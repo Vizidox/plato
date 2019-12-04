@@ -1,9 +1,9 @@
 from typing import NamedTuple
 
-from micro_templating.api import swagger
+from ..flask_app import swag
 
 
-@swagger.definition("TemplateDetail")
+@swag.definition("TemplateDetail")
 class TemplateDetailView(NamedTuple):
     """
     Template Detail
@@ -16,7 +16,7 @@ class TemplateDetailView(NamedTuple):
             type: object
             description: jsonschema for template
         type:
-            type: str
+            type: string
             description: template MIME type
         metadata:
             type: object

@@ -1,39 +1,30 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
-from flasgger import Swagger
-from sqlalchemy import create_engine
+from flask import jsonify, request
+from .flask_app import app
+from .views.template import TemplateDetailView
 
-app = Flask(__name__)
-app.config['SWAGGER'] = {
-    'title': 'Template API',
-    'uiversion': 3,
-    'openapi': '3.0.2'
-}
-
-cors = CORS(app)
-swagger = Swagger(app)
-
-engine = create_engine(db_url)
-app.config['database'] = db
-
-
-@app.route("/templates/<string:template_id>/", methods=["GET"])
-def template(template_id: str):
+@app.route("/template/{string:template_id}", methods=['GET'])
+def template():
     """
     Returns template information
     ---
-    parameters: template_id:
-        -   in: path
-            name: template_id
-            type: string
-            required: true
+    parameters:
+      - name: template_id
+        in: path
+        type: string
+        required: true
     responses:
-        200:
-            description: The template details.
-            schema:
-                $ref: '#/definitions/TemplateDetail':
+      200:
+        description: Information on the template
+        schema:
+          $ref: '#/definitions/TemplateDetail'
+      404:
+        description: Template not found
     """
 
-    template = None
+    view = TemplateDetailView("template_example", {"schema": {}}, "text/html", {})
 
-    return jsonify(template)
+    return jsonify(**view._asdict())
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
