@@ -1,8 +1,8 @@
-import sqlalchemy
-
-from sqlalchemy import Table, Column, Integer, ForeignKey, String
+from sqlalchemy import Column, String
 from sqlalchemy.dialects.postgresql import JSONB, ENUM
-from micro_templating.db.model import Base
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 
 class Template(Base):
