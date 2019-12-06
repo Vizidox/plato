@@ -7,6 +7,18 @@ Base = declarative_base()
 
 
 class Template(Base):
+    """
+    Database model for a Template
+
+    The unique identifiers for the table are `auth_id` and `id`.
+
+    Attributes:
+        auth_id (str): The id for the owner of the template
+        id (str): The id for the template
+        schema (dict): JSON dictionary with jsonschema used for validation in said template
+        type (str): MIME type for template type, currently restricted to 'text/html'
+        metadata_ (dict): JSON dictionary for arbitrary data useful for owner
+    """
     __tablename__ = "template"
     auth_id = Column(String, primary_key=True)
     id = Column(String, primary_key=True)
