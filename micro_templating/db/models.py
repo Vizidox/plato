@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""Database models
+
+All the classes in this module represent the database objects present in the microservice and extend a declarative
+base from sqlalchemy.
+
+"""
+
 from sqlalchemy import Column, String
 from sqlalchemy.dialects.postgresql import JSONB, ENUM
 from sqlalchemy.ext.declarative import declarative_base
