@@ -1,7 +1,7 @@
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from .model import *
+from .models import *
 
 
 def init_db(engine: Engine) -> scoped_session:
