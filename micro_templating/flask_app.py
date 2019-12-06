@@ -16,5 +16,15 @@ swag = Swagger(app)
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
+    """
+
+    Shuts down the session after the request is done with it
+
+    Args:
+        exception: Error raised by Flask
+
+    Returns:
+        exception: Error raise by Flask
+    """
     db_session.remove()
     return exception
