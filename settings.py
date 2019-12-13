@@ -20,6 +20,7 @@ PROJECT_VERSION = __project_meta["version"]
 
 # Template storage
 S3_BUCKET = environ["S3_BUCKET"]
+TEMPLATE_DIRECTORY = environ["TEMPLATE_DIRECTORY"]
 
 # Database
 POSTGRES_VER = environ["POSTGRES_VER"]
