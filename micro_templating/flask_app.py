@@ -44,7 +44,7 @@ def shutdown_session(exception=None):
         exception: Error raised by Flask
 
     Returns:
-        exception: Error raise by Flask
+        exception: Error raised by Flask
     """
     db_session.remove()
     return exception
