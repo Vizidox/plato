@@ -15,8 +15,23 @@ db_session = init_db(engine)
 cors = CORS(app)
 swag = Swagger(app)
 
+jinja_config_key = "JINJA_TEMPLATE_ENGINE"
+
 load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
-app.config["jinja_engine"] = create_template_environment(TEMPLATE_DIRECTORY)
+app.config[jinja_config_key] = create_template_environment(TEMPLATE_DIRECTORY)
+
+
+def get_template_engine(current_app):
+    """
+    Obtains the template engine for the current flask app
+
+    Args:
+        current_app: Current flask app
+
+    Returns:
+        Environment: Jinja2 Environment with templating
+    """
+    return current_app.config[jinja_config_key]
 
 
 @app.teardown_appcontext
