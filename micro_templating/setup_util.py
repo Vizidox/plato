@@ -26,7 +26,7 @@ def load_templates(s3_bucket: str, target_directory: str):
 
 def create_template_environment(template_directory_path: str) -> Environment:
     """
-    Setup jinja2 templating engine from
+    Setup jinja2 templating engine from a given directory path.
 
     Args:
         template_directory_path: Path to the directory where templates are stored
