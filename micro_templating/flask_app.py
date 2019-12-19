@@ -2,10 +2,9 @@ from flasgger import Swagger
 from flask import Flask
 from flask_cors import CORS
 from sqlalchemy import create_engine
-
 from micro_templating.db.database import init_db
 from micro_templating.setup_util import load_templates, create_template_environment
-from settings import WORKING_DB_URL, S3_BUCKET, TEMPLATE_DIRECTORY
+from settings import WORKING_DB_URL, S3_BUCKET, TEMPLATE_DIRECTORY, AUTH_SERVER, PROJECT_NAME, PROJECT_VERSION
 
 app = Flask(__name__)
 
@@ -13,7 +12,25 @@ engine = create_engine(WORKING_DB_URL, convert_unicode=True)
 db_session = init_db(engine)
 
 cors = CORS(app)
-swag = Swagger(app)
+
+swagger_template = {
+    "openapi": "3.0",
+    'uiversion': "3",
+    "info": {
+        "title": PROJECT_NAME,
+        "version": PROJECT_VERSION
+    },
+    "securityDefinitions": {
+        "Oauth2": {
+            "type": "oauth2",
+            "flow": "application",
+            "tokenUrl": f"{AUTH_SERVER}/protocol/openid-connect/token",
+            "scopes": {"templating": "gives access to the templating engine"}
+        }
+    }
+}
+
+swag = Swagger(app, template=swagger_template)
 
 jinja_config_key = "JINJA_TEMPLATE_ENGINE"
 
