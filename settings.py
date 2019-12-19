@@ -30,6 +30,9 @@ DB_USERNAME = environ["DB_USERNAME"]
 DB_PASSWORD = environ["DB_PASSWORD"]
 DB_DATABASE = environ["DB_DATABASE"]
 
+# Auth
+AUTH_SERVER = environ["AUTH_SERVER"]
+CLIENT_ID = environ["CLIENT_ID"]
 
 def db_url(database_name: str) -> str:
     return f'postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{database_name}'
