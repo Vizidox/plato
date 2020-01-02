@@ -29,7 +29,7 @@ swagger_template = {
         "version": PROJECT_VERSION
     },
     "securityDefinitions": {
-        "Oauth2": {
+        "api_auth": {
             "type": "oauth2",
             "flow": "application",
             "tokenUrl": f"{AUTH_SERVER}/protocol/openid-connect/token",
