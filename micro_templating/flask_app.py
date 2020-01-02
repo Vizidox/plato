@@ -8,6 +8,14 @@ from settings import WORKING_DB_URL, S3_BUCKET, TEMPLATE_DIRECTORY, AUTH_SERVER,
 
 app = Flask(__name__)
 
+swagger_config = Swagger.DEFAULT_CONFIG
+app.config['SWAGGER'] = {
+    'title': PROJECT_NAME,
+    'version': PROJECT_VERSION,
+    'uiversion': 3,
+    'swagger': '2.0'
+}
+
 engine = create_engine(WORKING_DB_URL, convert_unicode=True)
 db_session = init_db(engine)
 
@@ -30,7 +38,7 @@ swagger_template = {
     }
 }
 
-swag = Swagger(app, template=swagger_template)
+swag = Swagger(app, template=swagger_template, config=swagger_config)
 
 jinja_config_key = "JINJA_TEMPLATE_ENGINE"
 

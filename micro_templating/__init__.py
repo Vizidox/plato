@@ -1,1 +1,3 @@
-__version__ = '0.1.0'
+from settings import PROJECT_VERSION
+
+__version__ = PROJECT_VERSION
