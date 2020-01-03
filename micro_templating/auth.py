@@ -2,7 +2,7 @@ from functools import wraps
 from typing import Dict
 
 import requests
-from flask import request, jsonify
+from flask import request, jsonify, g
 from jose import jwt, JWTError
 from settings import AUTH_SERVER, CLIENT_ID
 
@@ -50,8 +50,8 @@ def token_required(f):
                                         issuer=AUTH_SERVER,
                                         audience=CLIENT_ID
                                         )
-
-            return f(verified_token['sub'], *args, **kwargs)
+            g.auth_id = verified_token['sub']
+            return f(*args, **kwargs)
 
         except JWTError as e:
             return jsonify({'message': f'Token is invalid: {e}'}), 401
