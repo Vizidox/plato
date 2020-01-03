@@ -34,6 +34,10 @@ DB_DATABASE = environ["DB_DATABASE"]
 AUTH_SERVER = environ["AUTH_SERVER"]
 CLIENT_ID = environ["CLIENT_ID"]
 
+# Swagger-UI (optional)
+SWAGGER_AUTH_CLIENT = environ["SWAGGER_AUTH_CLIENT"] if "SWAGGER_AUTH_CLIENT" in environ else ""
+SWAGGER_AUTH_CLIENT_SECRET = environ["SWAGGER_AUTH_CLIENT_SECRET"] if "SWAGGER_AUTH_CLIENT_SECRET" in environ else ""
+
 def db_url(database_name: str) -> str:
     return f'postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{database_name}'
 

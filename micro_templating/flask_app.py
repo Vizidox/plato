@@ -4,11 +4,19 @@ from flask_cors import CORS
 from sqlalchemy import create_engine
 from micro_templating.db.database import init_db
 from micro_templating.setup_util import load_templates, create_template_environment
-from settings import WORKING_DB_URL, S3_BUCKET, TEMPLATE_DIRECTORY, AUTH_SERVER, PROJECT_NAME, PROJECT_VERSION
+from settings import WORKING_DB_URL, S3_BUCKET, TEMPLATE_DIRECTORY, AUTH_SERVER, PROJECT_NAME, PROJECT_VERSION,\
+    SWAGGER_AUTH_CLIENT, SWAGGER_AUTH_CLIENT_SECRET
 
 app = Flask(__name__)
 
 swagger_config = Swagger.DEFAULT_CONFIG
+# Used to initialize Oauth in swagger-ui as per the initOAuth method
+# https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
+swagger_config['auth'] = {
+        "clientId": f"{SWAGGER_AUTH_CLIENT}",
+        "clientSecret": f"{SWAGGER_AUTH_CLIENT_SECRET}"
+}
+
 app.config['SWAGGER'] = {
     'title': PROJECT_NAME,
     'version': PROJECT_VERSION,
@@ -22,12 +30,6 @@ db_session = init_db(engine)
 cors = CORS(app)
 
 swagger_template = {
-    "openapi": "3.0",
-    'uiversion': "3",
-    "info": {
-        "title": PROJECT_NAME,
-        "version": PROJECT_VERSION
-    },
     "securityDefinitions": {
         "api_auth": {
             "type": "oauth2",
