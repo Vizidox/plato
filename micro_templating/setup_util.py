@@ -1,4 +1,4 @@
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 import pathlib
 
 from smart_open import s3_iter_bucket
@@ -24,7 +24,7 @@ def load_templates(s3_bucket: str, target_directory: str):
             file.write(content)
 
 
-def create_template_environment(template_directory_path: str) -> Environment:
+def create_template_environment(template_directory_path: str) -> JinjaEnv:
     """
     Setup jinja2 templating engine from a given directory path.
 
@@ -32,9 +32,9 @@ def create_template_environment(template_directory_path: str) -> Environment:
         template_directory_path: Path to the directory where templates are stored
 
     Returns:
-        Environment: Jinja2 Environment with templating
+        JinjaEnv: Jinja2 Environment with templating
     """
-    env = Environment(
+    env = JinjaEnv(
         loader=FileSystemLoader(template_directory_path),
         autoescape=select_autoescape(["html", "xml"])
     )

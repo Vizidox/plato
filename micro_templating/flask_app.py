@@ -1,77 +1,75 @@
+import requests
 from flasgger import Swagger
+from flasgger.base import SwaggerDefinition
 from flask import Flask
 from flask_cors import CORS
 from sqlalchemy import create_engine
+
+from micro_templating.api import initalize_api
+from micro_templating.auth import Authenticator
 from micro_templating.db.database import init_db
 from micro_templating.setup_util import load_templates, create_template_environment
 from settings import WORKING_DB_URL, S3_BUCKET, TEMPLATE_DIRECTORY, AUTH_SERVER, PROJECT_NAME, PROJECT_VERSION,\
     SWAGGER_AUTH_CLIENT, SWAGGER_AUTH_CLIENT_SECRET
+from micro_templating.views import *
 
-app = Flask(__name__)
 
-swagger_config = Swagger.DEFAULT_CONFIG
-# Used to initialize Oauth in swagger-ui as per the initOAuth method
-# https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
-swagger_config['auth'] = {
-        "clientId": f"{SWAGGER_AUTH_CLIENT}",
-        "clientSecret": f"{SWAGGER_AUTH_CLIENT_SECRET}"
-}
+def create_app(test_config=None):
+    app = Flask(__name__)
 
-app.config['SWAGGER'] = {
-    'title': PROJECT_NAME,
-    'version': PROJECT_VERSION,
-    'uiversion': 3,
-    'swagger': '2.0'
-}
+    swagger_config = Swagger.DEFAULT_CONFIG
+    # Used to initialize Oauth in swagger-ui as per the initOAuth method
+    # https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
+    swagger_config['auth'] = {
+            "clientId": f"{SWAGGER_AUTH_CLIENT}",
+            "clientSecret": f"{SWAGGER_AUTH_CLIENT_SECRET}"
+    }
 
-engine = create_engine(WORKING_DB_URL, convert_unicode=True)
-db_session = init_db(engine)
+    app.config['SWAGGER'] = {
+        'title': PROJECT_NAME,
+        'version': PROJECT_VERSION,
+        'uiversion': 3,
+        'swagger': '2.0'
+    }
 
-cors = CORS(app)
+    engine = create_engine(WORKING_DB_URL, convert_unicode=True)
+    db_session = init_db(engine)
 
-swagger_template = {
-    "securityDefinitions": {
-        "api_auth": {
-            "type": "oauth2",
-            "flow": "application",
-            "tokenUrl": f"{AUTH_SERVER}/protocol/openid-connect/token",
-            "scopes": {"templating": "gives access to the templating engine"}
+    cors = CORS(app)
+
+    swagger_template = {
+        "securityDefinitions": {
+            "api_auth": {
+                "type": "oauth2",
+                "flow": "application",
+                "tokenUrl": f"{AUTH_SERVER}/protocol/openid-connect/token",
+                "scopes": {"templating": "gives access to the templating engine"}
+            }
         }
     }
-}
 
-swag = Swagger(app, template=swagger_template, config=swagger_config)
-
-jinja_config_key = "JINJA_TEMPLATE_ENGINE"
-
-load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
-app.config[jinja_config_key] = create_template_environment(TEMPLATE_DIRECTORY)
+    swag = Swagger(app, template=swagger_template, config=swagger_config)
 
 
-def get_template_engine(current_app):
-    """
-    Obtains the template engine for the current flask app
+    load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
+    jinja_env = create_template_environment(TEMPLATE_DIRECTORY)
+    authenticator = Authenticator(f"{AUTH_SERVER}/.well-known/openid-configuration")
 
-    Args:
-        current_app: Current flask app
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        """
 
-    Returns:
-        Environment: Jinja2 Environment with templating
-    """
-    return current_app.config[jinja_config_key]
+        Shuts down the session after the request is done with it
 
+        Args:
+            exception: Error raised by Flask
 
-@app.teardown_appcontext
-def shutdown_session(exception=None):
-    """
+        Returns:
+            exception: Error raised by Flask
+        """
+        db_session.remove()
+        return exception
 
-    Shuts down the session after the request is done with it
+    initalize_api(app, authenticator, jinja_env)
 
-    Args:
-        exception: Error raised by Flask
-
-    Returns:
-        exception: Error raised by Flask
-    """
-    db_session.remove()
-    return exception
+    return app
