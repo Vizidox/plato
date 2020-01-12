@@ -1,9 +1,25 @@
-from typing import NamedTuple
+from typing import NamedTuple, List
 
-from ..flask_app import swag
+from flasgger.base import SwaggerDefinition
 
 
-@swag.definition("TemplateDetail")
+class SwaggerViewCatalogue:
+    swagger_definitions: List[SwaggerDefinition] = list()
+
+    @classmethod
+    def swagger_info(cls, name, tags=None):
+        """
+        Decorator to add class based definitions
+        """
+
+        def wrapper(obj):
+            cls.swagger_definitions.append(SwaggerDefinition(name, obj, tags=tags))
+            return obj
+
+        return wrapper
+
+
+@SwaggerViewCatalogue.swagger_info("TemplateDetail")
 class TemplateDetailView(NamedTuple):
     """
     Template Detail

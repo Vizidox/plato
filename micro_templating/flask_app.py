@@ -9,6 +9,7 @@ from micro_templating.api import initalize_api
 from micro_templating.auth import Authenticator
 from micro_templating.db.database import init_db
 from micro_templating.setup_util import load_templates, create_template_environment
+from micro_templating.views.template import SwaggerViewCatalogue
 from settings import WORKING_DB_URL, S3_BUCKET, TEMPLATE_DIRECTORY, AUTH_SERVER, PROJECT_NAME, PROJECT_VERSION,\
     SWAGGER_AUTH_CLIENT, SWAGGER_AUTH_CLIENT_SECRET
 from micro_templating.views import *
@@ -49,7 +50,7 @@ def create_app(test_config=None):
     }
 
     swag = Swagger(app, template=swagger_template, config=swagger_config)
-
+    swag.definition_models.append(*SwaggerViewCatalogue.swagger_definitions)
 
     load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
     jinja_env = create_template_environment(TEMPLATE_DIRECTORY)
