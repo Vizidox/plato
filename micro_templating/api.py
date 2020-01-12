@@ -1,5 +1,5 @@
 from flask import jsonify, request, current_app, g
-from .views.template import TemplateDetailView
+from micro_templating.views.views import TemplateDetailView
 
 
 def initalize_api(app, auth, jinjaenv):

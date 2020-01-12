@@ -9,7 +9,7 @@ from micro_templating.api import initalize_api
 from micro_templating.auth import Authenticator
 from micro_templating.db.database import init_db
 from micro_templating.setup_util import load_templates, create_template_environment
-from micro_templating.views.template import SwaggerViewCatalogue
+from micro_templating.views.views import SwaggerViewCatalogue
 from settings import WORKING_DB_URL, S3_BUCKET, TEMPLATE_DIRECTORY, AUTH_SERVER, PROJECT_NAME, PROJECT_VERSION,\
     SWAGGER_AUTH_CLIENT, SWAGGER_AUTH_CLIENT_SECRET
 from micro_templating.views import *
