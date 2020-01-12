@@ -4,6 +4,10 @@ import pathlib
 from smart_open import s3_iter_bucket
 
 
+class SetupError(Exception):
+    ...
+
+
 def load_templates(s3_bucket: str, target_directory: str):
     """
     Gets templates from the AWS S3 bucket. Assumes every file inside the bucket is a template.
@@ -12,16 +16,19 @@ def load_templates(s3_bucket: str, target_directory: str):
         s3_bucket: AWS S3 Bucket where the templates are
         target_directory: Target directory to store the templates in
     """
-    for key, content in s3_iter_bucket(s3_bucket):
-        if key[-1] == '/' or not content:
-            # Is a directory
-            continue
+    try:
+        for key, content in s3_iter_bucket(s3_bucket):
+            if key[-1] == '/' or not content:
+                # Is a directory
+                continue
 
-        path = pathlib.Path(f"{target_directory}/{key}")
-        path.parent.mkdir(parents=True, exist_ok=True)
+            path = pathlib.Path(f"{target_directory}/{key}")
+            path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(path, mode="wb") as file:
-            file.write(content)
+            with open(path, mode="wb") as file:
+                file.write(content)
+    except Exception as e:
+        raise SetupError(e, "Unable to obtain templates from S3")
 
 
 def create_template_environment(template_directory_path: str) -> JinjaEnv:
