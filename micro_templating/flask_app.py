@@ -12,19 +12,17 @@ from micro_templating.setup_util import load_templates, create_template_environm
 from micro_templating.views.views import SwaggerViewCatalogue
 from settings import WORKING_DB_URL, S3_BUCKET, TEMPLATE_DIRECTORY, AUTH_SERVER, PROJECT_NAME, PROJECT_VERSION,\
     SWAGGER_AUTH_CLIENT, SWAGGER_AUTH_CLIENT_SECRET
-from micro_templating.views import *
 
 
-def create_app(test_config=None):
+def create_app(authenticator: Authenticator = None, db_url: str = WORKING_DB_URL):
     app = Flask(__name__)
 
-    swagger_config = Swagger.DEFAULT_CONFIG
-    # Used to initialize Oauth in swagger-ui as per the initOAuth method
-    # https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
-    swagger_config['auth'] = {
-            "clientId": f"{SWAGGER_AUTH_CLIENT}",
-            "clientSecret": f"{SWAGGER_AUTH_CLIENT_SECRET}"
-    }
+    engine = create_engine(db_url, convert_unicode=True)
+    db_session = init_db(engine)
+
+    cors = CORS(app)
+
+    # TODO: Remove Settings consts from swagger configurations below
 
     app.config['SWAGGER'] = {
         'title': PROJECT_NAME,
@@ -33,10 +31,13 @@ def create_app(test_config=None):
         'swagger': '2.0'
     }
 
-    engine = create_engine(WORKING_DB_URL, convert_unicode=True)
-    db_session = init_db(engine)
-
-    cors = CORS(app)
+    swagger_config = Swagger.DEFAULT_CONFIG
+    # Used to initialize Oauth in swagger-ui as per the initOAuth method
+    # https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
+    swagger_config['auth'] = {
+        "clientId": f"{SWAGGER_AUTH_CLIENT}",
+        "clientSecret": f"{SWAGGER_AUTH_CLIENT_SECRET}"
+    }
 
     swagger_template = {
         "securityDefinitions": {
@@ -54,7 +55,9 @@ def create_app(test_config=None):
 
     load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
     jinja_env = create_template_environment(TEMPLATE_DIRECTORY)
-    authenticator = Authenticator(f"{AUTH_SERVER}/.well-known/openid-configuration")
+
+    if authenticator is None:
+        authenticator = Authenticator(f"{AUTH_SERVER}/.well-known/openid-configuration")
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
