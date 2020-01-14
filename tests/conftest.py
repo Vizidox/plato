@@ -9,9 +9,9 @@ from testcontainers.compose import DockerCompose
 from testcontainers.core.utils import inside_container
 from testcontainers.core.waiting_utils import wait_for
 
-from micro_templating.auth import Authenticator
 from micro_templating.db.database import init_db
 from micro_templating.flask_app import create_app
+from settings import PROJECT_NAME, PROJECT_VERSION
 
 TEST_AUTH_HOST = f"http://{'auth:8080' if inside_container() else 'localhost:8788'}/auth/realms/master/"
 TEST_DB_URL = f"postgresql://test:test@{'database:5432' if inside_container() else 'localhost:5456'}/test"
@@ -30,8 +30,8 @@ def client():
 
         wait_for(lambda: requests.get(f"{TEST_AUTH_HOST}/.well-known/openid-configuration").json())
 
-        auth = Authenticator(TEST_AUTH_HOST)
-        micro_templating_app = create_app(authenticator=auth, db_url=TEST_DB_URL)
+        micro_templating_app = create_app(project_name=PROJECT_NAME, project_version=PROJECT_VERSION,
+                                          auth_host_url=TEST_AUTH_HOST, db_url=TEST_DB_URL)
         micro_templating_app.config['TESTING'] = True
 
         with micro_templating_app.test_client() as client:

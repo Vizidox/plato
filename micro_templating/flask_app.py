@@ -10,11 +10,11 @@ from micro_templating.auth import Authenticator
 from micro_templating.db.database import init_db
 from micro_templating.setup_util import load_templates, create_template_environment
 from micro_templating.views.views import SwaggerViewCatalogue
-from settings import WORKING_DB_URL, S3_BUCKET, TEMPLATE_DIRECTORY, AUTH_SERVER, PROJECT_NAME, PROJECT_VERSION,\
+from settings import S3_BUCKET, TEMPLATE_DIRECTORY, PROJECT_NAME, PROJECT_VERSION,\
     SWAGGER_AUTH_CLIENT, SWAGGER_AUTH_CLIENT_SECRET
 
 
-def create_app(authenticator: Authenticator = None, db_url: str = WORKING_DB_URL):
+def create_app(project_name: str, project_version: str, auth_host_url: str, db_url: str):
     app = Flask(__name__)
 
     engine = create_engine(db_url, convert_unicode=True)
@@ -25,8 +25,8 @@ def create_app(authenticator: Authenticator = None, db_url: str = WORKING_DB_URL
     # TODO: Remove Settings consts from swagger configurations below
 
     app.config['SWAGGER'] = {
-        'title': PROJECT_NAME,
-        'version': PROJECT_VERSION,
+        'title': project_name,
+        'version': project_version,
         'uiversion': 3,
         'swagger': '2.0'
     }
@@ -44,7 +44,7 @@ def create_app(authenticator: Authenticator = None, db_url: str = WORKING_DB_URL
             "api_auth": {
                 "type": "oauth2",
                 "flow": "application",
-                "tokenUrl": f"{AUTH_SERVER}/protocol/openid-connect/token",
+                "tokenUrl": f"{auth_host_url}/protocol/openid-connect/token",
                 "scopes": {"templating": "gives access to the templating engine"}
             }
         }
@@ -56,8 +56,7 @@ def create_app(authenticator: Authenticator = None, db_url: str = WORKING_DB_URL
     load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
     jinja_env = create_template_environment(TEMPLATE_DIRECTORY)
 
-    if authenticator is None:
-        authenticator = Authenticator(f"{AUTH_SERVER}/.well-known/openid-configuration")
+    authenticator = Authenticator(f"{auth_host_url}/.well-known/openid-configuration")
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
