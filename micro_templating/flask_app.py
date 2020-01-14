@@ -25,8 +25,6 @@ def create_app(project_name: str, project_version: str,
 
     cors = CORS(app)
 
-    # TODO: Remove Settings consts from swagger configurations below
-
     app.config['SWAGGER'] = {
         'title': project_name,
         'version': project_version,
@@ -60,6 +58,8 @@ def create_app(project_name: str, project_version: str,
     jinja_env = create_template_environment(TEMPLATE_DIRECTORY)
 
     authenticator = Authenticator(auth_host_url, "templating")
+
+    app.config["AUTH"] = authenticator
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
