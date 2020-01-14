@@ -59,7 +59,7 @@ def create_app(project_name: str, project_version: str,
     load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
     jinja_env = create_template_environment(TEMPLATE_DIRECTORY)
 
-    authenticator = Authenticator(f"{auth_host_url}/.well-known/openid-configuration")
+    authenticator = Authenticator(auth_host_url, "templating")
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):

@@ -5,14 +5,15 @@ import requests
 from flask import request, jsonify, g
 from jose import jwt, JWTError
 
-from settings import AUTH_SERVER, CLIENT_ID
-
 
 class Authenticator:
     oauth_config: Dict
 
-    def __init__(self, oauth_config_url):
-        self.oauth_config = requests.get(oauth_config_url).json()
+    def __init__(self, auth_host: str, audience: str):
+        self.auth_host = auth_host
+        self.oauth_config_url = f"{auth_host}/.well-known/openid-configuration"
+        self.oauth_config = requests.get(self.oauth_config_url).json()
+        self.audience = audience
 
     def token_required(self, f):
         """
@@ -52,8 +53,8 @@ class Authenticator:
                 verified_token = jwt.decode(token=token,
                                             key=key,
                                             algorithms=key['alg'],
-                                            issuer=AUTH_SERVER,
-                                            audience=CLIENT_ID
+                                            issuer=self.auth_host,
+                                            audience=self.audience
                                             )
                 g.auth_id = verified_token['sub']
                 return f(*args, **kwargs)
