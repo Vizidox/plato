@@ -18,10 +18,11 @@ from settings import S3_BUCKET, TEMPLATE_DIRECTORY
 def create_app(project_name: str, project_version: str,
                auth_host_url: str, db_url: str, oauth2_audience: str,
                swagger_scope: str = "templating",
-               default_swagger_client: str = "", default_swagger_secret: str = ""):
+               default_swagger_client: str = "", default_swagger_secret: str = "",
+               load_s3_templates: bool = True):
     app = Flask(__name__)
 
-    engine = create_engine(db_url, convert_unicode=True)
+    engine = create_engine(db_url)
     db_session = init_db(engine)
 
     cors = CORS(app)
@@ -55,7 +56,8 @@ def create_app(project_name: str, project_version: str,
     swag = Swagger(app, template=swagger_template, config=swagger_config)
     swag.definition_models.append(*SwaggerViewCatalogue.swagger_definitions)
 
-    load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
+    if load_s3_templates:
+        load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
     jinja_env = create_template_environment(TEMPLATE_DIRECTORY)
 
     authenticator = Authenticator(auth_host_url, oauth2_audience)
