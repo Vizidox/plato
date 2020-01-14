@@ -1,3 +1,5 @@
+from typing import Optional
+
 import requests
 from flasgger import Swagger
 from flasgger.base import SwaggerDefinition
@@ -10,11 +12,12 @@ from micro_templating.auth import Authenticator
 from micro_templating.db.database import init_db
 from micro_templating.setup_util import load_templates, create_template_environment
 from micro_templating.views.views import SwaggerViewCatalogue
-from settings import S3_BUCKET, TEMPLATE_DIRECTORY, PROJECT_NAME, PROJECT_VERSION,\
-    SWAGGER_AUTH_CLIENT, SWAGGER_AUTH_CLIENT_SECRET
+from settings import S3_BUCKET, TEMPLATE_DIRECTORY
 
 
-def create_app(project_name: str, project_version: str, auth_host_url: str, db_url: str):
+def create_app(project_name: str, project_version: str,
+               auth_host_url: str, db_url: str,
+               default_swagger_client: str = "", default_swagger_secret: str = ""):
     app = Flask(__name__)
 
     engine = create_engine(db_url, convert_unicode=True)
@@ -35,8 +38,8 @@ def create_app(project_name: str, project_version: str, auth_host_url: str, db_u
     # Used to initialize Oauth in swagger-ui as per the initOAuth method
     # https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
     swagger_config['auth'] = {
-        "clientId": f"{SWAGGER_AUTH_CLIENT}",
-        "clientSecret": f"{SWAGGER_AUTH_CLIENT_SECRET}"
+        "clientId": f"{default_swagger_client}",
+        "clientSecret": f"{default_swagger_secret}"
     }
 
     swagger_template = {
