@@ -16,7 +16,8 @@ from settings import S3_BUCKET, TEMPLATE_DIRECTORY
 
 
 def create_app(project_name: str, project_version: str,
-               auth_host_url: str, db_url: str,
+               auth_host_url: str, db_url: str, oauth2_audience: str,
+               swagger_scope: str = "templating",
                default_swagger_client: str = "", default_swagger_secret: str = ""):
     app = Flask(__name__)
 
@@ -46,7 +47,7 @@ def create_app(project_name: str, project_version: str,
                 "type": "oauth2",
                 "flow": "application",
                 "tokenUrl": f"{auth_host_url}/protocol/openid-connect/token",
-                "scopes": {"templating": "gives access to the templating engine"}
+                "scopes": {f"{swagger_scope}": "gives access to the templating engine"}
             }
         }
     }
@@ -57,7 +58,7 @@ def create_app(project_name: str, project_version: str,
     load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
     jinja_env = create_template_environment(TEMPLATE_DIRECTORY)
 
-    authenticator = Authenticator(auth_host_url, "templating")
+    authenticator = Authenticator(auth_host_url, oauth2_audience)
 
     app.config["AUTH"] = authenticator
 
