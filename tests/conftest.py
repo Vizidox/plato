@@ -24,7 +24,7 @@ def client():
     if inside_container():
         context_manager = nullcontext()
     else:
-        context_manager = DockerCompose(filepath="../", compose_file_name="docker-compose.test.yml")
+        context_manager = DockerCompose(filepath="./", compose_file_name="docker-compose.test.yml")
 
     with context_manager:
 
