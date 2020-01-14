@@ -26,8 +26,11 @@ services:
 
   auth:
     image: jboss/keycloak:8.0.1
+    volumes:
+      - ./micro-templating-keycloak-realm.json:/opt/jboss/keycloak/test-realm.json
     command:
       - "-b 0.0.0.0"
+      - "-Dkeycloak.import=/opt/jboss/keycloak/test-realm.json"
     environment:
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: pass
