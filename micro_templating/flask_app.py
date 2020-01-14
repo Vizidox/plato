@@ -1,8 +1,10 @@
-from typing import Optional
+"""Flask app creation module.
 
-import requests
+Flask app creation is handled here by the create_app function.
+Import the function wherever you decide to create a flask app.
+
+"""
 from flasgger import Swagger
-from flasgger.base import SwaggerDefinition
 from flask import Flask
 from flask_cors import CORS
 from sqlalchemy import create_engine
@@ -20,6 +22,22 @@ def create_app(project_name: str, project_version: str,
                swagger_scope: str = "templating",
                default_swagger_client: str = "", default_swagger_secret: str = "",
                load_s3_templates: bool = True):
+    """
+
+    Args:
+        project_name: Name of the flask app
+        project_version: Version of the flask app
+        auth_host_url: URL for the authorization server
+        db_url: Database URI
+        oauth2_audience: Audience to be used in JWT validation for requests
+        swagger_scope: Scope name be used in swagger-ui
+        default_swagger_client: Default value for client in client_credentials for swagger-ui
+        default_swagger_secret: Default value for secret in client_credentials for swagger-ui
+        load_s3_templates: If true, it updates the templates from the relevant bucket in S3
+
+    Returns:
+
+    """
     app = Flask(__name__)
 
     engine = create_engine(db_url)

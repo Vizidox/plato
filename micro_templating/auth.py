@@ -1,3 +1,5 @@
+"""Module containing any function or class regarding authentication
+"""
 from functools import wraps
 from typing import Dict
 
@@ -7,7 +9,16 @@ from jose import jwt, JWTError
 
 
 class Authenticator:
-    oauth_config: Dict
+    """
+    Authenticator is the class responsible for cross-checking any information regarding the bearer token.
+    Currently coupled to our Authentication provider, Keycloak.
+
+    Attributes:
+        auth_host: URL representing the keycloak realm, e.g http://localhost:8080/auth/realms/example_realm
+        oauth_config_url: URL for OIDC well known resources on server
+        oauth_config: JSON response for well known server resources
+        audience: Audience used for JWT validation
+    """
 
     def __init__(self, auth_host: str, audience: str):
         self.auth_host = auth_host

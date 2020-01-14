@@ -1,3 +1,9 @@
+"""Main module to instantiate Flask app.
+
+Either create a Flask run configuration on this module or set up to run it locally with main.
+
+"""
+
 from micro_templating.flask_app import create_app
 from settings import WORKING_DB_URL, AUTH_SERVER, PROJECT_NAME, PROJECT_VERSION, SWAGGER_AUTH_CLIENT_SECRET, \
     SWAGGER_AUTH_CLIENT, CLIENT_ID, SWAGGER_AUTH_SCOPE

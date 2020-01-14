@@ -5,6 +5,9 @@ from smart_open import s3_iter_bucket
 
 
 class SetupError(Exception):
+    """
+    Error for any setup Exception to occur when running this module's functions.
+    """
     ...
 
 
