@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "micro-templating"
-version = "0.0.1"
+version = "0.1.0"
 description = "Templating as a microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>"]
 
@@ -28,10 +28,8 @@ SQLAlchemy = {version="1.3.11", extras=["postgresql_psycopg2binary"]}
 
 [tool.poetry.dev-dependencies]
 pytest="5.3.1"
-testcontainers={version="2.5", extras="postgresql"}
 moto="1.3.14"
 testcontainers = { git = "https://github.com/testcontainers/testcontainers-python.git", tag = "v2.6" }
-pytest-dotenv="0.4.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
