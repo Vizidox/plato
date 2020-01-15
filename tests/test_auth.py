@@ -23,10 +23,9 @@ class TestAuthenticator:
             assert not mock.called
 
     def test_wrong_audience(self, client, authenticator: NoAuthServerAuthenticator):
-        token = authenticator.sign({"iss": authenticator.auth_host,
-                                    "aud": f"{authenticator.audience}-bad",
-                                    "sub": "someone"
-                                    })
+        token = authenticator.sign(issuer=f"{authenticator.auth_host}",
+                                   audience=f"{authenticator.audience}-bad",
+                                   sub="someone")
         with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
 
             authenticator.verify(token)
@@ -37,10 +36,10 @@ class TestAuthenticator:
             assert message.json["message"] == 'Token is invalid: Invalid audience'
 
     def test_wrong_iss(self, client, authenticator: NoAuthServerAuthenticator):
-        token = authenticator.sign({"iss": f"{authenticator.auth_host}-bad",
-                                    "aud": f"{authenticator.audience}",
-                                    "sub": "someone"
-                                    })
+        token = authenticator.sign(issuer=f"{authenticator.auth_host}-bad",
+                                   audience=f"{authenticator.audience}",
+                                   sub="someone")
+
         with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
 
             authenticator.verify(token)
