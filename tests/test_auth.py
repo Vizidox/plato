@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from mock import Mock
-
 from auth import Authenticator
 from tests.conftest import NoAuthServerAuthenticator
 
@@ -28,7 +27,6 @@ class TestAuthenticator:
                                    sub="someone")
         with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
 
-            authenticator.verify(token)
             mock, decorated_mock = self.get_decorated_mock(authenticator)
             message, response_code = decorated_mock()
 
@@ -42,9 +40,36 @@ class TestAuthenticator:
 
         with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
 
-            authenticator.verify(token)
             mock, decorated_mock = self.get_decorated_mock(authenticator)
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
             assert message.json["message"] == 'Token is invalid: Invalid issuer'
+
+    def test_wrong_signature(self, client, authenticator: NoAuthServerAuthenticator):
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.hazmat.primitives import serialization
+
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+            backend=default_backend()
+        )
+
+        pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        token = authenticator.sign(issuer=f"{authenticator.auth_host}",
+                                   audience=f"{authenticator.audience}",
+                                   sub="someone", key=pem)
+
+        with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
+
+            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            message, response_code = decorated_mock()
+
+            assert response_code == HTTPStatus.UNAUTHORIZED
+            assert message.json["message"] == 'Token is invalid: Signature verification failed.'
