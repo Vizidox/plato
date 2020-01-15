@@ -18,6 +18,11 @@ __project_meta = _get_project_meta()
 PROJECT_NAME = __project_meta["name"]
 PROJECT_VERSION = __project_meta["version"]
 
+# Template storage
+S3_BUCKET = environ["S3_BUCKET"]
+TEMPLATE_DIRECTORY = environ["TEMPLATE_DIRECTORY"]
+
+# Database
 POSTGRES_VER = environ["POSTGRES_VER"]
 DB_HOST = environ["DB_HOST"]
 DB_PORT = environ["DB_PORT"]
