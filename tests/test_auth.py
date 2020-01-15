@@ -12,13 +12,27 @@ class TestAuthenticator:
         decorated_function = authenticator.token_required(mock_function)
         return mock_function, decorated_function
 
-    def test_missing_token(self, client, authenticator: Authenticator):
+    def test_missing_header(self, client, authenticator: Authenticator):
 
         with client.application.test_request_context():
             mock, decorated_mock = self.get_decorated_mock(authenticator)
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
+            assert message.json["message"] == "Expected 'Authorization' header"
+            assert not mock.called
+
+    def test_no_bearer(self, client, authenticator: NoAuthServerAuthenticator):
+        valid_token = authenticator.sign(issuer=f"{authenticator.auth_host}",
+                                         audience=f"{authenticator.audience}",
+                                         sub="someone")
+
+        with client.application.test_request_context(headers={"Authorization": f"Basic {valid_token}"}):
+            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            message, response_code = decorated_mock()
+
+            assert response_code == HTTPStatus.UNAUTHORIZED
+            assert message.json["message"] == "Authorization header must start with 'Bearer '"
             assert not mock.called
 
     def test_wrong_audience(self, client, authenticator: NoAuthServerAuthenticator):

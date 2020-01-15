@@ -32,7 +32,6 @@ class Authenticator:
             self.oauth_config = requests.get(self.oauth_config_url).json()
         return self.oauth_config
 
-
     def get_jwks(self):
         _jwks_json = requests.get(self.oauth_config['jwks_uri']).json()
         return {key_data['kid']: key_data for key_data in _jwks_json['keys']}
@@ -61,10 +60,13 @@ class Authenticator:
             """
             header = request.headers.get('Authorization', None)
 
-            token = header[7:] if header is not None and header.startswith(("Bearer ", "bearer ")) else None
+            if header is None:
+                return jsonify({'message': "Expected 'Authorization' header"}), 401
 
-            if not token:
-                return jsonify({'message': 'Token is missing!'}), 401
+            if not header.startswith(("Bearer ", "bearer ")):
+                return jsonify({'message': "Authorization header must start with 'Bearer '"}), 401
+
+            token = header[7:]
 
             try:
                 unverified_header = jwt.get_unverified_header(token)
