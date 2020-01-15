@@ -19,12 +19,23 @@ class Authenticator:
         oauth_config: JSON response for well known server resources
         audience: Audience used for JWT validation
     """
+    oauth_config = None
 
     def __init__(self, auth_host: str, audience: str):
         self.auth_host = auth_host
         self.oauth_config_url = f"{auth_host}/.well-known/openid-configuration"
-        self.oauth_config = requests.get(self.oauth_config_url).json()
+        self.oauth_config = self.get_oauth_config()
         self.audience = audience
+
+    def get_oauth_config(self):
+        if self.oauth_config is None:
+            self.oauth_config = requests.get(self.oauth_config_url).json()
+        return self.oauth_config
+
+
+    def get_jwks(self):
+        _jwks_json = requests.get(self.oauth_config['jwks_uri']).json()
+        return {key_data['kid']: key_data for key_data in _jwks_json['keys']}
 
     def token_required(self, f):
         """
@@ -35,8 +46,7 @@ class Authenticator:
         Returns:
 
         """
-        _jwks_json = requests.get(self.oauth_config['jwks_uri']).json()
-        jwks: Dict[str, Dict] = {key_data['kid']: key_data for key_data in _jwks_json['keys']}
+        jwks = self.get_jwks()
 
         @wraps(f)
         def decorated(*args, **kwargs):

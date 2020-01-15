@@ -2,18 +2,37 @@ from http import HTTPStatus
 
 from mock import Mock
 
+from auth import Authenticator
+from tests.conftest import NoAuthServerAuthenticator
 
-def test_missing_token(client, authenticator):
 
-    with client.application.test_request_context():
+class TestAuthenticator:
+
+    def get_decorated_mock(self, authenticator: Authenticator):
         mock_function = Mock()
         decorated_function = authenticator.token_required(mock_function)
-        message, response_code = decorated_function()
+        return mock_function, decorated_function
 
-        assert response_code == HTTPStatus.UNAUTHORIZED
+    def test_missing_token(self, client, authenticator: Authenticator):
 
-        assert not mock_function.called
+        with client.application.test_request_context():
+            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            message, response_code = decorated_mock()
 
+            assert response_code == HTTPStatus.UNAUTHORIZED
+            assert not mock.called
 
+    def test_wrong_audience(self, client, authenticator: NoAuthServerAuthenticator):
+        token = authenticator.sign({"iss": authenticator.auth_host,
+                                    "aud": f"{authenticator.audience}-bad",
+                                    "sub": "someone"
+                                    })
+        with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
 
+            authenticator.verify(token)
+            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            message, response_code = decorated_mock()
+
+            assert response_code == HTTPStatus.UNAUTHORIZED
+            assert message.json["message"] == 'Token is invalid: Invalid audience'
 
