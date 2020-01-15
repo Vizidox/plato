@@ -6,6 +6,7 @@ from jose import jwk, jwt, jws
 from testcontainers.compose import DockerCompose
 from testcontainers.core.utils import inside_container
 from testcontainers.core.waiting_utils import wait_for
+from time import sleep
 
 from auth import Authenticator
 from micro_templating.flask_app import create_app, create_template_environment
@@ -84,7 +85,7 @@ def client():
 
     with context_manager:
 
-        wait_for(lambda: requests.get(f"{TEST_AUTH_HOST}/.well-known/openid-configuration").json())
+        sleep(3)
 
         fake_authenticator = NoAuthServerAuthenticator(TEST_AUTH_HOST, TEST_OAUTH2_AUDIENCE)
         micro_templating_app = create_app(project_name=PROJECT_NAME, project_version=PROJECT_VERSION,
