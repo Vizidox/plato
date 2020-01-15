@@ -3,12 +3,18 @@ import pathlib
 
 from smart_open import s3_iter_bucket
 
+from auth import Authenticator
+
 
 class SetupError(Exception):
     """
     Error for any setup Exception to occur when running this module's functions.
     """
     ...
+
+
+def setup_authenticator(auth_host_url: str, oauth2_audience: str) -> Authenticator:
+    return Authenticator(auth_host_url, oauth2_audience)
 
 
 def load_templates(s3_bucket: str, target_directory: str):
@@ -50,3 +56,8 @@ def create_template_environment(template_directory_path: str) -> JinjaEnv:
     )
 
     return env
+
+
+def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
+    load_templates(s3_bucket, target_directory)
+    return create_template_environment(target_directory)

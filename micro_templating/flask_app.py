@@ -9,6 +9,7 @@ from flask import Flask
 from flask_cors import CORS
 from sqlalchemy import create_engine
 
+from jinja2 import Environment as JinjaEnv
 from micro_templating.api import initalize_api
 from micro_templating.auth import Authenticator
 from micro_templating.db.database import init_db
@@ -18,13 +19,14 @@ from settings import S3_BUCKET, TEMPLATE_DIRECTORY
 
 
 def create_app(project_name: str, project_version: str,
-               auth_host_url: str, db_url: str, oauth2_audience: str,
+               db_url: str, authenticator: Authenticator, jinja_env: JinjaEnv,
                swagger_scope: str = "templating",
-               default_swagger_client: str = "", default_swagger_secret: str = "",
-               load_s3_templates: bool = True):
+               default_swagger_client: str = "", default_swagger_secret: str = "",):
     """
 
     Args:
+        jinja_env: Jinja environment responsible for rendering the templates
+        authenticator: Authenticator responsible for validating tokens on API requests
         project_name: Name of the flask app
         project_version: Version of the flask app
         auth_host_url: URL for the authorization server
@@ -65,7 +67,7 @@ def create_app(project_name: str, project_version: str,
             "api_auth": {
                 "type": "oauth2",
                 "flow": "application",
-                "tokenUrl": f"{auth_host_url}/protocol/openid-connect/token",
+                "tokenUrl": f"{authenticator.auth_host}/protocol/openid-connect/token",
                 "scopes": {f"{swagger_scope}": "gives access to the templating engine"}
             }
         }
@@ -74,12 +76,7 @@ def create_app(project_name: str, project_version: str,
     swag = Swagger(app, template=swagger_template, config=swagger_config)
     swag.definition_models.append(*SwaggerViewCatalogue.swagger_definitions)
 
-    if load_s3_templates:
-        load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
-    jinja_env = create_template_environment(TEMPLATE_DIRECTORY)
-
-    authenticator = Authenticator(auth_host_url, oauth2_audience)
-
+    app.config["JINJENV"] = jinja_env
     app.config["AUTH"] = authenticator
 
     @app.teardown_appcontext
