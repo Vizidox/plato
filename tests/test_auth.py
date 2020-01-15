@@ -45,6 +45,7 @@ class TestAuthenticator:
 
             assert response_code == HTTPStatus.UNAUTHORIZED
             assert message.json["message"] == 'Token is invalid: Invalid issuer'
+            assert not mock.called
 
     def test_wrong_signature(self, client, authenticator: NoAuthServerAuthenticator):
         from cryptography.hazmat.backends import default_backend
@@ -73,3 +74,16 @@ class TestAuthenticator:
 
             assert response_code == HTTPStatus.UNAUTHORIZED
             assert message.json["message"] == 'Token is invalid: Signature verification failed.'
+            assert not mock.called
+
+    def test_ok(self, client, authenticator: NoAuthServerAuthenticator):
+        token = authenticator.sign(issuer=f"{authenticator.auth_host}",
+                                   audience=f"{authenticator.audience}",
+                                   sub="someone")
+
+        with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
+
+            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            decorated_mock()
+
+            assert mock.called
