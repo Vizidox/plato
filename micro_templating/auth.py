@@ -77,7 +77,14 @@ class Authenticator:
                                             key=key,
                                             algorithms=key['alg'],
                                             issuer=self.auth_host,
-                                            audience=self.audience
+                                            audience=self.audience,
+                                            options={
+                                                    'require_aud': True,
+                                                    'require_iat': True,
+                                                    'require_iss': True,
+                                                    'require_exp': True,
+                                                    'require_sub': True
+                                                }
                                             )
                 g.auth_id = verified_token['sub']
                 return f(*args, **kwargs)
