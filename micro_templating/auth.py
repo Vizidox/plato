@@ -1,7 +1,7 @@
 """Module containing any function or class regarding authentication
 """
 from functools import wraps
-from typing import Dict
+from typing import Dict, Callable
 
 import requests
 from flask import request, jsonify, g
@@ -36,7 +36,7 @@ class Authenticator:
         _jwks_json = requests.get(self.oauth_config['jwks_uri']).json()
         return {key_data['kid']: key_data for key_data in _jwks_json['keys']}
 
-    def token_required(self, f):
+    def token_required(self, f: Callable):
         """
         Retrieves most recent JWKs from the OAUTH configuration and sets up the wrapper for JWT validation
         Args:
@@ -77,7 +77,14 @@ class Authenticator:
                                             key=key,
                                             algorithms=key['alg'],
                                             issuer=self.auth_host,
-                                            audience=self.audience
+                                            audience=self.audience,
+                                            options={
+                                                    'require_aud': True,
+                                                    'require_iat': True,
+                                                    'require_iss': True,
+                                                    'require_exp': True,
+                                                    'require_sub': True
+                                                }
                                             )
                 g.auth_id = verified_token['sub']
                 return f(*args, **kwargs)

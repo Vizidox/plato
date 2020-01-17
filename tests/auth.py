@@ -1,4 +1,8 @@
+from datetime import time
+from typing import Optional, Union
+
 from auth import Authenticator
+import time
 from jose import jwk, jwt, jws
 
 
@@ -54,8 +58,13 @@ jQIDAQAB
     def get_oauth_config(self):
         return {}
 
-    def sign(self, issuer: str, sub: str, audience: str, key=None):
-        json = {"iss": issuer, "sub": sub, "aud": audience}
+    def sign(self, issuer: str, sub: str, audience: str,
+             issued_at: Optional[int] = None, expires_at: Optional[int] = None, key: Union[str, dict] = None):
+        if issued_at is None:
+            issued_at = int(time.time())
+        if expires_at is None:
+            expires_at = issued_at + 60
+        json = {"iss": issuer, "sub": sub, "aud": audience, "iat": issued_at, "exp": expires_at}
         return jwt.encode(json, self.rsa_private_key if key is None else key, algorithm="RS256", headers={"kid": "0"})
 
     def verify(self, token):

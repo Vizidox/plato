@@ -1,3 +1,4 @@
+import time
 from http import HTTPStatus
 
 from mock import Mock
@@ -34,6 +35,20 @@ class TestAuthenticator:
             assert response_code == HTTPStatus.UNAUTHORIZED
             assert message.json["message"] == "Authorization header must start with 'Bearer '"
             assert not mock.called
+
+    def test_expired(self, client, authenticator: NoAuthServerAuthenticator):
+        yesterday = int(time.time()) - 60*60*24
+        token = authenticator.sign(issuer=f"{authenticator.auth_host}",
+                                   audience=f"{authenticator.audience}",
+                                   expires_at=yesterday,
+                                   sub="someone")
+        with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
+
+            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            message, response_code = decorated_mock()
+
+            assert response_code == HTTPStatus.UNAUTHORIZED
+            assert message.json["message"] == 'Token is invalid: Signature has expired.'
 
     def test_wrong_audience(self, client, authenticator: NoAuthServerAuthenticator):
         token = authenticator.sign(issuer=f"{authenticator.auth_host}",
