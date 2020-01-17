@@ -7,19 +7,19 @@ Import the function wherever you decide to create a flask app.
 from flasgger import Swagger
 from flask import Flask
 from flask_cors import CORS
-from sqlalchemy import create_engine
 
 from jinja2 import Environment as JinjaEnv
 from micro_templating.api import initalize_api
 from micro_templating.auth import Authenticator
-from micro_templating.db.database import init_db
 from micro_templating.views.views import SwaggerViewCatalogue
+from micro_templating.db import db
+from micro_templating.cli import register_cli_commands
 
 
 def create_app(project_name: str, project_version: str,
                db_url: str, authenticator: Authenticator, jinja_env: JinjaEnv,
                swagger_scope: str = "templating",
-               default_swagger_client: str = "", default_swagger_secret: str = "",):
+               default_swagger_client: str = "", default_swagger_secret: str = "",) -> Flask:
     """
 
     Args:
@@ -36,9 +36,8 @@ def create_app(project_name: str, project_version: str,
 
     """
     app = Flask(__name__)
-
-    engine = create_engine(db_url)
-    db_session = init_db(engine)
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+    db.init_app(app)
 
     cors = CORS(app)
 
@@ -74,21 +73,7 @@ def create_app(project_name: str, project_version: str,
     app.config["JINJENV"] = jinja_env
     app.config["AUTH"] = authenticator
 
-    @app.teardown_appcontext
-    def shutdown_session(exception=None):
-        """
-
-        Shuts down the session after the request is done with it
-
-        Args:
-            exception: Error raised by Flask
-
-        Returns:
-            exception: Error raised by Flask
-        """
-        db_session.remove()
-        return exception
-
+    register_cli_commands(app)
     initalize_api(app, authenticator, jinja_env)
 
     return app

@@ -5,16 +5,12 @@ All the classes in this module represent the database objects present in the mic
 base from sqlalchemy.
 
 """
-
-from sqlalchemy import Column, String
+from micro_templating.db import db
+from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import JSONB, ENUM
-from sqlalchemy.ext.declarative import declarative_base
 
 
-Base = declarative_base()
-
-
-class Template(Base):
+class Template(db.Model):
     """
     Database model for a Template
 
@@ -28,11 +24,11 @@ class Template(Base):
         metadata_ (dict): JSON dictionary for arbitrary data useful for owner
     """
     __tablename__ = "template"
-    auth_id = Column(String, primary_key=True)
-    id = Column(String, primary_key=True)
-    schema = Column(JSONB, nullable=False)
-    type = Column(ENUM("text/html", name="template_mime_type"), nullable=False)
-    metadata_ = Column(JSONB, name="metadata", nullable=True)
+    auth_id = db.Column(String, primary_key=True)
+    id = db.Column(String, primary_key=True)
+    schema = db.Column(JSONB, nullable=False)
+    type = db.Column(ENUM("text/html", name="template_mime_type"), nullable=False)
+    metadata_ = db.Column(JSONB, name="metadata", nullable=True)
 
     def __init__(self, auth_id, id_: str, schema: dict, type_: str, metadata: dict):
         self.auth_id = auth_id
