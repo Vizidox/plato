@@ -4,7 +4,6 @@ Flask app creation is handled here by the create_app function.
 Import the function wherever you decide to create a flask app.
 
 """
-from flasgger import Swagger
 from flask import Flask
 from flask_cors import CORS
 
