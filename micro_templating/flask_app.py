@@ -11,9 +11,11 @@ from flask_cors import CORS
 from jinja2 import Environment as JinjaEnv
 from micro_templating.api import initalize_api
 from micro_templating.auth import Authenticator
-from micro_templating.views.views import SwaggerViewCatalogue
+from micro_templating.views import swag
 from micro_templating.db import db
 from micro_templating.cli import register_cli_commands
+
+
 
 
 def create_app(project_name: str, project_version: str,
@@ -45,18 +47,7 @@ def create_app(project_name: str, project_version: str,
         'title': project_name,
         'version': project_version,
         'uiversion': 3,
-        'swagger': '2.0'
-    }
-
-    swagger_config = Swagger.DEFAULT_CONFIG
-    # Used to initialize Oauth in swagger-ui as per the initOAuth method
-    # https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
-    swagger_config['auth'] = {
-        "clientId": f"{default_swagger_client}",
-        "clientSecret": f"{default_swagger_secret}"
-    }
-
-    swagger_template = {
+        'swagger': '2.0',
         "securityDefinitions": {
             "api_auth": {
                 "type": "oauth2",
@@ -64,11 +55,17 @@ def create_app(project_name: str, project_version: str,
                 "tokenUrl": f"{authenticator.auth_host}/protocol/openid-connect/token",
                 "scopes": {f"{swagger_scope}": "gives access to the templating engine"}
             }
+        },
+        # 'auth' configuration used to initialize Oauth in swagger-ui as per the initOAuth method
+        # https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
+        # this is not standard flasgger behavior but it is possible because we overrode the swagger-ui templates
+        "auth": {
+            "clientId": f"{default_swagger_client}",
+            "clientSecret": f"{default_swagger_secret}"
         }
     }
 
-    swag = Swagger(app, template=swagger_template, config=swagger_config)
-    swag.definition_models.append(*SwaggerViewCatalogue.swagger_definitions)
+    swag.init_app(app)
 
     app.config["JINJENV"] = jinja_env
     app.config["AUTH"] = authenticator
