@@ -24,15 +24,23 @@ class Authenticator:
     def __init__(self, auth_host: str, audience: str):
         self.auth_host = auth_host
         self.oauth_config_url = f"{auth_host}/.well-known/openid-configuration"
-        self.oauth_config = self.get_oauth_config()
+        self.oauth_config = self.obtain_oauth_config()
         self.audience = audience
 
-    def get_oauth_config(self):
+    def obtain_oauth_config(self):
+        """
+        Obtains the OAuth config making a request to self.oauth_config_url and stores it at self.oauth_config
+
+        """
         if self.oauth_config is None:
             self.oauth_config = requests.get(self.oauth_config_url).json()
         return self.oauth_config
 
-    def get_jwks(self):
+    def obtain_jwks(self):
+        """
+        Obtains the JSON web keys making a request dependant on the oauth_config and stores them at self._jwks_json
+
+        """
         _jwks_json = requests.get(self.oauth_config['jwks_uri']).json()
         return {key_data['kid']: key_data for key_data in _jwks_json['keys']}
 
@@ -42,10 +50,8 @@ class Authenticator:
         Args:
             f: decorated function
 
-        Returns:
-
         """
-        jwks = self.get_jwks()
+        jwks = self.obtain_jwks()
 
         @wraps(f)
         def decorated(*args, **kwargs):

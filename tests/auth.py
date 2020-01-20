@@ -52,10 +52,10 @@ jQIDAQAB
 
         super().__init__(auth_host, audience)
 
-    def get_jwks(self):
+    def obtain_jwks(self):
         return self.jwks
 
-    def get_oauth_config(self):
+    def obtain_oauth_config(self):
         return {}
 
     def sign(self, issuer: str, sub: str, audience: str,
