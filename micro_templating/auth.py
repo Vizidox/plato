@@ -1,11 +1,14 @@
 """Module containing any function or class regarding authentication
 """
 from functools import wraps
-from typing import Dict, Callable
+from typing import Callable, TypeVar, Any, cast
 
 import requests
 from flask import request, jsonify, g
 from jose import jwt, JWTError
+
+FuncType = Callable[..., Any]
+F = TypeVar('F', bound=FuncType)
 
 
 class Authenticator:
@@ -44,7 +47,7 @@ class Authenticator:
         _jwks_json = requests.get(self.oauth_config['jwks_uri']).json()
         return {key_data['kid']: key_data for key_data in _jwks_json['keys']}
 
-    def token_required(self, f: Callable):
+    def token_required(self, f: Callable) -> F:
         """
         Retrieves most recent JWKs from the OAUTH configuration and sets up the wrapper for JWT validation
         Args:
@@ -98,4 +101,4 @@ class Authenticator:
             except JWTError as e:
                 return jsonify({'message': f'Token is invalid: {e}'}), 401
 
-        return decorated
+        return cast(F, decorated)
