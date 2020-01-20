@@ -2,7 +2,7 @@
 """
 from functools import wraps
 from typing import Callable, TypeVar, Any, cast
-
+from error_messages import unbeary_auth_message, no_auth_header_message, token_is_invalid_message
 import requests
 from flask import request, jsonify, g
 from jose import jwt, JWTError
@@ -70,10 +70,10 @@ class Authenticator:
             header = request.headers.get('Authorization', None)
 
             if header is None:
-                return jsonify({'message': "Expected 'Authorization' header"}), 401
+                return jsonify({'message': no_auth_header_message}), 401
 
             if not header.startswith(("Bearer ", "bearer ")):
-                return jsonify({'message': "Authorization header must start with 'Bearer '"}), 401
+                return jsonify({'message': unbeary_auth_message}), 401
 
             token = header[7:]
 
@@ -99,6 +99,6 @@ class Authenticator:
                 return f(*args, **kwargs)
 
             except JWTError as e:
-                return jsonify({'message': f'Token is invalid: {e}'}), 401
+                return jsonify({'message': token_is_invalid_message.format(e)}), 401
 
         return cast(F, decorated)
