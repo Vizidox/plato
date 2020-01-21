@@ -15,6 +15,16 @@ class SetupError(Exception):
 
 
 def setup_authenticator(auth_host_url: str, oauth2_audience: str) -> Authenticator:
+    """
+    Convenience method to setup the authenticator to gather all setup functions in one module.
+
+    Args:
+        auth_host_url: url for keycloak host e.g https://keycloak.org/auth/realms/vizidox/
+        oauth2_audience: audience for JWT token validation
+
+    Returns:
+        Authenticator: authenticator be used for token validation
+    """
     return Authenticator(auth_host_url, oauth2_audience)
 
 
@@ -60,6 +70,16 @@ def create_template_environment(template_directory_path: str) -> JinjaEnv:
 
 
 def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
+    """
+    Obtains the templates from the S3 bucket and makes them available as part of the JinjaEnv
+
+    Args:
+        s3_bucket: string representing which bucket is to be accessed
+        target_directory: path to the directory where the templates should be stored
+
+    Returns:
+        JinjaEnv: environment loaded for target_directory with all templates from bucket
+    """
     load_templates(s3_bucket, target_directory)
     return create_template_environment(target_directory)
 

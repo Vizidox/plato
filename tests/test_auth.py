@@ -3,6 +3,7 @@ from http import HTTPStatus
 
 from mock import Mock
 from auth import Authenticator
+from error_messages import token_is_invalid_message, unbeary_auth_message, no_auth_header_message
 from tests.conftest import NoAuthServerAuthenticator
 
 
@@ -20,7 +21,7 @@ class TestAuthenticator:
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
-            assert message.json["message"] == "Expected 'Authorization' header"
+            assert message.json["message"] == no_auth_header_message
             assert not mock.called
 
     def test_no_bearer(self, client, authenticator: NoAuthServerAuthenticator):
@@ -33,7 +34,7 @@ class TestAuthenticator:
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
-            assert message.json["message"] == "Authorization header must start with 'Bearer '"
+            assert message.json["message"] == unbeary_auth_message
             assert not mock.called
 
     def test_expired(self, client, authenticator: NoAuthServerAuthenticator):
@@ -48,7 +49,7 @@ class TestAuthenticator:
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
-            assert message.json["message"] == 'Token is invalid: Signature has expired.'
+            assert message.json["message"] == token_is_invalid_message.format('Signature has expired.')
 
     def test_wrong_audience(self, client, authenticator: NoAuthServerAuthenticator):
         token = authenticator.sign(issuer=f"{authenticator.auth_host}",
@@ -60,7 +61,7 @@ class TestAuthenticator:
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
-            assert message.json["message"] == 'Token is invalid: Invalid audience'
+            assert message.json["message"] == token_is_invalid_message.format('Invalid audience')
 
     def test_wrong_iss(self, client, authenticator: NoAuthServerAuthenticator):
         token = authenticator.sign(issuer=f"{authenticator.auth_host}-bad",
@@ -73,7 +74,7 @@ class TestAuthenticator:
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
-            assert message.json["message"] == 'Token is invalid: Invalid issuer'
+            assert message.json["message"] == token_is_invalid_message.format('Invalid issuer')
             assert not mock.called
 
     def test_wrong_signature(self, client, authenticator: NoAuthServerAuthenticator):
@@ -102,7 +103,7 @@ class TestAuthenticator:
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
-            assert message.json["message"] == 'Token is invalid: Signature verification failed.'
+            assert message.json["message"] == token_is_invalid_message.format("Signature verification failed.")
             assert not mock.called
 
     def test_ok(self, client, authenticator: NoAuthServerAuthenticator):

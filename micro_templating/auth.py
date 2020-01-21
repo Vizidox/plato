@@ -1,11 +1,14 @@
 """Module containing any function or class regarding authentication
 """
 from functools import wraps
-from typing import Dict, Callable
-
+from typing import Callable, TypeVar, Any, cast
+from error_messages import unbeary_auth_message, no_auth_header_message, token_is_invalid_message
 import requests
 from flask import request, jsonify, g
 from jose import jwt, JWTError
+
+FuncType = Callable[..., Any]
+F = TypeVar('F', bound=FuncType)
 
 
 class Authenticator:
@@ -24,28 +27,34 @@ class Authenticator:
     def __init__(self, auth_host: str, audience: str):
         self.auth_host = auth_host
         self.oauth_config_url = f"{auth_host}/.well-known/openid-configuration"
-        self.oauth_config = self.get_oauth_config()
+        self.oauth_config = self.obtain_oauth_config()
         self.audience = audience
 
-    def get_oauth_config(self):
+    def obtain_oauth_config(self):
+        """
+        Obtains the OAuth config making a request to self.oauth_config_url and stores it at self.oauth_config
+
+        """
         if self.oauth_config is None:
             self.oauth_config = requests.get(self.oauth_config_url).json()
         return self.oauth_config
 
-    def get_jwks(self):
+    def obtain_jwks(self):
+        """
+        Obtains the JSON web keys making a request dependant on the oauth_config and stores them at self._jwks_json
+
+        """
         _jwks_json = requests.get(self.oauth_config['jwks_uri']).json()
         return {key_data['kid']: key_data for key_data in _jwks_json['keys']}
 
-    def token_required(self, f: Callable):
+    def token_required(self, f: Callable) -> F:
         """
         Retrieves most recent JWKs from the OAUTH configuration and sets up the wrapper for JWT validation
         Args:
             f: decorated function
 
-        Returns:
-
         """
-        jwks = self.get_jwks()
+        jwks = self.obtain_jwks()
 
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -61,10 +70,10 @@ class Authenticator:
             header = request.headers.get('Authorization', None)
 
             if header is None:
-                return jsonify({'message': "Expected 'Authorization' header"}), 401
+                return jsonify({'message': no_auth_header_message}), 401
 
             if not header.startswith(("Bearer ", "bearer ")):
-                return jsonify({'message': "Authorization header must start with 'Bearer '"}), 401
+                return jsonify({'message': unbeary_auth_message}), 401
 
             token = header[7:]
 
@@ -90,6 +99,6 @@ class Authenticator:
                 return f(*args, **kwargs)
 
             except JWTError as e:
-                return jsonify({'message': f'Token is invalid: {e}'}), 401
+                return jsonify({'message': token_is_invalid_message.format(e)}), 401
 
-        return decorated
+        return cast(F, decorated)
