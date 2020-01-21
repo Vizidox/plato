@@ -26,6 +26,8 @@ tomlkit="0.5.8"
 SQLAlchemy = {version="1.3.12", extras=["postgresql_psycopg2binary"]}
 Flask-SQLAlchemy = "2.4.1"
 
+# Templating
+WeasyPrint="51"
 
 [tool.poetry.dev-dependencies]
 pytest="5.3.1"
