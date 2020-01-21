@@ -39,14 +39,14 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
            - template
         """
 
-        template: Template = Template.query.filter_by(auth_id=g.auth_id).first()
+        template: Template = Template.query.filter_by(auth_id=g.auth_id, id=template_id).first()
 
         if template is None:
             return jsonify({"message": template_not_found.format(template_id)}), 404
 
         view = TemplateDetailView(template.id, template.schema, template.type, template.metadata_)
 
-        return jsonify(view)
+        return jsonify(view._asdict())
 
     @app.route("/templates/", methods=['GET'])
     @auth.token_required
@@ -67,10 +67,11 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         """
 
         all_templates: Sequence[Template] = Template.query.filter_by(auth_id=g.auth_id).all()
-        views = [TemplateDetailView(template.id, template.schema, template.type, template.metadata_) for template in
-                 all_templates]
+        json_views = [TemplateDetailView(template.id, template.schema, template.type, template.metadata_)._asdict() for
+                      template in
+                      all_templates]
 
-        return jsonify(views)
+        return jsonify(json_views)
 
     @app.route("/template/<string:template_id>/compose", methods=["POST"])
     def compose_file(template_id: str):
