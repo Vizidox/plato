@@ -15,8 +15,6 @@ from micro_templating.db import db
 from micro_templating.cli import register_cli_commands
 
 
-
-
 def create_app(project_name: str, project_version: str,
                db_url: str, authenticator: Authenticator, jinja_env: JinjaEnv,
                swagger_scope: str = "templating",

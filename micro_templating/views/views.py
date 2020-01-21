@@ -1,5 +1,8 @@
-from typing import NamedTuple
+from typing import NamedTuple, Sequence, TYPE_CHECKING
 from . import swag
+
+if TYPE_CHECKING:
+    from db.models import Template
 
 
 @swag.definition("TemplateDetail")
@@ -25,3 +28,31 @@ class TemplateDetailView(NamedTuple):
     template_schema: dict
     type: str
     metadata: dict
+
+    @classmethod
+    def view_from_template(cls, template: 'Template') -> 'TemplateDetailView':
+        """
+        Takes a template model and creates a TemplateDetailView.
+
+        Args:
+            template: the target template
+
+        Returns:
+            TemplateDetailView: A view for the template
+        """
+        return TemplateDetailView(template_id=template.id,
+                                  template_schema=template.schema,
+                                  type=template.type,
+                                  metadata=template.metadata_)
+
+    @classmethod
+    def views_from_templates(cls, templates: Sequence['Template']) -> Sequence['TemplateDetailView']:
+        """
+        Takes a collection of templates and returns the a collection of views for them.
+        Args:
+            templates: collection of templates.
+
+        Returns:
+            Sequence[TemplateDetailView]: A collection with the views for the supplied templates.
+        """
+        return [cls.view_from_template(template) for template in templates]

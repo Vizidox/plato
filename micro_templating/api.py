@@ -1,12 +1,19 @@
-from flask import jsonify, request, current_app, g
+from collections import Sequence
+from typing import Optional
+
+from flask import jsonify, request, current_app, g, Flask
+
+from .auth import Authenticator
+from .db.models import Template
 from micro_templating.views.views import TemplateDetailView
+from jinja2 import Environment as JinjaEnv
 
 
-def initalize_api(app, auth, jinjaenv):
+def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
 
     @app.route("/templates/<string:template_id>", methods=['GET'])
     @auth.token_required
-    def template(template_id: str):
+    def template_by_id(template_id: str):
         """
         Returns template information
         ---
@@ -16,7 +23,7 @@ def initalize_api(app, auth, jinjaenv):
           - name: template_id
             in: path
             type: string
-            required: true
+            required: false
         responses:
           200:
             description: Information on the template
@@ -25,12 +32,34 @@ def initalize_api(app, auth, jinjaenv):
           404:
             description: Template not found
         """
-        # env = jinjaenv
-        # all_templates: Sequence[Template] = Template.query.filter(Template. == )
 
-        view = TemplateDetailView(f"{g.auth_id}template_example", {"schema": {}}, "text/html", {})
+        template: Template = Template.query.filter_by(auth_id=g.auth_id).first()
 
-        return jsonify(**view._asdict())
+        if template is None:
+            return jsonify({"message": f"Template '{template_id}' not found"}), 404
 
+        view = TemplateDetailView(template.id, template.schema, template.type, template.metadata_)
 
+        return jsonify(view)
 
+    @app.route("/templates/", methods=['GET'])
+    @auth.token_required
+    def templates():
+        """
+        Returns template information
+        ---
+        security:
+          - api_auth: [templating]
+        responses:
+          200:
+            description: Information on all templates available
+            type: array
+            items:
+                $ref: '#/definitions/TemplateDetail'
+        """
+
+        all_templates: Sequence[Template] = Template.query.filter_by(auth_id=g.auth_id).all()
+        views = [TemplateDetailView(template.id, template.schema, template.type, template.metadata_) for template in
+                 all_templates]
+
+        return jsonify(views)
