@@ -1,8 +1,8 @@
+import io
 import tempfile
 from collections import Sequence
-from typing import Optional
 
-from flask import jsonify, request, current_app, g, Flask, send_file
+from flask import jsonify, request, g, Flask, send_file
 from jsonschema import validate as json_validate, ValidationError
 from weasyprint import HTML, CSS
 
@@ -96,8 +96,8 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         responses:
           201:
             description: composed file
-            content:
-                application/pdf
+            schema:
+              type: file
           404:
              description: Template not found
         tags:
@@ -118,10 +118,10 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         template = jinjaenv.get_template(name=f"{g.partner_id}/{template_id}")
         composed_html = template.render(compose_data)
 
-        with tempfile.NamedTemporaryFile() as target_file:
+        with tempfile.NamedTemporaryFile() as target_file_html:
             html = HTML(string=composed_html)
-            html.write_pdf(target_file.name)
-            with open(target_file.name, mode='rb') as temp_file_stream:
-                target_file.write(temp_file_stream.read())
-                target_file.seek(0)
-                return send_file(target_file)
+            html.write_pdf(target_file_html.name)
+            with open(target_file_html.name, mode='rb') as temp_file_stream:
+
+                return send_file(io.BytesIO(temp_file_stream.read()), mimetype='application/pdf', as_attachment=True,
+                                 attachment_filename="compose.pdf"), 201
