@@ -24,7 +24,7 @@ class Template(db.Model):
         metadata_ (dict): JSON dictionary for arbitrary data useful for owner
     """
     __tablename__ = "template"
-    auth_id = db.Column(String, primary_key=True)
+    partner_id = db.Column(String, primary_key=True)
     id = db.Column(String, primary_key=True)
     schema = db.Column(JSONB, nullable=False)
     type = db.Column(ENUM("text/html", name="template_mime_type"), nullable=False)

@@ -27,7 +27,7 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
           - name: template_id
             in: path
             type: string
-            required: false
+            required: true
         responses:
           200:
             description: Information on the template
@@ -39,7 +39,7 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
            - template
         """
 
-        template: Template = Template.query.filter_by(auth_id=g.auth_id, id=template_id).first()
+        template: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).first()
 
         if template is None:
             return jsonify({"message": template_not_found.format(template_id)}), 404
@@ -66,7 +66,7 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
            - template
         """
 
-        all_templates: Sequence[Template] = Template.query.filter_by(auth_id=g.auth_id).all()
+        all_templates: Sequence[Template] = Template.query.filter_by(partner_id=g.partner_id).all()
         json_views = [TemplateDetailView(template.id, template.schema, template.type, template.metadata_)._asdict() for
                       template in
                       all_templates]
@@ -74,6 +74,7 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         return jsonify(json_views)
 
     @app.route("/template/<string:template_id>/compose", methods=["POST"])
+    @auth.token_required
     def compose_file(template_id: str):
         """
         Composes file based on the template
@@ -81,6 +82,10 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         consumes:
             - application/json
         parameters:
+            - name: template_id
+              in: path
+              type: string
+              required: true
             - in: body
               name: schema
               description: body to compose file with, must be according to the template schema
@@ -99,7 +104,7 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
            - compose
            - template
         """
-        template_model: Template = Template.query.filter_by(auth_id=g.auth_id, template_id=template_id).first()
+        template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).first()
 
         if template_model is None:
             return jsonify({"message": template_not_found.format(template_id)}), 404
@@ -110,7 +115,7 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
 
-        template = jinjaenv.get_template(parent=g.auth_id, name=template_id)
+        template = jinjaenv.get_template(name=f"{g.partner_id}/{template_id}")
         composed_html = template.render(compose_data)
 
         with tempfile.NamedTemporaryFile() as target_file:

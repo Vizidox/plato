@@ -96,6 +96,7 @@ class Authenticator:
                                                 }
                                             )
                 g.auth_id = verified_token['sub']
+                g.partner_id = verified_token['clientId']
                 return f(*args, **kwargs)
 
             except JWTError as e:
