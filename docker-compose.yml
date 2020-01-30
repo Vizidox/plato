@@ -17,3 +17,18 @@ services:
       PGDATA: /data/db/
     ports:
       - 127.0.0.1:5455:5432
+
+  auth:
+    image: jboss/keycloak:8.0.1
+    volumes:
+      - ./micro-templating-keycloak-realm.json:/opt/jboss/keycloak/realm.json
+    command:
+      - "-b 0.0.0.0"
+      - "-Dkeycloak.import=/opt/jboss/keycloak/realm.json"
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: pass
+      PROXY_ADDRESS_FORWARDING: ${KEYCLOAK_PROXY_ALLOWED:-false}
+    restart: unless-stopped
+    ports:
+      - 8787:8080
