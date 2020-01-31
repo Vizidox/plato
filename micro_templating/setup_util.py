@@ -81,7 +81,7 @@ def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
         JinjaEnv: environment loaded for target_directory with all templates from bucket
     """
     load_templates(s3_bucket, target_directory)
-    return create_template_environment(target_directory)
+    return create_template_environment(f"{target_directory}/templates")
 
 
 def setup_database() -> SQLAlchemy:

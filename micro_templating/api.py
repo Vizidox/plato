@@ -122,8 +122,8 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
 
         composed_html = template.render(
             p=compose_data,
-            partner_static=f"{TEMPLATE_DIRECTORY}/{g.partner_id}/static/",
-            template_static=f"{TEMPLATE_DIRECTORY}/{g.partner_id}/{template_id}/static/"
+            partner_static=f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/",
+            template_static=f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/{template_id}/"
         )
 
         with tempfile.NamedTemporaryFile() as target_file_html:
