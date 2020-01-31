@@ -11,6 +11,7 @@ from .auth import Authenticator
 from .db.models import Template
 from micro_templating.views.views import TemplateDetailView
 from jinja2 import Environment as JinjaEnv
+from settings import TEMPLATE_DIRECTORY
 
 
 def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
@@ -115,13 +116,19 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
 
-        template = jinjaenv.get_template(name=f"{g.partner_id}/{template_id}")
-        composed_html = template.render(compose_data)
+        template = jinjaenv.get_template(
+            name=f"{g.partner_id}/{template_id}/{template_id}"
+        )  # template id works for the file as well
+
+        composed_html = template.render(
+            p=compose_data,
+            partner_static=f"{TEMPLATE_DIRECTORY}/{g.partner_id}/static/",
+            template_static=f"{TEMPLATE_DIRECTORY}/{g.partner_id}/{template_id}/static/"
+        )
 
         with tempfile.NamedTemporaryFile() as target_file_html:
             html = HTML(string=composed_html)
             html.write_pdf(target_file_html.name)
             with open(target_file_html.name, mode='rb') as temp_file_stream:
-
                 return send_file(io.BytesIO(temp_file_stream.read()), mimetype='application/pdf', as_attachment=True,
                                  attachment_filename="compose.pdf"), 201
