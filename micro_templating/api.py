@@ -7,6 +7,7 @@ from jsonschema import validate as json_validate, ValidationError
 from weasyprint import HTML, CSS
 
 from error_messages import invalid_compose_json, template_not_found
+from renderer import Renderer, PdfRenderer
 from .auth import Authenticator
 from .db.models import Template
 from micro_templating.views.views import TemplateDetailView
@@ -120,15 +121,19 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
             name=f"{g.partner_id}/{template_id}/{template_id}"
         )  # template id works for the file as well
 
+        partner_static_folder = f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/"
+        template_static_folder = f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/{template_id}/"
+
         composed_html = template.render(
             p=compose_data,
-            partner_static=f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/",
-            template_static=f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/{template_id}/"
+            partner_static=partner_static_folder,
+            template_static=template_static_folder
         )
 
-        with tempfile.NamedTemporaryFile() as target_file_html:
-            html = HTML(string=composed_html)
-            html.write_pdf(target_file_html.name)
-            with open(target_file_html.name, mode='rb') as temp_file_stream:
-                return send_file(io.BytesIO(temp_file_stream.read()), mimetype='application/pdf', as_attachment=True,
-                                 attachment_filename="compose.pdf"), 201
+        renderer = PdfRenderer(
+            partner_static_directory=partner_static_folder,
+            template_static_directory=template_static_folder
+        )
+
+        return send_file(renderer.render(composed_html), mimetype=renderer.mime_type(), as_attachment=True,
+                         attachment_filename=f"compose{renderer.file_extension()}"), 201
