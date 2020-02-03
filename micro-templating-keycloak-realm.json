@@ -709,7 +709,7 @@
       "surrogateAuthRequired": false,
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
-      "secret": "**********",
+      "secret": "c4fa57fb-afb9-4afc-bb6b-516bb76233ae",
       "redirectUris": [
         "http://localhost:5000"
       ],
