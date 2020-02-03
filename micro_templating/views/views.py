@@ -1,38 +1,11 @@
-from typing import NamedTuple, List
+from typing import NamedTuple, Sequence, TYPE_CHECKING
+from . import swag
 
-from flasgger.base import SwaggerDefinition
-
-
-class SwaggerViewCatalogue:
-    """
-    Swagger View Catalogue
-
-    A catalogue of all the Views relevant for the Swagger specification.
-    To be used with `flasgger.base.Swagger' by appending the `swagger_definitions' property to Swagger.definition_models
-
-        swag = Swagger(app, template=swagger_template, config=swagger_config)
-        swag.definition_models.append(*SwaggerViewCatalogue.swagger_definitions)
-
-    Attributes:
-        swagger_definitions: A List of flasgger.base.SwaggerDefinition with all the definitions
-         created through swagger_info
-    """
-    swagger_definitions: List[SwaggerDefinition] = list()
-
-    @classmethod
-    def swagger_info(cls, name, tags=None):
-        """
-        Decorator to add class based definitions
-        """
-
-        def wrapper(obj):
-            cls.swagger_definitions.append(SwaggerDefinition(name, obj, tags=tags))
-            return obj
-
-        return wrapper
+if TYPE_CHECKING:
+    from db.models import Template
 
 
-@SwaggerViewCatalogue.swagger_info("TemplateDetail")
+@swag.definition("TemplateDetail")
 class TemplateDetailView(NamedTuple):
     """
     Template Detail
@@ -55,3 +28,31 @@ class TemplateDetailView(NamedTuple):
     template_schema: dict
     type: str
     metadata: dict
+
+    @classmethod
+    def view_from_template(cls, template: 'Template') -> 'TemplateDetailView':
+        """
+        Takes a template model and creates a TemplateDetailView.
+
+        Args:
+            template: the target template
+
+        Returns:
+            TemplateDetailView: A view for the template
+        """
+        return TemplateDetailView(template_id=template.id,
+                                  template_schema=template.schema,
+                                  type=template.type,
+                                  metadata=template.metadata_)
+
+    @classmethod
+    def views_from_templates(cls, templates: Sequence['Template']) -> Sequence['TemplateDetailView']:
+        """
+        Takes a collection of templates and returns the a collection of views for them.
+        Args:
+            templates: collection of templates.
+
+        Returns:
+            Sequence[TemplateDetailView]: A collection with the views for the supplied templates.
+        """
+        return [cls.view_from_template(template) for template in templates]
