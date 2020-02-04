@@ -18,14 +18,16 @@ class Authenticator:
 
     Attributes:
         auth_host: URL representing the keycloak realm, e.g http://localhost:8080/auth/realms/example_realm
+        auth_host_origin: URL keycloak signs with, defaults to auth_host
         oauth_config_url: URL for OIDC well known resources on server
         oauth_config: JSON response for well known server resources
         audience: Audience used for JWT validation
     """
     oauth_config = None
 
-    def __init__(self, auth_host: str, audience: str):
+    def __init__(self, auth_host: str, audience: str, auth_host_origin: str = ""):
         self.auth_host = auth_host
+        self.auth_host_origin = auth_host_origin if auth_host_origin else auth_host
         self.oauth_config_url = f"{auth_host}/.well-known/openid-configuration"
         self.oauth_config = self.obtain_oauth_config()
         self.audience = audience
@@ -85,7 +87,7 @@ class Authenticator:
                 verified_token = jwt.decode(token=token,
                                             key=key,
                                             algorithms=key['alg'],
-                                            issuer=self.auth_host,
+                                            issuer=self.auth_host_origin,
                                             audience=self.audience,
                                             options={
                                                     'require_aud': True,

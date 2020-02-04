@@ -49,7 +49,7 @@ def create_app(project_name: str, project_version: str,
             "api_auth": {
                 "type": "oauth2",
                 "flow": "application",
-                "tokenUrl": f"{authenticator.auth_host}/protocol/openid-connect/token",
+                "tokenUrl": f"{authenticator.auth_host_origin}/protocol/openid-connect/token",
                 "scopes": {f"{swagger_scope}": "gives access to the templating engine"}
             }
         },

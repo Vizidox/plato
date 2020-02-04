@@ -32,6 +32,7 @@ DB_DATABASE = environ["DB_DATABASE"]
 
 # Auth
 AUTH_SERVER = environ["AUTH_SERVER"]
+AUTH_SERVER_ORIGIN = environ["AUTH_SERVER_ORIGIN"] if "AUTH_SERVER_ORIGIN" in environ else AUTH_SERVER
 CLIENT_ID = environ["CLIENT_ID"]
 
 # Swagger-UI (optional)

@@ -14,18 +14,19 @@ class SetupError(Exception):
     ...
 
 
-def setup_authenticator(auth_host_url: str, oauth2_audience: str) -> Authenticator:
+def setup_authenticator(auth_host_url: str, oauth2_audience: str, auth_host_origin: str = "") -> Authenticator:
     """
     Convenience method to setup the authenticator to gather all setup functions in one module.
 
     Args:
         auth_host_url: url for keycloak host e.g https://keycloak.org/auth/realms/vizidox/
+        auth_host_origin: the url keycloak signs with, defaults to auth_host_url
         oauth2_audience: audience for JWT token validation
 
     Returns:
         Authenticator: authenticator be used for token validation
     """
-    return Authenticator(auth_host_url, oauth2_audience)
+    return Authenticator(auth_host_url, oauth2_audience, auth_host_origin)
 
 
 def load_templates(s3_bucket: str, target_directory: str):
