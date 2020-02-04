@@ -6,6 +6,7 @@ services:
       context: .
       args:
         pg_ver: ${POSTGRES_VER}
+        uid: ${UID}
     image: postgres-templating
     restart: unless-stopped
     volumes:
