@@ -6,13 +6,13 @@ from flask import jsonify, request, g, Flask, send_file
 from jsonschema import validate as json_validate, ValidationError
 from weasyprint import HTML, CSS
 
-from error_messages import invalid_compose_json, template_not_found
-from renderer import Renderer, PdfRenderer
+from .error_messages import invalid_compose_json, template_not_found
+from .renderer import Renderer, PdfRenderer
 from .auth import Authenticator
 from .db.models import Template
 from micro_templating.views.views import TemplateDetailView
 from jinja2 import Environment as JinjaEnv
-from settings import TEMPLATE_DIRECTORY
+from .settings import TEMPLATE_DIRECTORY
 
 
 def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):

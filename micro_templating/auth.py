@@ -2,7 +2,7 @@
 """
 from functools import wraps
 from typing import Callable, TypeVar, Any, cast
-from error_messages import unbeary_auth_message, no_auth_header_message, token_is_invalid_message
+from .error_messages import unbeary_auth_message, no_auth_header_message, token_is_invalid_message
 import requests
 from flask import request, jsonify, g
 from jose import jwt, JWTError

@@ -1,0 +1,18 @@
+FROM tiangolo/uwsgi-nginx:python3.7
+COPY ./.env /.env
+COPY ./poetry.lock ./poetry.lock
+COPY ./pyproject.toml ./pyproject.toml
+COPY ./main.py /app/main.py
+COPY ./micro_templating /app/micro_templating
+COPY ./uwsgi.ini /app/uwsgi.ini
+
+RUN apt-get update && apt-get install -y build-essential python3-dev python3-pip python3-setuptools python3-wheel python3-cffi cairo libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+
+RUN curl https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py --output get-poetry.py
+RUN python get-poetry.py --version 1.0.3
+ENV PATH=/root/.poetry/bin:$PATH
+RUN poetry config virtualenvs.create false
+RUN poetry install -vvv
+
+
+
