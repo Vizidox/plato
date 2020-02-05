@@ -1,55 +1,10 @@
 version: "3.5"
 services:
-  database:
-    build:
-      dockerfile: docker/postgres.Dockerfile
-      context: .
-      args:
-        pg_ver: ${POSTGRES_VER}
-        uid: ${UID}
-    image: postgres-templating
-    restart: unless-stopped
-    volumes:
-      - ${DATA_DIR}/db:/data/db
-    environment:
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_DATABASE}
-      PGDATA: /data/db/
-    ports:
-      - 127.0.0.1:5455:5432
-
-  auth:
-    image: jboss/keycloak:8.0.1
-    volumes:
-      - ./micro-templating-keycloak-realm.json:/opt/jboss/keycloak/realm.json
-    command:
-      - "-b 0.0.0.0"
-      - "-Dkeycloak.import=/opt/jboss/keycloak/realm.json"
-    environment:
-      KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: pass
-      PROXY_ADDRESS_FORWARDING: ${KEYCLOAK_PROXY_ALLOWED:-false}
-      KEYCLOAK_HOSTNAME: localhost:8787
-    restart: unless-stopped
-    ports:
-      - 8787:8080
-
   deploy:
-    image: templating-deploy
+    image: doxerv
     build:
         context: .
         dockerfile: ./Dockerfile
-    environment:
-      DB_HOST: database
-      DB_PORT: 5432
-      AUTH_SERVER: http://auth:8080/auth/realms/micro-keycloak
-      AUTH_SERVER_ORIGIN: http://localhost:8787/auth/realms/micro-keycloak
-      SWAGGER_AUTH_CLIENT: relying-party
-      SWAGGER_AUTH_CLIENT_SECRET: c4fa57fb-afb9-4afc-bb6b-516bb76233ae
-      SWAGGER_AUTH_SCOPE: content-provider-scope
     volumes:
       - ${DATA_DIR}/aws:/root/.aws
-    ports:
-      - 5000:80
 
