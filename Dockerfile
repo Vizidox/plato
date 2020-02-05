@@ -11,7 +11,6 @@ COPY ./poetry.lock ./poetry.lock
 COPY ./pyproject.toml ./pyproject.toml
 COPY ./main.py /app/main.py
 COPY ./micro_templating /app/micro_templating
-COPY ./uwsgi.ini /app/uwsgi.ini
 
 RUN poetry config virtualenvs.create false
 RUN poetry install -vvv
