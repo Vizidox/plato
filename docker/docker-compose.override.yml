@@ -10,16 +10,11 @@ services:
     environment:
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: pass
-      PROXY_ADDRESS_FORWARDING: ${KEYCLOAK_PROXY_ALLOWED:-false}
+      PROXY_ADDRESS_FORWARDING: true
     restart: unless-stopped
 
   deploy:
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_DATABASE: ${DB_DATABASE}
       AUTH_SERVER: http://auth:8080/auth/realms/micro-keycloak
       AUTH_SERVER_ORIGIN: http://${HOSTNAME}/auth/realms/micro-keycloak
     labels:
