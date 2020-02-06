@@ -1,9 +1,10 @@
 import tomlkit
 from os import environ
 from dotenv import load_dotenv, find_dotenv
+from .setup_util import inside_container
 
-
-load_dotenv(find_dotenv(), override=False)
+if not inside_container():
+    load_dotenv(find_dotenv(), override=False)
 
 
 def _get_project_meta() -> dict:
