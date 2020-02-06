@@ -12,11 +12,16 @@ services:
       KEYCLOAK_PASSWORD: pass
       PROXY_ADDRESS_FORWARDING: "true"
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`${HOSTNAME}`) && PathPrefix(`/auth/`)"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls.certresolver=mytlschallenge"
 
   deploy:
     environment:
       AUTH_SERVER: http://auth:8080/auth/realms/micro-keycloak
-      AUTH_SERVER_ORIGIN: http://${HOSTNAME}/auth/reams/micro-keycloak
+      AUTH_SERVER_ORIGIN: http://${HOSTNAME}/auth/realms/micro-keycloak
       WORKERS_PER_CORE: 1
     labels:
       - "traefik.enable=true"
