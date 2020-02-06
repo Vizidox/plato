@@ -2,8 +2,8 @@ import time
 from http import HTTPStatus
 
 from mock import Mock
-from auth import Authenticator
-from error_messages import token_is_invalid_message, unbeary_auth_message, no_auth_header_message
+from micro_templating.auth import Authenticator
+from micro_templating.error_messages import token_is_invalid_message, unbeary_auth_message, no_auth_header_message
 from tests.conftest import NoAuthServerAuthenticator
 
 

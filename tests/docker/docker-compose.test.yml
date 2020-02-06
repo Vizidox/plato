@@ -5,12 +5,7 @@ volumes:
 
 services:
   database:
-    build:
-      dockerfile: docker/postgres.Dockerfile
-      context: .
-      args:
-        pg_ver: 12.1
-    image: postgres-templating
+    image: postgres:12.1
     restart: unless-stopped
     volumes:
       - pg_data:/data/db

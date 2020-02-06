@@ -6,7 +6,7 @@ from testcontainers.core.utils import inside_container
 from time import sleep
 
 from micro_templating.flask_app import create_app
-from settings import PROJECT_NAME, PROJECT_VERSION
+from micro_templating.settings import PROJECT_NAME, PROJECT_VERSION
 from tests.auth import NoAuthServerAuthenticator
 
 TEST_AUTH_HOST = f"http://{'auth:8080' if inside_container() else 'localhost:8788'}/auth/realms/micro-keycloak"
