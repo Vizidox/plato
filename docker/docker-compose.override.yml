@@ -17,6 +17,7 @@ services:
     environment:
       AUTH_SERVER: http://auth:8080/auth/realms/micro-keycloak
       AUTH_SERVER_ORIGIN: http://${HOSTNAME}/auth/reams/micro-keycloak
+      WORKERS_PER_CORE: 1
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.deploy.rule=Host(`${HOSTNAME}`)"
@@ -24,7 +25,7 @@ services:
       - "traefik.http.routers.deploy.tls.certresolver=mytlschallenge"
 
   traefik:
-    image: "traefik:v2.0.0-rc3"
+    image: "traefik:v2.1"
     container_name: "traefik"
     command:
       #- "--log.level=DEBUG"
