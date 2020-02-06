@@ -30,7 +30,6 @@ services:
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: pass
       PROXY_ADDRESS_FORWARDING: ${KEYCLOAK_PROXY_ALLOWED:-false}
-      KEYCLOAK_HOSTNAME: localhost
     restart: unless-stopped
     ports:
       - 8787:8080
