@@ -21,7 +21,7 @@ services:
   deploy:
     environment:
       AUTH_SERVER: http://auth:8080/auth/realms/micro-keycloak
-      AUTH_SERVER_ORIGIN: http://${HOSTNAME}/auth/realms/micro-keycloak
+      AUTH_SERVER_ORIGIN: https://${HOSTNAME}/auth/realms/micro-keycloak
       WORKERS_PER_CORE: 1
     labels:
       - "traefik.enable=true"
