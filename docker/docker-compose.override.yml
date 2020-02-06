@@ -16,11 +16,12 @@ services:
   deploy:
     environment:
       AUTH_SERVER: http://auth:8080/auth/realms/micro-keycloak
-      AUTH_SERVER_ORIGIN: http://${HOSTNAME}/auth/realms/micro-keycloak
+      AUTH_SERVER_ORIGIN: http://${HOSTNAME}/auth/reams/micro-keycloak
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.deploy.rule=Host(`doxerv-dev.vizidox.com`)"
-      - "traefik.http.routers.deploy.entrypoints=web"
+      - "traefik.http.routers.deploy.rule=Host(`${HOSTNAME}`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=mytlschallenge"
 
   traefik:
     image: "traefik:v2.0.0-rc3"
@@ -30,9 +31,15 @@ services:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      #- "--certificatesresolvers.mytlschallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.mytlschallenge.acme.email=dev@vizidox.com"
+      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+
     ports:
-      - "80:80"
+      - "443:443"
       - "8080:8080"
     volumes:
+      - "./letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"

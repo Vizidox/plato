@@ -43,5 +43,24 @@ services:
       SWAGGER_AUTH_CLIENT: relying-party
       SWAGGER_AUTH_CLIENT_SECRET: c4fa57fb-afb9-4afc-bb6b-516bb76233ae
       SWAGGER_AUTH_SCOPE: content-provider-scope
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.deploy.rule=Host(`localhost`)"
+      - "traefik.http.routers.deploy.entrypoints=web"
     ports:
       - 5000:80
+
+  traefik:
+    image: "traefik:v2.0.0-rc3"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
