@@ -9,6 +9,8 @@ These instructions will get the project up and running on your local environment
 
 * [Python 3.7+](https://www.python.org/)
 * [Poetry 1.0+](https://python-poetry.org/)
+* [Docker](https://docker.com)
+* [Docker-compose](https://docs.docker.com/compose/)
 
 The project depends on [weasyprint](https://weasyprint.org/) for writing PDF from HTML so make sure you have everything
  weasy print needs to run by following the instructions on this [page](https://weasyprint.readthedocs.io/en/latest/install.html#linux). 
