@@ -1,5 +1,5 @@
 from contextlib import nullcontext
-
+from pathlib import Path
 import pytest
 from testcontainers.compose import DockerCompose
 from testcontainers.core.utils import inside_container
@@ -20,7 +20,8 @@ def client():
     if inside_container():
         context_manager = nullcontext()
     else:
-        context_manager = DockerCompose(filepath="./docker/", compose_file_name="docker-compose.test.yml")
+        docker_compose_path = f"{str(Path(__file__).resolve().parent)}/docker/"
+        context_manager = DockerCompose(filepath=docker_compose_path, compose_file_name="docker-compose.test.yml")
 
     with context_manager:
 
