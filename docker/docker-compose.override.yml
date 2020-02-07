@@ -49,8 +49,8 @@ services:
       - "./letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     labels:
-      traefik.http.routers.http_catchall.rule: HostRegexp(`{any:.+}`)
-      traefik.http.routers.http_catchall.entrypoints: web
-      traefik.http.routers.http_catchall.middlewares: https_redirect
-      traefik.http.middlewares.https_redirect.redirectscheme.scheme: https
-      traefik.http.middlewares.https_redirect.redirectscheme.permanent: true
+      - "traefik.http.routers.http_catchall.rule: HostRegexp(`{any:.+}`)"
+      - "traefik.http.routers.http_catchall.entrypoints: web"
+      - "traefik.http.routers.http_catchall.middlewares: https_redirect"
+      - "traefik.http.middlewares.https_redirect.redirectscheme.scheme: https"
+      - "traefik.http.middlewares.https_redirect.redirectscheme.permanent: true"
