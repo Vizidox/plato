@@ -23,31 +23,35 @@ class Authenticator:
         oauth_config: JSON response for well known server resources
         audience: Audience used for JWT validation
     """
-    oauth_config = None
 
     def __init__(self, auth_host: str, audience: str, auth_host_origin: str = ""):
         self.auth_host = auth_host
         self.auth_host_origin = auth_host_origin if auth_host_origin else auth_host
         self.oauth_config_url = f"{auth_host}/.well-known/openid-configuration"
-        self.oauth_config = self.obtain_oauth_config()
+        self._oauth_config = None
+        self._jwks = None
         self.audience = audience
 
-    def obtain_oauth_config(self):
+    @property
+    def oauth_config(self):
         """
         Obtains the OAuth config making a request to self.oauth_config_url and stores it at self.oauth_config
 
         """
-        if self.oauth_config is None:
-            self.oauth_config = requests.get(self.oauth_config_url).json()
+        if self._oauth_config is None:
+            self._oauth_config = requests.get(self.oauth_config_url).json()
         return self.oauth_config
 
-    def obtain_jwks(self):
+    @property
+    def jwks(self):
         """
         Obtains the JSON web keys making a request dependant on the oauth_config and stores them at self._jwks_json
 
         """
-        _jwks_json = requests.get(self.oauth_config['jwks_uri']).json()
-        return {key_data['kid']: key_data for key_data in _jwks_json['keys']}
+        if self._jwks is None:
+            _jwks_json = requests.get(self.oauth_config['jwks_uri']).json()
+            self._jwks = {key_data['kid']: key_data for key_data in _jwks_json['keys']}
+        return self._jwks
 
     def token_required(self, f: Callable) -> F:
         """
@@ -56,7 +60,6 @@ class Authenticator:
             f: decorated function
 
         """
-        jwks = self.obtain_jwks()
 
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -82,7 +85,7 @@ class Authenticator:
             try:
                 unverified_header = jwt.get_unverified_header(token)
                 unverified_key_id = unverified_header['kid']
-                key = jwks[unverified_key_id]
+                key = self.jwks[unverified_key_id]
 
                 verified_token = jwt.decode(token=token,
                                             key=key,

@@ -47,15 +47,16 @@ jQIDAQAB
 
     def __init__(self, auth_host: str, audience: str):
         key = jwk.construct(self.rsa_public_key, algorithm='RS256')
-        jwk_dict = key.to_dict()
-        self.jwks = {"0": jwk_dict}
+        self._jwk_dict = key.to_dict()
 
         super().__init__(auth_host, audience)
 
-    def obtain_jwks(self):
-        return self.jwks
+    @property
+    def jwks(self):
+        return {"0": self._jwk_dict}
 
-    def obtain_oauth_config(self):
+    @property
+    def oauth_config(self):
         return {}
 
     def sign(self, issuer: str, sub: str, audience: str,
