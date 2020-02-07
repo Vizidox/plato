@@ -40,7 +40,7 @@ class Authenticator:
         """
         if self._oauth_config is None:
             self._oauth_config = requests.get(self.oauth_config_url).json()
-        return self.oauth_config
+        return self._oauth_config
 
     @property
     def jwks(self):
