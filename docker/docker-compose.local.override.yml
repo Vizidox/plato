@@ -5,7 +5,6 @@ services:
       dockerfile: docker/postgres.Dockerfile
       context: .
       args:
-        pg_ver: ${POSTGRES_VER}
         uid: ${UID}
     image: postgres-templating
     restart: unless-stopped
@@ -51,7 +50,7 @@ services:
       - 5000:80
 
   traefik:
-    image: "traefik:v2.0.0-rc3"
+    image: "traefik:v2.1"
     container_name: "traefik"
     command:
       #- "--log.level=DEBUG"
