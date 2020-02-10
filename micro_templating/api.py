@@ -4,7 +4,7 @@ from flask import jsonify, request, g, Flask, send_file
 from jsonschema import ValidationError
 
 from .error_messages import invalid_compose_json, template_not_found
-from .compose.validator import VDXSchemaValidator
+from .compose.types import VDXSchemaValidator
 from .compose.renderer import PdfRenderer
 from .auth import Authenticator
 from .db.models import Template
@@ -116,18 +116,8 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
 
-        template = jinjaenv.get_template(
-            name=f"{g.partner_id}/{template_id}/{template_id}"
-        )  # template id works for the file as well
-
         partner_static_folder = f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/"
         template_static_folder = f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/{template_id}/"
-
-        composed_html = template.render(
-            p=compose_data,
-            partner_static=partner_static_folder,
-            template_static=template_static_folder
-        )
 
         renderer = PdfRenderer(
             template_model=template_model,
@@ -136,5 +126,5 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
             template_static_directory=template_static_folder
         )
 
-        return send_file(renderer.render(composed_html), mimetype=renderer.mime_type(), as_attachment=True,
+        return send_file(renderer.render(), mimetype=renderer.mime_type(), as_attachment=True,
                          attachment_filename=f"compose{renderer.file_extension()}"), 201

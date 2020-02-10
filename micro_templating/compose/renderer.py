@@ -1,6 +1,7 @@
 import io
 import tempfile
 from abc import abstractmethod, ABC
+from flask import current_app
 from jmespath import search
 from mimetypes import guess_extension
 from typing import AnyStr, Optional, Type, ClassVar, Dict
@@ -36,13 +37,27 @@ class Renderer(ABC):
         self.partner_static_directory = partner_static_directory
         self.template_static_directory = template_static_directory
 
-    @abstractmethod
-    def render(self, html: AnyStr) -> io.BytesIO:
-        """
-        Renders HTML onto a a stream according to the Renderer's MIME type.
+    def compose_html(self, compose_data: Optional[dict] = None) -> str:
+        if compose_data is None:
+            compose_data = self.compose_data
+        jinjaenv = current_app.config["JINJENV"]
+        template = jinjaenv.get_template(
+            name=f"{self.template_model.partner_id}/{self.template_model.id}/{self.template_model.id}"
+        )  # template id works for the file as well
 
-        Args:
-            html: String that represents the HTML
+        composed_html = template.render(
+            p=compose_data,
+            partner_static=self.partner_static_directory,
+            template_static=self.template_static_directory
+        )
+
+        return composed_html
+
+    @abstractmethod
+    def render(self) -> io.BytesIO:
+        """
+        Renders Template onto a a stream according to the Renderer's MIME type.
+
         """
         ...
 
@@ -119,7 +134,8 @@ class PdfRenderer(Renderer):
     PDF Renderer which uses weasyprint to generate PDF documents.
     """
 
-    def render(self, html: AnyStr) -> io.BytesIO:
+    def render(self) -> io.BytesIO:
+        html = self.compose_html()
         with tempfile.NamedTemporaryFile() as target_file_html:
             html = HTML(string=html)
             html.write_pdf(target_file_html.name)
