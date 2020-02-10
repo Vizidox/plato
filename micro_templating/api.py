@@ -98,6 +98,8 @@ def initalize_api(app: Flask, auth: Authenticator):
             description: composed file
             schema:
               type: file
+          400:
+            description: Invalid compose data for template schema
           404:
              description: Template not found
         tags:
