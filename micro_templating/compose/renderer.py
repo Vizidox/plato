@@ -1,10 +1,14 @@
 import io
 import tempfile
 from abc import abstractmethod, ABC
+from jmespath import search
 from mimetypes import guess_extension
 from typing import AnyStr, Optional, Type, ClassVar, Dict
 
 from weasyprint import HTML
+
+from micro_templating.compose.types import QR_CODE_TYPE
+from micro_templating.db.models import Template
 
 
 class Renderer(ABC):
@@ -25,7 +29,10 @@ class Renderer(ABC):
     """
     renderers: ClassVar[Dict[str, 'Renderer']] = dict()
 
-    def __init__(self, partner_static_directory: str, template_static_directory: str):
+    def __init__(self, template_model: Template, compose_data: dict,
+                 partner_static_directory: str, template_static_directory: str):
+        self.template_model = template_model
+        self.compose_data = compose_data
         self.partner_static_directory = partner_static_directory
         self.template_static_directory = template_static_directory
 
@@ -89,6 +96,22 @@ class Renderer(ABC):
             return type_
         return wrapper
 
+    def qr_render(self, output_folder: str):
+
+        qr_type_values = list()
+
+        def find_qr_paths(dict_path, current_dict):
+            json_schema_type = current_dict["type"]
+            if json_schema_type == "object":
+                for field_name, new_dict in current_dict["properties"].items():
+                    find_qr_paths(f"{dict_path}.{field_name}", current_dict["properties"])
+            elif json_schema_type == QR_CODE_TYPE:
+                qr_type_values.append(dict_path[1:])
+
+            return
+
+        for qr in qr_type_values:
+            search(qr, self.compose_data)
 
 @Renderer.renderer()
 class PdfRenderer(Renderer):

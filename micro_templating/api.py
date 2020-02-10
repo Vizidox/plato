@@ -130,6 +130,8 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         )
 
         renderer = PdfRenderer(
+            template_model=template_model,
+            compose_data=compose_data,
             partner_static_directory=partner_static_folder,
             template_static_directory=template_static_folder
         )
