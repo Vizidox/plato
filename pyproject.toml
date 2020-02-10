@@ -29,6 +29,7 @@ Flask-Migrate="2.5.2"
 
 # Templating
 WeasyPrint="51"
+qrcode={ version = "6.1", extras=["pil"] }
 
 [tool.poetry.dev-dependencies]
 pytest="5.3.1"

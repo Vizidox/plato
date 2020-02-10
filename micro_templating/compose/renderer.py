@@ -4,8 +4,9 @@ from abc import abstractmethod, ABC
 from flask import current_app
 from jmespath import search
 from mimetypes import guess_extension
-from typing import AnyStr, Optional, Type, ClassVar, Dict
-
+from typing import Optional, Type, ClassVar, Dict, List
+from qrcode import make
+from tempfile import TemporaryDirectory
 from weasyprint import HTML
 
 from micro_templating.compose.types import QR_CODE_TYPE
@@ -38,9 +39,11 @@ class Renderer(ABC):
         self.template_static_directory = template_static_directory
 
     def compose_html(self, compose_data: Optional[dict] = None) -> str:
+        jinjaenv = current_app.config["JINJENV"]
+
         if compose_data is None:
             compose_data = self.compose_data
-        jinjaenv = current_app.config["JINJENV"]
+
         template = jinjaenv.get_template(
             name=f"{self.template_model.partner_id}/{self.template_model.id}/{self.template_model.id}"
         )  # template id works for the file as well
@@ -113,21 +116,34 @@ class Renderer(ABC):
 
     def qr_render(self, output_folder: str):
 
-        qr_type_values = list()
+        qr_schema_paths = list()
 
-        def find_qr_paths(dict_path, current_dict):
+        def find_qr_paths(dict_path: List, current_dict):
+            dict_path = dict_path[:]
             json_schema_type = current_dict["type"]
             if json_schema_type == "object":
                 for field_name, new_dict in current_dict["properties"].items():
-                    find_qr_paths(f"{dict_path}.{field_name}", current_dict["properties"])
+                    dict_path.append(field_name)
+                    find_qr_paths(dict_path, new_dict)
             elif json_schema_type == QR_CODE_TYPE:
-                qr_type_values.append(dict_path[1:])
-
+                qr_schema_paths.append(dict_path)
             return
 
-        for qr in qr_type_values:
-            search(qr, self.compose_data)
+        def set_nested(key_list: List[str], dict_: dict, value: str):
+            for key in key_list[:-1]:
+                dict_ = dict_[key]
+            dict_[key_list[-1]] = value
 
+        find_qr_paths(list(), self.template_model.schema)
+
+        for i, qr_schema_path in enumerate(qr_schema_paths):
+            with open(f"{output_folder}/{i}.png", mode="wb") as qr_file:
+                qr_value = search(".".join(qr_schema_path), self.compose_data)
+                img = make(qr_value)
+                img.save(qr_file)
+                set_nested(qr_schema_path, self.compose_data, qr_file.name)
+
+        return self.compose_data
 @Renderer.renderer()
 class PdfRenderer(Renderer):
     """
@@ -135,12 +151,14 @@ class PdfRenderer(Renderer):
     """
 
     def render(self) -> io.BytesIO:
-        html = self.compose_html()
-        with tempfile.NamedTemporaryFile() as target_file_html:
-            html = HTML(string=html)
-            html.write_pdf(target_file_html.name)
-            with open(target_file_html.name, mode='rb') as temp_file_stream:
-                return io.BytesIO(temp_file_stream.read())
+        with TemporaryDirectory() as temp_render_directory:
+            self.qr_render(temp_render_directory)
+            html_string = self.compose_html()
+            with tempfile.NamedTemporaryFile() as target_file_html:
+                html = HTML(string=html_string)
+                html.write_pdf(target_file_html.name)
+                with open(target_file_html.name, mode='rb') as temp_file_stream:
+                    return io.BytesIO(temp_file_stream.read())
 
     @classmethod
     def mime_type(cls):
