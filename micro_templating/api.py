@@ -13,7 +13,7 @@ from jinja2 import Environment as JinjaEnv
 from .settings import TEMPLATE_DIRECTORY
 
 
-def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
+def initalize_api(app: Flask, auth: Authenticator):
 
     @app.route("/templates/<string:template_id>", methods=['GET'])
     @auth.token_required

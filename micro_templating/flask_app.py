@@ -5,7 +5,6 @@ Import the function wherever you decide to create a flask app.
 
 """
 from flask import Flask
-from flask.cli import with_appcontext
 from flask_cors import CORS
 from flask_migrate import Migrate
 
@@ -70,6 +69,6 @@ def create_app(project_name: str, project_version: str,
     app.config["AUTH"] = authenticator
 
     register_cli_commands(app)
-    initalize_api(app, authenticator, jinja_env)
+    initalize_api(app, authenticator)
 
     return app
