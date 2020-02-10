@@ -115,10 +115,25 @@ class Renderer(ABC):
         return wrapper
 
     def qr_render(self, output_folder: str):
+        """
+        Render QR codes, altering
+        Args:
+            output_folder: where to store the QR images renderer
 
+        Alters self.compose with qr types
+
+        """
         qr_schema_paths = list()
 
-        def find_qr_paths(dict_path: List, current_dict):
+        def find_qr_paths(dict_path: List[str], current_dict: Dict[str]):
+            """
+            Collects all the "type: qr_code" key paths on the nested jsonschema and stores them on qr_schema_paths.
+            Dict_path is used to iterate what keys lead where, give an empty list().
+
+            Args:
+                dict_path: initially empty.
+                current_dict: jsonschema dict to be iterated
+            """
             dict_path = dict_path[:]
             json_schema_type = current_dict["type"]
             if json_schema_type == "object":
@@ -130,6 +145,13 @@ class Renderer(ABC):
             return
 
         def set_nested(key_list: List[str], dict_: dict, value: str):
+            """
+            Sets dict_[key1, key2, ...] = value
+            Args:
+                key_list: Nested key list
+                dict_: Dict to be iterated with key_list
+                value: Value to be set
+            """
             for key in key_list[:-1]:
                 dict_ = dict_[key]
             dict_[key_list[-1]] = value
@@ -144,6 +166,8 @@ class Renderer(ABC):
                 set_nested(qr_schema_path, self.compose_data, qr_file.name)
 
         return self.compose_data
+
+
 @Renderer.renderer()
 class PdfRenderer(Renderer):
     """
