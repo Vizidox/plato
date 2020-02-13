@@ -34,7 +34,7 @@ Do so by copying the template .env by following the step below.
 cp .env.local .env
 ```
 
-Make sure you fill in expiry the Template directory with an absolute path.
+Make sure you fill in the Template directory with an absolute path.
 You may use a subdirectory inside of your DATA_DIR.
 
 e.g TEMPLATE_DIRECTORY=/home/carloscoda/projects/templating/data/templates
