@@ -46,7 +46,7 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         if template is None:
             return jsonify({"message": template_not_found.format(template_id)}), 404
 
-        view = TemplateDetailView(template.id, template.schema, template.type, template.metadata_)
+        view = TemplateDetailView.view_from_template(template)
 
         return jsonify(view._asdict())
 
@@ -69,7 +69,7 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
         """
 
         all_templates: Sequence[Template] = Template.query.filter_by(partner_id=g.partner_id).all()
-        json_views = [TemplateDetailView(template.id, template.schema, template.type, template.metadata_)._asdict() for
+        json_views = [TemplateDetailView.view_from_template(template)._asdict() for
                       template in
                       all_templates]
 

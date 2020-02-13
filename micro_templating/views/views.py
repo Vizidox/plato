@@ -45,14 +45,3 @@ class TemplateDetailView(NamedTuple):
                                   type=template.type,
                                   metadata=template.metadata_)
 
-    @classmethod
-    def views_from_templates(cls, templates: Sequence['Template']) -> Sequence['TemplateDetailView']:
-        """
-        Takes a collection of templates and returns the a collection of views for them.
-        Args:
-            templates: collection of templates.
-
-        Returns:
-            Sequence[TemplateDetailView]: A collection with the views for the supplied templates.
-        """
-        return [cls.view_from_template(template) for template in templates]
