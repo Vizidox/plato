@@ -34,7 +34,7 @@ Do so by copying the template .env by following the step below.
 cp .env.local .env
 ```
 
-Make sure you fill in expiry the Template directory with an absolute path.
+Make sure you fill in the Template directory with an absolute path.
 You may use a subdirectory inside of your DATA_DIR.
 
 e.g TEMPLATE_DIRECTORY=/home/carloscoda/projects/templating/data/templates
@@ -77,7 +77,7 @@ poetry run python main.py
 
 This will make the application available at http://localhost:5000/apidocs/ 
 where you can use swagger-ui to interact with the application. Make sure you authenticate with your example client. 
-By pressing one of the locks on the page and _Authorize_.
+By clicking one of the locks on the page and _Authorize_.
 
 
 ## Running the tests
