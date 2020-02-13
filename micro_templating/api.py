@@ -9,7 +9,6 @@ from .compose.renderer import PdfRenderer
 from .auth import Authenticator
 from .db.models import Template
 from micro_templating.views.views import TemplateDetailView
-from jinja2 import Environment as JinjaEnv
 from .settings import TEMPLATE_DIRECTORY
 
 

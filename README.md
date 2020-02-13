@@ -63,6 +63,13 @@ To do the same for the database you may try accessing it through
 postgresql://templating:template-pass@localhost:5455/templating
 ```
 
+Then you have to initialize the DB, which is done through [Flask-Migrate](https://flask-migrate.readthedocs.io/en/latest/).
+Make sure you export the FLASK_APP environment variable as the main.py module beforehand.
+```bash
+export FLASK_APP=main.py
+flask db upgrade
+```
+
 You can then run the application by running:
 ```bash
 poetry run python main.py
