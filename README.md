@@ -70,7 +70,7 @@ poetry run python main.py
 
 This will make the application available at http://localhost:5000/apidocs/ 
 where you can use swagger-ui to interact with the application. Make sure you authenticate with your example client. 
-By pressing one of the locks on the page and _Authorize_.
+By clicking one of the locks on the page and _Authorize_.
 
 
 ## Running the tests
