@@ -40,7 +40,10 @@ class TemplateDetailView(NamedTuple):
         Returns:
             TemplateDetailView: A view for the template
         """
-        return cls.view_from_template(template)
+        return TemplateDetailView(template_id=template.id,
+                                  template_schema=template.schema,
+                                  type=template.type,
+                                  metadata=template.metadata_)
 
     @classmethod
     def views_from_templates(cls, templates: Sequence['Template']) -> Sequence['TemplateDetailView']:
