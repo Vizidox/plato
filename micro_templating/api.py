@@ -127,5 +127,6 @@ def initalize_api(app: Flask, auth: Authenticator):
             template_static_directory=template_static_folder
         )
 
-        return send_file(renderer.render(), mimetype=renderer.mime_type(), as_attachment=True,
+        render = renderer.render()
+        return send_file(render, mimetype=renderer.mime_type(), as_attachment=True,
                          attachment_filename=f"compose{renderer.file_extension()}"), 201
