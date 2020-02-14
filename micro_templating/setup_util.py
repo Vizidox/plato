@@ -1,9 +1,10 @@
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
+from flask_sqlalchemy import SQLAlchemy
 import pathlib
 
 from smart_open import s3_iter_bucket
 
-from auth import Authenticator
+from .auth import Authenticator
 
 
 class SetupError(Exception):
@@ -80,4 +81,8 @@ def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
         JinjaEnv: environment loaded for target_directory with all templates from bucket
     """
     load_templates(s3_bucket, target_directory)
-    return create_template_environment(target_directory)
+    return create_template_environment(f"{target_directory}/templates")
+
+
+def setup_database() -> SQLAlchemy:
+    return SQLAlchemy()
