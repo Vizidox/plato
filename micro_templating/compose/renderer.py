@@ -125,7 +125,7 @@ class Renderer(ABC):
         """
         qr_schema_paths = list()
 
-        def find_qr_paths(dict_path: List[str], current_dict: Dict[str]):
+        def find_qr_paths(dict_path: List[str], current_dict: dict):
             """
             Collects all the "type: qr_code" key paths on the nested jsonschema and stores them on qr_schema_paths.
             Dict_path is used to iterate what keys lead where, give an empty list().
