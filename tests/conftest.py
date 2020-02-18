@@ -5,6 +5,7 @@ from testcontainers.compose import DockerCompose
 from testcontainers.core.utils import inside_container
 from time import sleep
 
+from micro_templating.db import db
 from micro_templating.flask_app import create_app
 from micro_templating.settings import PROJECT_NAME, PROJECT_VERSION
 from tests.auth import NoAuthServerAuthenticator
@@ -34,7 +35,7 @@ def client():
 
         with micro_templating_app.test_client() as client:
             with micro_templating_app.app_context():
-                pass
+                db.create_all()
             yield client
 
 

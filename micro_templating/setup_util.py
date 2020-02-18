@@ -1,7 +1,6 @@
 import os
 
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
-from flask_sqlalchemy import SQLAlchemy
 import pathlib
 
 from smart_open import s3_iter_bucket

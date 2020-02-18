@@ -1,21 +1,18 @@
-import io
-import tempfile
 from collections import Sequence
 
 from flask import jsonify, request, g, Flask, send_file
-from jsonschema import validate as json_validate, ValidationError
-from weasyprint import HTML, CSS
+from jsonschema import ValidationError
 
 from .error_messages import invalid_compose_json, template_not_found
-from .renderer import Renderer, PdfRenderer
+from .compose.types import VDXSchemaValidator
+from .compose.renderer import PdfRenderer
 from .auth import Authenticator
 from .db.models import Template
 from micro_templating.views.views import TemplateDetailView
-from jinja2 import Environment as JinjaEnv
 from .settings import TEMPLATE_DIRECTORY
 
 
-def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
+def initalize_api(app: Flask, auth: Authenticator):
 
     @app.route("/templates/<string:template_id>", methods=['GET'])
     @auth.token_required
@@ -100,6 +97,8 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
             description: composed file
             schema:
               type: file
+          400:
+            description: Invalid compose data for template schema
           404:
              description: Template not found
         tags:
@@ -113,27 +112,21 @@ def initalize_api(app: Flask, auth: Authenticator, jinjaenv: JinjaEnv):
 
         compose_data = request.get_json()
         try:
-            json_validate(compose_data, template_model.schema)
+            validator = VDXSchemaValidator(template_model.schema)
+            validator.validate(compose_data)
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
-
-        template = jinjaenv.get_template(
-            name=f"{g.partner_id}/{template_id}/{template_id}"
-        )  # template id works for the file as well
 
         partner_static_folder = f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/"
         template_static_folder = f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/{template_id}/"
 
-        composed_html = template.render(
-            p=compose_data,
-            partner_static=partner_static_folder,
-            template_static=template_static_folder
-        )
-
         renderer = PdfRenderer(
+            template_model=template_model,
+            compose_data=compose_data,
             partner_static_directory=partner_static_folder,
             template_static_directory=template_static_folder
         )
 
-        return send_file(renderer.render(composed_html), mimetype=renderer.mime_type(), as_attachment=True,
+        render = renderer.render()
+        return send_file(render, mimetype=renderer.mime_type(), as_attachment=True,
                          attachment_filename=f"compose{renderer.file_extension()}"), 201

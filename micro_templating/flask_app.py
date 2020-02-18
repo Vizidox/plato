@@ -5,8 +5,8 @@ Import the function wherever you decide to create a flask app.
 
 """
 from flask import Flask
-from flask.cli import with_appcontext
 from flask_cors import CORS
+from flask_migrate import Migrate
 
 from jinja2 import Environment as JinjaEnv
 from micro_templating.api import initalize_api
@@ -37,9 +37,9 @@ def create_app(project_name: str, project_version: str,
     """
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
-    with app.app_context():
-        db.create_all(app=app)
+    migrate = Migrate(app, db)
     cors = CORS(app)
 
     app.config['SWAGGER'] = {
@@ -70,6 +70,6 @@ def create_app(project_name: str, project_version: str,
     app.config["AUTH"] = authenticator
 
     register_cli_commands(app)
-    initalize_api(app, authenticator, jinja_env)
+    initalize_api(app, authenticator)
 
     return app
