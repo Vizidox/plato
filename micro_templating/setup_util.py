@@ -1,3 +1,5 @@
+import os
+
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 from flask_sqlalchemy import SQLAlchemy
 import pathlib
@@ -14,18 +16,19 @@ class SetupError(Exception):
     ...
 
 
-def setup_authenticator(auth_host_url: str, oauth2_audience: str) -> Authenticator:
+def setup_authenticator(auth_host_url: str, oauth2_audience: str, auth_host_origin: str = "") -> Authenticator:
     """
     Convenience method to setup the authenticator to gather all setup functions in one module.
 
     Args:
         auth_host_url: url for keycloak host e.g https://keycloak.org/auth/realms/vizidox/
+        auth_host_origin: the url keycloak signs with, defaults to auth_host_url
         oauth2_audience: audience for JWT token validation
 
     Returns:
         Authenticator: authenticator be used for token validation
     """
-    return Authenticator(auth_host_url, oauth2_audience)
+    return Authenticator(auth_host_url, oauth2_audience, auth_host_origin)
 
 
 def load_templates(s3_bucket: str, target_directory: str):
@@ -84,5 +87,11 @@ def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
     return create_template_environment(f"{target_directory}/templates")
 
 
-def setup_database() -> SQLAlchemy:
-    return SQLAlchemy()
+def inside_container():
+    """
+    Returns true if we are running inside a container.
+    Copied from testcontainers library as testcontainers are a dev dependency.
+
+    https://github.com/docker/docker/blob/a9fa38b1edf30b23cae3eade0be48b3d4b1de14b/daemon/initlayer/setup_unix.go#L25
+    """
+    return os.path.exists('/.dockerenv')

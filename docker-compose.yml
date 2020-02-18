@@ -1,34 +1,25 @@
 version: "3.5"
 services:
-  database:
+  deploy:
+    image: doxerv
     build:
-      dockerfile: docker/postgres.Dockerfile
-      context: .
-      args:
-        pg_ver: ${POSTGRES_VER}
-    image: postgres-templating
-    restart: unless-stopped
-    volumes:
-      - ${DATA_DIR}/db:/data/db
+        context: .
+        dockerfile: ./Dockerfile
     environment:
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_DATABASE}
-      PGDATA: /data/db/
-    ports:
-      - 127.0.0.1:5455:5432
+      DATA_DIR: /templating-data/
+      TEMPLATE_DIRECTORY: /templating-data/templates/
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      AUTH_SERVER: ${AUTH_SERVER}
+      AUTH_SERVER_ORIGIN: ${AUTH_SERVER_ORIGIN} # optional
+      CLIENT_ID: ${CLIENT_ID}
+      S3_BUCKET: ${S3_BUCKET}
+      SWAGGER_AUTH_CLIENT: ${SWAGGER_AUTH_CLIENT} # optional
+      SWAGGER_AUTH_CLIENT_SECRET: ${SWAGGER_AUTH_CLIENT_SECRET} # optional
+      SWAGGER_AUTH_SCOPE: ${SWAGGER_AUTH_SCOPE} # optional
+    volumes:
+      - ${DATA_DIR}/aws:/root/.aws
 
-  auth:
-    image: jboss/keycloak:8.0.1
-    volumes:
-      - ./micro-templating-keycloak-realm.json:/opt/jboss/keycloak/realm.json
-    command:
-      - "-b 0.0.0.0"
-      - "-Dkeycloak.import=/opt/jboss/keycloak/realm.json"
-    environment:
-      KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: pass
-      PROXY_ADDRESS_FORWARDING: ${KEYCLOAK_PROXY_ALLOWED:-false}
-    restart: unless-stopped
-    ports:
-      - 8787:8080

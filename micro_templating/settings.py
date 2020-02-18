@@ -1,9 +1,10 @@
 import tomlkit
 from os import environ
 from dotenv import load_dotenv, find_dotenv
+from .setup_util import inside_container
 
-
-load_dotenv(find_dotenv(), override=False)
+if not inside_container():
+    load_dotenv(find_dotenv(), override=False)
 
 
 def _get_project_meta() -> dict:
@@ -23,7 +24,6 @@ S3_BUCKET = environ["S3_BUCKET"]
 TEMPLATE_DIRECTORY = environ["TEMPLATE_DIRECTORY"]
 
 # Database
-POSTGRES_VER = environ["POSTGRES_VER"]
 DB_HOST = environ["DB_HOST"]
 DB_PORT = environ["DB_PORT"]
 DB_USERNAME = environ["DB_USERNAME"]
@@ -32,6 +32,7 @@ DB_DATABASE = environ["DB_DATABASE"]
 
 # Auth
 AUTH_SERVER = environ["AUTH_SERVER"]
+AUTH_SERVER_ORIGIN = environ["AUTH_SERVER_ORIGIN"] if "AUTH_SERVER_ORIGIN" in environ else AUTH_SERVER
 CLIENT_ID = environ["CLIENT_ID"]
 
 # Swagger-UI (optional)
