@@ -116,7 +116,7 @@ class Renderer(ABC):
 
     def qr_render(self, output_folder: str):
         """
-        Render QR codes, altering
+        Render QR codes, altering self.compose_data to replace qr_code properties with the filepath to their renders
         Args:
             output_folder: where to store the QR images renderer
 
