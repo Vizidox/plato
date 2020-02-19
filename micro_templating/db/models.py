@@ -37,5 +37,22 @@ class Template(db.Model):
         self.type = type_
         self.metadata_ = metadata
 
+    @classmethod
+    def from_json_dict(cls, partner_id: str, json_: dict) -> 'Template':
+        template_id = json_["title"]
+        schema = json_["schema"]
+        type_ = json_["type"]
+        metadata = json_["metadata"]
+
+        return Template(partner_id=partner_id, id_=template_id, schema=schema, type_=type_, metadata=metadata)
+
+    def json_dict(self) -> dict:
+        json_ = dict()
+        json_["title"] = self.id
+        json_["schema"] = self.schema
+        json_["type"] = self.type
+        json_["metadata"] = self.metadata_
+        return json_
+
     def __repr__(self):
         return '<Template %r - %r>' % (self.partner_id, self.id)
