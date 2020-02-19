@@ -17,7 +17,7 @@ class Template(db.Model):
     The unique identifiers for the table are `auth_id` and `id`.
 
     Attributes:
-        auth_id (str): The id for the owner of the template
+        partner_id (str): The id for the owner of the template
         id (str): The id for the template
         schema (dict): JSON dictionary with jsonschema used for validation in said template
         type (str): MIME type for template type, currently restricted to 'text/html'
