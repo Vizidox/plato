@@ -30,12 +30,12 @@ class Template(db.Model):
     type = db.Column(ENUM("text/html", name="template_mime_type"), nullable=False)
     metadata_ = db.Column(JSONB, name="metadata", nullable=True)
 
-    def __init__(self, auth_id, id_: str, schema: dict, type_: str, metadata: dict):
-        self.auth_id = auth_id
+    def __init__(self, partner_id, id_: str, schema: dict, type_: str, metadata: dict):
+        self.partner_id = partner_id
         self.id = id_
         self.schema = schema
         self.type = type_
         self.metadata_ = metadata
 
     def __repr__(self):
-        return '<Template %r - %r>' % (self.auth_id, self.id)
+        return '<Template %r - %r>' % (self.partner_id, self.id)
