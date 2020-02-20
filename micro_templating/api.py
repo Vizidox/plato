@@ -1,10 +1,9 @@
 from collections import Sequence
 
 from flask import jsonify, request, g, Flask, send_file
-from jsonschema import ValidationError
+from jsonschema import ValidationError, validate
 
 from .error_messages import invalid_compose_json, template_not_found
-from .compose.types import VDXSchemaValidator
 from .compose.renderer import PdfRenderer
 from .auth import Authenticator
 from .db.models import Template
@@ -112,8 +111,7 @@ def initalize_api(app: Flask, auth: Authenticator):
 
         compose_data = request.get_json()
         try:
-            validator = VDXSchemaValidator(template_model.schema)
-            validator.validate(compose_data)
+            validate(instance=compose_data, schema=template_model.schema)
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
 

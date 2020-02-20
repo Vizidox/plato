@@ -46,6 +46,16 @@ class Template(db.Model):
 
     @classmethod
     def from_json_dict(cls, partner_id: str, json_: dict) -> 'Template':
+        """
+        Builds a model from a dictionary that follows the export standard.
+
+        Args:
+            partner_id: Id for the partner
+            json_: dict with title, schema, and metadata entries.
+
+        Returns:
+            Template
+        """
         template_id = json_["title"]
         schema = json_["schema"]
         type_ = json_["type"]
@@ -54,6 +64,12 @@ class Template(db.Model):
         return Template(partner_id=partner_id, id_=template_id, schema=schema, type_=type_, metadata=metadata)
 
     def json_dict(self) -> dict:
+        """
+        Exports template data as dict.
+
+        Returns:
+            dict
+        """
         json_ = dict()
         json_["title"] = self.id
         json_["schema"] = self.schema
@@ -62,6 +78,11 @@ class Template(db.Model):
         return json_
 
     def get_qr_entries(self):
+        """
+        Fetches all the qr_entries for the template as a list comprised of JMESPath friendly strings
+        Returns:
+            List[str]
+        """
         return self.metadata_.get("qr_entries", [])
 
     def __repr__(self):

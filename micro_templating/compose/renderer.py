@@ -9,7 +9,6 @@ from qrcode import make
 from tempfile import TemporaryDirectory
 from weasyprint import HTML
 
-from micro_templating.compose.types import QR_CODE_TYPE
 from micro_templating.db.models import Template
 
 
