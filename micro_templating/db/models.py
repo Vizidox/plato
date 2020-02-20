@@ -14,7 +14,14 @@ class Template(db.Model):
     """
     Database model for a Template
 
-    The unique identifiers for the table are `auth_id` and `id`.
+    The unique identifiers for the table are `partner_id` and `id`.
+    The metadata has some optional but relevant entries:
+        qr_entries
+            This is an array of JMESPath friendly sequences to represent where in the schema
+            are the urls to be transformed into QR codes.
+
+            Examples
+                "course.organization.contact.website_url"
 
     Attributes:
         partner_id (str): The id for the owner of the template
@@ -53,6 +60,9 @@ class Template(db.Model):
         json_["type"] = self.type
         json_["metadata"] = self.metadata_
         return json_
+
+    def get_qr_entries(self):
+        return self.metadata_.get("qr_entries", [])
 
     def __repr__(self):
         return '<Template %r - %r>' % (self.partner_id, self.id)
