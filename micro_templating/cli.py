@@ -18,6 +18,12 @@ def register_cli_commands(app: Flask):
     @click.argument("json_file", type=click.File("r"))
     @with_appcontext
     def register_new_template(partner_id: str, json_file):
+        """
+        Imports new template from json file and inserts it in database
+        Args:
+            partner_id: partner owning said template
+            json_file: file containing the template json
+        """
         template_entry_json = json.load(json_file)
         new_template = Template.from_json_dict(partner_id, template_entry_json)
         db.session.add(new_template)
@@ -29,6 +35,13 @@ def register_cli_commands(app: Flask):
     @click.option("--template-id", default=None, type=click.STRING)
     @with_appcontext
     def export_template(partner_id: str, output, template_id: Optional[str]):
+        """
+        Export new template to file
+        Args:
+            partner_id: partner who owns the credential
+            output: output file
+            template_id: template to be exported
+        """
         if template_id is None:
             templates = Template.query.filter_by(partner_id=partner_id)
             template_options = "\n".join([template.id for template in templates])
