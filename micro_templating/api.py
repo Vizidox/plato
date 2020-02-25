@@ -1,5 +1,3 @@
-from collections import Sequence
-
 from flask import jsonify, request, g, Flask, send_file
 from jsonschema import ValidationError, validate
 from sqlalchemy import String, cast as db_cast
