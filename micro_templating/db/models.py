@@ -64,8 +64,14 @@ class Template(db.Model):
         schema = json_["schema"]
         type_ = json_["type"]
         metadata = json_["metadata"]
+        tags = json_["tags"]
 
-        return Template(partner_id=partner_id, id_=template_id, schema=schema, type_=type_, metadata=metadata)
+        return Template(partner_id=partner_id,
+                        id_=template_id,
+                        schema=schema,
+                        type_=type_,
+                        metadata=metadata,
+                        tags=tags)
 
     def json_dict(self) -> dict:
         """
@@ -79,6 +85,7 @@ class Template(db.Model):
         json_["schema"] = self.schema
         json_["type"] = self.type
         json_["metadata"] = self.metadata_
+        json_["tags"] = self.tags
         return json_
 
     def get_qr_entries(self):
