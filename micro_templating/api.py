@@ -2,6 +2,8 @@ from collections import Sequence
 
 from flask import jsonify, request, g, Flask, send_file
 from jsonschema import ValidationError, validate
+from sqlalchemy import String, cast as db_cast
+from sqlalchemy.dialects.postgresql import ARRAY
 
 from .error_messages import invalid_compose_json, template_not_found
 from .compose.renderer import PdfRenderer
@@ -54,6 +56,12 @@ def initalize_api(app: Flask, auth: Authenticator):
         ---
         security:
           - api_auth: [templating]
+        parameters:
+          - in: query
+            name: tags
+            type: array
+            items:
+                type: string
         responses:
           200:
             description: Information on all templates available
@@ -64,10 +72,15 @@ def initalize_api(app: Flask, auth: Authenticator):
            - template
         """
 
-        all_templates: Sequence[Template] = Template.query.filter_by(partner_id=g.partner_id).all()
+        tags = request.args.getlist("tags", type=str)
+
+        template_query = Template.query.filter_by(partner_id=g.partner_id)
+        if tags:
+            template_query = template_query.filter(Template.tags.contains(db_cast(tags, ARRAY(String))))
+
         json_views = [TemplateDetailView.view_from_template(template)._asdict() for
                       template in
-                      all_templates]
+                      template_query]
 
         return jsonify(json_views)
 

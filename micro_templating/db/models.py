@@ -8,8 +8,8 @@ base from sqlalchemy.
 from typing import Sequence
 
 from micro_templating.db import db
-from sqlalchemy import String, ARRAY
-from sqlalchemy.dialects.postgresql import JSONB, ENUM
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import JSONB, ENUM, ARRAY
 
 
 class Template(db.Model):
