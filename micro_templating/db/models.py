@@ -5,9 +5,11 @@ All the classes in this module represent the database objects present in the mic
 base from sqlalchemy.
 
 """
+from typing import Sequence
+
 from micro_templating.db import db
 from sqlalchemy import String
-from sqlalchemy.dialects.postgresql import JSONB, ENUM
+from sqlalchemy.dialects.postgresql import JSONB, ENUM, ARRAY
 
 
 class Template(db.Model):
@@ -36,13 +38,15 @@ class Template(db.Model):
     schema = db.Column(JSONB, nullable=False)
     type = db.Column(ENUM("text/html", name="template_mime_type"), nullable=False)
     metadata_ = db.Column(JSONB, name="metadata", nullable=True)
+    tags = db.Column(ARRAY(String), name="tags", nullable=False, server_default="{}")
 
-    def __init__(self, partner_id, id_: str, schema: dict, type_: str, metadata: dict):
+    def __init__(self, partner_id, id_: str, schema: dict, type_: str, metadata: dict, tags: Sequence[str]):
         self.partner_id = partner_id
         self.id = id_
         self.schema = schema
         self.type = type_
         self.metadata_ = metadata
+        self.tags = tags
 
     @classmethod
     def from_json_dict(cls, partner_id: str, json_: dict) -> 'Template':
@@ -60,8 +64,14 @@ class Template(db.Model):
         schema = json_["schema"]
         type_ = json_["type"]
         metadata = json_["metadata"]
+        tags = json_["tags"]
 
-        return Template(partner_id=partner_id, id_=template_id, schema=schema, type_=type_, metadata=metadata)
+        return Template(partner_id=partner_id,
+                        id_=template_id,
+                        schema=schema,
+                        type_=type_,
+                        metadata=metadata,
+                        tags=tags)
 
     def json_dict(self) -> dict:
         """
@@ -75,6 +85,7 @@ class Template(db.Model):
         json_["schema"] = self.schema
         json_["type"] = self.type
         json_["metadata"] = self.metadata_
+        json_["tags"] = self.tags
         return json_
 
     def get_qr_entries(self):
