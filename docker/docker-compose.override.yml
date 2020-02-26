@@ -1,0 +1,56 @@
+version: "3.5"
+services:
+  auth:
+    image: jboss/keycloak:8.0.1
+    volumes:
+      - ./micro-templating-keycloak-realm.json:/opt/jboss/keycloak/realm.json
+    command:
+      - "-b 0.0.0.0"
+      - "-Dkeycloak.import=/opt/jboss/keycloak/realm.json"
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: pass
+      PROXY_ADDRESS_FORWARDING: "true"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`${HOSTNAME}`) && PathPrefix(`/auth/`)"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls.certresolver=mytlschallenge"
+
+  deploy:
+    environment:
+      AUTH_SERVER: http://auth:8080/auth/realms/micro-keycloak
+      AUTH_SERVER_ORIGIN: https://${HOSTNAME}/auth/realms/micro-keycloak
+      WORKERS_PER_CORE: 1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.deploy.rule=Host(`${HOSTNAME}`)"
+      - "traefik.http.routers.deploy.entrypoints=websecure"
+      - "traefik.http.routers.deploy.tls.certresolver=mytlschallenge"
+
+  traefik:
+    image: "traefik:v2.1"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      #- "--certificatesresolvers.mytlschallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.mytlschallenge.acme.email=dev@vizidox.com"
+      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - "traefik.http.routers.http_catchall.rule: HostRegexp(`{any:.+}`)"
+      - "traefik.http.routers.http_catchall.entrypoints: web"
+      - "traefik.http.routers.http_catchall.middlewares: https_redirect"
+      - "traefik.http.middlewares.https_redirect.redirectscheme.scheme: https"
+      - "traefik.http.middlewares.https_redirect.redirectscheme.permanent: true"

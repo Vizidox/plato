@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "micro-templating"
+version = "1.0.0"
+description = "Templating as a microservice"
+authors = ["Tiago Santos <tiago.santos@vizidox.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+flasgger = "0.9.4"
+flask = "1.1.1"
+Flask-Cors="3.0.8"
+uWSGI="2.0.18"
+
+# auth
+python-jose="3.1.0"
+
+# S3
+smart-open="1.9.0"
+
+# settings
+python-dotenv="0.10.3"
+tomlkit="0.5.8"
+
+# Database
+SQLAlchemy = {version="1.3.12", extras=["postgresql_psycopg2binary"]}
+Flask-SQLAlchemy="2.4.1"
+Flask-Migrate="2.5.2"
+
+# Templating
+WeasyPrint="51"
+qrcode={ version = "6.1", extras=["pil"] }
+
+[tool.poetry.dev-dependencies]
+pytest="5.3.1"
+moto="1.3.14"
+testcontainers = { git = "https://github.com/testcontainers/testcontainers-python.git", tag = "v2.6" }
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

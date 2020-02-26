@@ -1,0 +1,65 @@
+version: "3.5"
+services:
+  database:
+    build:
+      dockerfile: docker/postgres.Dockerfile
+      context: .
+      args:
+        uid: ${UID}
+    image: postgres-templating
+    restart: unless-stopped
+    volumes:
+      - ${DATA_DIR}/db:/data/db
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+      PGDATA: /data/db/
+    ports:
+      - 127.0.0.1:5455:5432
+
+  auth:
+    image: jboss/keycloak:8.0.1
+    volumes:
+      - ./micro-templating-keycloak-realm.json:/opt/jboss/keycloak/realm.json
+    command:
+      - "-b 0.0.0.0"
+      - "-Dkeycloak.import=/opt/jboss/keycloak/realm.json"
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: pass
+      PROXY_ADDRESS_FORWARDING: ${KEYCLOAK_PROXY_ALLOWED:-false}
+    restart: unless-stopped
+    ports:
+      - 8787:8080
+
+  deploy:
+    environment:
+      DB_HOST: database
+      DB_PORT: 5432
+      AUTH_SERVER: http://auth:8080/auth/realms/micro-keycloak
+      AUTH_SERVER_ORIGIN: http://localhost:8787/auth/realms/micro-keycloak
+      SWAGGER_AUTH_CLIENT: relying-party
+      SWAGGER_AUTH_CLIENT_SECRET: c4fa57fb-afb9-4afc-bb6b-516bb76233ae
+      SWAGGER_AUTH_SCOPE: content-provider-scope
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.deploy.rule=Host(`localhost`)"
+      - "traefik.http.routers.deploy.entrypoints=web"
+    ports:
+      - 5000:80
+
+  traefik:
+    image: "traefik:v2.1"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
