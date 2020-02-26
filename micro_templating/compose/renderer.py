@@ -9,7 +9,6 @@ from qrcode import make
 from tempfile import TemporaryDirectory
 from weasyprint import HTML
 
-from micro_templating.compose.types import QR_CODE_TYPE
 from micro_templating.db.models import Template
 
 
@@ -123,26 +122,7 @@ class Renderer(ABC):
         Alters self.compose with qr types
 
         """
-        qr_schema_paths = list()
-
-        def find_qr_paths(dict_path: List[str], current_dict: dict):
-            """
-            Collects all the "type: qr_code" key paths on the nested jsonschema and stores them on qr_schema_paths.
-            Dict_path is used to iterate what keys lead where, give an empty list().
-
-            Args:
-                dict_path: initially empty.
-                current_dict: jsonschema dict to be iterated
-            """
-            dict_path = dict_path[:]
-            json_schema_type = current_dict["type"]
-            if json_schema_type == "object":
-                for field_name, new_dict in current_dict["properties"].items():
-                    dict_path.append(field_name)
-                    find_qr_paths(dict_path, new_dict)
-            elif json_schema_type == QR_CODE_TYPE:
-                qr_schema_paths.append(dict_path)
-            return
+        qr_schema_paths = self.template_model.get_qr_entries()
 
         def set_nested(key_list: List[str], dict_: dict, value: str):
             """
@@ -156,14 +136,12 @@ class Renderer(ABC):
                 dict_ = dict_[key]
             dict_[key_list[-1]] = value
 
-        find_qr_paths(list(), self.template_model.schema)
-
         for i, qr_schema_path in enumerate(qr_schema_paths):
             with open(f"{output_folder}/{i}.png", mode="wb") as qr_file:
-                qr_value = search(".".join(qr_schema_path), self.compose_data)
+                qr_value = search(qr_schema_path, self.compose_data)
                 img = make(qr_value)
                 img.save(qr_file)
-                set_nested(qr_schema_path, self.compose_data, qr_file.name)
+                set_nested(qr_schema_path.split("."), self.compose_data, qr_file.name)
 
         return self.compose_data
 

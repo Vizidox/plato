@@ -23,11 +23,16 @@ class TemplateDetailView(NamedTuple):
         metadata:
             type: object
             description: a collection on property values defined by the resource owner at the template conception
-    """
+        tags:
+            type: array
+            items:
+                type: string
+          """
     template_id: str
     template_schema: dict
     type: str
     metadata: dict
+    tags: Sequence[str]
 
     @classmethod
     def view_from_template(cls, template: 'Template') -> 'TemplateDetailView':
@@ -43,5 +48,6 @@ class TemplateDetailView(NamedTuple):
         return TemplateDetailView(template_id=template.id,
                                   template_schema=template.schema,
                                   type=template.type,
-                                  metadata=template.metadata_)
+                                  metadata=template.metadata_,
+                                  tags=template.tags)
 
