@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "micro-templating"
-version = "0.1.0"
+version = "1.0.0"
 description = "Templating as a microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>"]
 
