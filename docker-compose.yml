@@ -20,6 +20,7 @@ services:
       SWAGGER_AUTH_CLIENT: ${SWAGGER_AUTH_CLIENT} # optional
       SWAGGER_AUTH_CLIENT_SECRET: ${SWAGGER_AUTH_CLIENT_SECRET} # optional
       SWAGGER_AUTH_SCOPE: ${SWAGGER_AUTH_SCOPE} # optional
+      WORKER_CLASS: "egg:meinheld#gunicorn_worker"
     volumes:
       - ${DATA_DIR}/aws:/root/.aws
 
