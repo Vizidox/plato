@@ -120,14 +120,12 @@ def initalize_api(app: Flask, auth: Authenticator):
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
             compose_data = request.get_json()
             pdf_file = compose(template_model, mimetype, compose_data)
-
+            return send_file(pdf_file, mimetype=mimetype, as_attachment=True,
+                             attachment_filename=f"compose.pdf"), 201
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
-
-        return send_file(pdf_file, mimetype=mimetype, as_attachment=True,
-                         attachment_filename=f"compose.pdf"), 201
 
     @app.route("/template/<string:template_id>/example", methods=["GET"])
     @auth.token_required
@@ -161,6 +159,6 @@ def initalize_api(app: Flask, auth: Authenticator):
             pdf_file = compose(template_model, mimetype, template_model.example_composition)
 
             return send_file(pdf_file, mimetype=mimetype, as_attachment=True,
-                             attachment_filename=f"{template_model.id}-example.pdf"), 201
+                             attachment_filename=f"{template_model.id}-example.pdf"), 200
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
