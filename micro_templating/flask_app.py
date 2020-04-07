@@ -9,7 +9,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 
 from jinja2 import Environment as JinjaEnv
-from micro_templating.api import initalize_api
+from micro_templating.api import initialize_api
 from micro_templating.auth import Authenticator
 from micro_templating.views import swag
 from micro_templating.db import db
@@ -70,6 +70,6 @@ def create_app(project_name: str, project_version: str,
     app.config["AUTH"] = authenticator
 
     register_cli_commands(app)
-    initalize_api(app, authenticator)
+    initialize_api(app, authenticator)
 
     return app

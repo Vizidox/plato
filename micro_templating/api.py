@@ -11,7 +11,7 @@ from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found
 
 
-def initalize_api(app: Flask, auth: Authenticator):
+def initialize_api(app: Flask, auth: Authenticator):
     """
     Initializes Flask app with the microservice endpoints.
 
