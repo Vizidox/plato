@@ -12,7 +12,16 @@ from .error_messages import invalid_compose_json, template_not_found
 
 
 def initalize_api(app: Flask, auth: Authenticator):
+    """
+    Initializes Flask app with the microservice endpoints.
 
+    Args:
+        app: The Flask app
+        auth: The authenticator to provide security on the endpoints.
+
+    Returns:
+
+    """
     @app.route("/templates/<string:template_id>", methods=['GET'])
     @auth.token_required
     def template_by_id(template_id: str):
