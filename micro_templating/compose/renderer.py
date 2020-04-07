@@ -8,8 +8,10 @@ from typing import Optional, Type, ClassVar, Dict, List
 from qrcode import make
 from tempfile import TemporaryDirectory
 from weasyprint import HTML
+from jsonschema import validate as validate_schema
 
 from micro_templating.db.models import Template
+from micro_templating.settings import TEMPLATE_DIRECTORY
 
 
 class Renderer(ABC):
@@ -81,7 +83,7 @@ class Renderer(ABC):
         return guess_extension(cls.mime_type())
 
     @classmethod
-    def build_renderer(cls, mime_type: str, *args) -> Optional[Type['Renderer']]:
+    def build_renderer(cls, mime_type: str, *args, **kwargs) -> Optional[Type['Renderer']]:
         """
         Factory method for 'Renderer' subclasses registered with @Renderer.renderer()
 
@@ -97,7 +99,7 @@ class Renderer(ABC):
         assert mime_type in cls.renderers
         sub_renderer = cls.renderers.get(mime_type)
 
-        return sub_renderer(*args)
+        return sub_renderer(*args, **kwargs)
 
     @classmethod
     def renderer(cls):
@@ -165,3 +167,20 @@ class PdfRenderer(Renderer):
     @classmethod
     def mime_type(cls):
         return 'application/pdf'
+
+
+def compose(template: Template, mime_type: str, compose_data: dict):
+
+    validate_schema(instance=compose_data, schema=template.schema)
+
+    partner_static_folder = f"{TEMPLATE_DIRECTORY}/static/{template.partner_id}/"
+    template_static_folder = f"{TEMPLATE_DIRECTORY}/static/{template.partner_id}/{template.id}/"
+
+    renderer = Renderer.build_renderer(mime_type,
+                                       template_model=template,
+                                       compose_data=compose_data,
+                                       partner_static_directory=partner_static_folder,
+                                       template_static_directory=template_static_folder
+                                       )
+
+    return renderer.render()

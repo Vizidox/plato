@@ -1,14 +1,14 @@
 from flask import jsonify, request, g, Flask, send_file
-from jsonschema import ValidationError, validate
+from jsonschema import ValidationError
 from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm.exc import NoResultFound
 
-from .error_messages import invalid_compose_json, template_not_found
-from .compose.renderer import PdfRenderer
-from .auth import Authenticator
-from .db.models import Template
 from micro_templating.views.views import TemplateDetailView
-from .settings import TEMPLATE_DIRECTORY
+from .auth import Authenticator
+from .compose.renderer import compose
+from .db.models import Template
+from .error_messages import invalid_compose_json, template_not_found
 
 
 def initalize_api(app: Flask, auth: Authenticator):
@@ -115,27 +115,16 @@ def initalize_api(app: Flask, auth: Authenticator):
            - compose
            - template
         """
-        template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).first()
-
-        if template_model is None:
-            return jsonify({"message": template_not_found.format(template_id)}), 404
-
-        compose_data = request.get_json()
         try:
-            validate(instance=compose_data, schema=template_model.schema)
+            mimetype = "application/pdf"
+            template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
+            compose_data = request.get_json()
+            pdf_file = compose(template_model, mimetype, compose_data)
+
+        except NoResultFound:
+            return jsonify({"message": template_not_found.format(template_id)}), 404
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
 
-        partner_static_folder = f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/"
-        template_static_folder = f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/{template_id}/"
-
-        renderer = PdfRenderer(
-            template_model=template_model,
-            compose_data=compose_data,
-            partner_static_directory=partner_static_folder,
-            template_static_directory=template_static_folder
-        )
-
-        render = renderer.render()
-        return send_file(render, mimetype=renderer.mime_type(), as_attachment=True,
-                         attachment_filename=f"compose{renderer.file_extension()}"), 201
+        return send_file(pdf_file, mimetype=mimetype, as_attachment=True,
+                         attachment_filename=f"compose.pdf"), 201
