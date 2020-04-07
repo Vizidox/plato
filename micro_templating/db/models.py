@@ -38,14 +38,19 @@ class Template(db.Model):
     schema = db.Column(JSONB, nullable=False)
     type = db.Column(ENUM("text/html", name="template_mime_type"), nullable=False)
     metadata_ = db.Column(JSONB, name="metadata", nullable=True)
+    example_composition = db.Column(JSONB, nullable=False)
     tags = db.Column(ARRAY(String), name="tags", nullable=False, server_default="{}")
 
-    def __init__(self, partner_id, id_: str, schema: dict, type_: str, metadata: dict, tags: Sequence[str]):
+    def __init__(self, partner_id, id_: str, schema: dict, type_: str,
+                 metadata: dict,
+                 example_composition: dict,
+                 tags: Sequence[str]):
         self.partner_id = partner_id
         self.id = id_
         self.schema = schema
         self.type = type_
         self.metadata_ = metadata
+        self.example_composition = example_composition
         self.tags = tags
 
     @classmethod
@@ -55,23 +60,19 @@ class Template(db.Model):
 
         Args:
             partner_id: Id for the partner
-            json_: dict with title, schema, and metadata entries.
+            json_: dict with template details.
 
         Returns:
             Template
         """
-        template_id = json_["title"]
-        schema = json_["schema"]
-        type_ = json_["type"]
-        metadata = json_["metadata"]
-        tags = json_["tags"]
 
         return Template(partner_id=partner_id,
-                        id_=template_id,
-                        schema=schema,
-                        type_=type_,
-                        metadata=metadata,
-                        tags=tags)
+                        id_=json_["title"],
+                        schema=json_["schema"],
+                        type_=json_["type"],
+                        metadata=json_["metadata"],
+                        example_composition=json_["example_composition"],
+                        tags=json_["tags"])
 
     def json_dict(self) -> dict:
         """
@@ -85,6 +86,7 @@ class Template(db.Model):
         json_["schema"] = self.schema
         json_["type"] = self.type
         json_["metadata"] = self.metadata_
+        json_["example_composition"] = self.example_composition
         json_["tags"] = self.tags
         return json_
 

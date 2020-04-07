@@ -128,3 +128,39 @@ def initalize_api(app: Flask, auth: Authenticator):
 
         return send_file(pdf_file, mimetype=mimetype, as_attachment=True,
                          attachment_filename=f"compose.pdf"), 201
+
+    @app.route("/template/<string:template_id>/example", methods=["GET"])
+    @auth.token_required
+    def example_compose(template_id: str):
+        """
+        Gets example file based on the template
+        ---
+        consumes:
+            - application/json
+        parameters:
+            - name: template_id
+              in: path
+              type: string
+              required: true
+        security:
+          - api_auth: [templating]
+        responses:
+          200:
+            description: composed file
+            schema:
+              type: file
+          404:
+             description: Template not found
+        tags:
+           - compose
+           - template
+        """
+        try:
+            mimetype = "application/pdf"
+            template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
+            pdf_file = compose(template_model, mimetype, template_model.example_composition)
+
+            return send_file(pdf_file, mimetype=mimetype, as_attachment=True,
+                             attachment_filename=f"{template_model.id}-example.pdf"), 201
+        except NoResultFound:
+            return jsonify({"message": template_not_found.format(template_id)}), 404
