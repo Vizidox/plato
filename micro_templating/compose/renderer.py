@@ -32,18 +32,14 @@ class Renderer(ABC):
     """
     renderers: ClassVar[Dict[str, 'Renderer']] = dict()
 
-    def __init__(self, template_model: Template, compose_data: dict,
+    def __init__(self, template_model: Template,
                  partner_static_directory: str, template_static_directory: str):
         self.template_model = template_model
-        self.compose_data = compose_data
         self.partner_static_directory = partner_static_directory
         self.template_static_directory = template_static_directory
 
-    def compose_html(self, compose_data: Optional[dict] = None) -> str:
+    def compose_html(self, compose_data: dict) -> str:
         jinjaenv = current_app.config["JINJENV"]
-
-        if compose_data is None:
-            compose_data = self.compose_data
 
         template = jinjaenv.get_template(
             name=f"{self.template_model.partner_id}/{self.template_model.id}/{self.template_model.id}"
@@ -58,7 +54,7 @@ class Renderer(ABC):
         return composed_html
 
     @abstractmethod
-    def render(self) -> io.BytesIO:
+    def render(self, compose_data: dict) -> io.BytesIO:
         """
         Renders Template onto a a stream according to the Renderer's MIME type.
 
@@ -115,14 +111,14 @@ class Renderer(ABC):
             return type_
         return wrapper
 
-    def qr_render(self, output_folder: str):
+    def qr_render(self, output_folder: str, compose_data: dict):
         """
         Render QR codes, altering self.compose_data to replace qr_code properties with the filepath to their renders
         Args:
             output_folder: where to store the QR images renderer
-
-        Alters self.compose with qr types
-
+            compose_data: the data to fill the templatye with
+        Returns:
+            dict: altered compose_data
         """
         qr_schema_paths = self.template_model.get_qr_entries()
 
@@ -140,12 +136,12 @@ class Renderer(ABC):
 
         for i, qr_schema_path in enumerate(qr_schema_paths):
             with open(f"{output_folder}/{i}.png", mode="wb") as qr_file:
-                qr_value = search(qr_schema_path, self.compose_data)
+                qr_value = search(qr_schema_path, compose_data)
                 img = make(qr_value)
                 img.save(qr_file)
-                set_nested(qr_schema_path.split("."), self.compose_data, qr_file.name)
+                set_nested(qr_schema_path.split("."), compose_data, qr_file.name)
 
-        return self.compose_data
+        return compose_data
 
 
 @Renderer.renderer()
@@ -154,10 +150,10 @@ class PdfRenderer(Renderer):
     PDF Renderer which uses weasyprint to generate PDF documents.
     """
 
-    def render(self) -> io.BytesIO:
+    def render(self, compose_data: dict) -> io.BytesIO:
         with TemporaryDirectory() as temp_render_directory:
-            self.qr_render(temp_render_directory)
-            html_string = self.compose_html()
+            compose_data = self.qr_render(temp_render_directory, compose_data)
+            html_string = self.compose_html(compose_data)
             with tempfile.NamedTemporaryFile() as target_file_html:
                 html = HTML(string=html_string)
                 html.write_pdf(target_file_html.name)
@@ -190,9 +186,8 @@ def compose(template: Template, compose_data: dict, mime_type: str) -> io.BytesI
 
     renderer = Renderer.build_renderer(mime_type,
                                        template_model=template,
-                                       compose_data=compose_data,
                                        partner_static_directory=partner_static_folder,
                                        template_static_directory=template_static_folder
                                        )
 
-    return renderer.render()
+    return renderer.render(compose_data)
