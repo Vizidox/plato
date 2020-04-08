@@ -20,7 +20,7 @@ class Renderer(ABC):
 
     Typical usage:
 
-        Renderer.build_renderer('application/pdf', /home/my_user/static/, /home/my_user/my_template/static/)
+        Renderer.build_renderer('application/pdf')
 
     You may also create your own renderer by extending 'Renderer' and registering it in the factory by using the
     'renderer' decorator like so:
@@ -32,23 +32,23 @@ class Renderer(ABC):
     """
     renderers: ClassVar[Dict[str, 'Renderer']] = dict()
 
-    def __init__(self, template_model: Template,
-                 partner_static_directory: str, template_static_directory: str):
+    def __init__(self, template_model: Template):
         self.template_model = template_model
-        self.partner_static_directory = partner_static_directory
-        self.template_static_directory = template_static_directory
 
     def compose_html(self, compose_data: dict) -> str:
         jinjaenv = current_app.config["JINJENV"]
 
-        template = jinjaenv.get_template(
+        partner_static_directory = f"{TEMPLATE_DIRECTORY}/static/{self.template_model.partner_id}/"
+        template_static_directory = f"{TEMPLATE_DIRECTORY}/static/{self.template_model.partner_id}/{self.template_model.id}/"
+
+        jinja_template = jinjaenv.get_template(
             name=f"{self.template_model.partner_id}/{self.template_model.id}/{self.template_model.id}"
         )  # template id works for the file as well
 
-        composed_html = template.render(
+        composed_html = jinja_template.render(
             p=compose_data,
-            partner_static=self.partner_static_directory,
-            template_static=self.template_static_directory
+            partner_static=partner_static_directory,
+            template_static=template_static_directory
         )
 
         return composed_html
@@ -193,14 +193,6 @@ def compose(template: Template, compose_data: dict, mime_type: str) -> io.BytesI
         io.BytesIO: The Byte stream for the composed file.
     """
     validate_schema(instance=compose_data, schema=template.schema)
-
-    partner_static_folder = f"{TEMPLATE_DIRECTORY}/static/{template.partner_id}/"
-    template_static_folder = f"{TEMPLATE_DIRECTORY}/static/{template.partner_id}/{template.id}/"
-
-    renderer = Renderer.build_renderer(mime_type,
-                                       template_model=template,
-                                       partner_static_directory=partner_static_folder,
-                                       template_static_directory=template_static_folder
-                                       )
+    renderer = Renderer.build_renderer(mime_type, template_model=template)
 
     return renderer.render(compose_data)
