@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 from weasyprint import HTML
 from jsonschema import validate as validate_schema
 
-from micro_templating.compose import PDF_MIME
+from micro_templating.compose import PDF_MIME, OCTET_STREAM
 from micro_templating.db.models import Template
 from micro_templating.settings import TEMPLATE_DIRECTORY
 
@@ -19,17 +19,20 @@ class Renderer(ABC):
     """
     Renderer is a factory for every Renderer subclass.
 
-    Typical usage:
+        Typical usage:
 
-        Renderer.build_renderer('application/pdf')
+            Renderer.build_renderer('application/pdf')
 
-    You may also create your own renderer by extending 'Renderer' and registering it in the factory by using the
-    'renderer' decorator like so:
+        You may also create your own renderer by extending 'Renderer' and registering it in the factory by using the
+        'renderer' decorator like so:
 
-    @Renderer.renderer()
-    class MyRenderer(Renderer):
+        @Renderer.renderer()
+        class MyRenderer(Renderer):
         ...
 
+    """
+    mime_type = OCTET_STREAM
+    """MIME type for the renderer. Should be implemented by subclass. e.g: 'text/plain', 'application/pdf'
     """
     renderers: ClassVar[Dict[str, 'Renderer']] = dict()
 
@@ -88,15 +91,6 @@ class Renderer(ABC):
         ...
 
     @classmethod
-    @abstractmethod
-    def mime_type(cls) -> str:
-        """
-        MIME type for the renderer. Must be implemented by subclass.
-        e.g: 'text/plain', 'application/pdf'
-        """
-        ...
-
-    @classmethod
     def file_extension(cls) -> str:
         """
         File extension for the renderer. Guesses it using mimetypes.py library.
@@ -133,7 +127,7 @@ class Renderer(ABC):
         """
         def wrapper(type_: Type['Renderer']) -> Type['Renderer']:
             assert issubclass(type_, Renderer)
-            cls.renderers[type_.mime_type()] = type_
+            cls.renderers[type_.mime_type] = type_
             return type_
         return wrapper
 
@@ -176,6 +170,8 @@ class PdfRenderer(Renderer):
     PDF Renderer which uses weasyprint to generate PDF documents.
     """
 
+    mime_type = PDF_MIME
+
     def print(self, html_string: str) -> io.BytesIO:
 
         with tempfile.NamedTemporaryFile() as target_file_html:
@@ -183,10 +179,6 @@ class PdfRenderer(Renderer):
             html.write_pdf(target_file_html.name)
             with open(target_file_html.name, mode='rb') as temp_file_stream:
                 return io.BytesIO(temp_file_stream.read())
-
-    @classmethod
-    def mime_type(cls) -> str:
-        return PDF_MIME
 
 
 def compose(template: Template, compose_data: dict, mime_type: str) -> io.BytesIO:
