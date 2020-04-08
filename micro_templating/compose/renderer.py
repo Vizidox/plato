@@ -49,7 +49,8 @@ class Renderer(ABC):
         jinjaenv = current_app.config["JINJENV"]
 
         partner_static_directory = f"{TEMPLATE_DIRECTORY}/static/{self.template_model.partner_id}/"
-        template_static_directory = f"{TEMPLATE_DIRECTORY}/static/{self.template_model.partner_id}/{self.template_model.id}/"
+        template_static_directory = f"{TEMPLATE_DIRECTORY}/static/{self.template_model.partner_id}/" \
+                                    f"{self.template_model.id}/"
 
         jinja_template = jinjaenv.get_template(
             name=f"{self.template_model.partner_id}/{self.template_model.id}/{self.template_model.id}"
