@@ -10,6 +10,7 @@ from tempfile import TemporaryDirectory
 from weasyprint import HTML
 from jsonschema import validate as validate_schema
 
+from micro_templating.compose import PDF_MIME
 from micro_templating.db.models import Template
 from micro_templating.settings import TEMPLATE_DIRECTORY
 
@@ -183,8 +184,8 @@ class PdfRenderer(Renderer):
                 return io.BytesIO(temp_file_stream.read())
 
     @classmethod
-    def mime_type(cls):
-        return 'application/pdf'
+    def mime_type(cls) -> str:
+        return PDF_MIME
 
 
 def compose(template: Template, compose_data: dict, mime_type: str) -> io.BytesIO:

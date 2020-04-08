@@ -4,9 +4,10 @@ from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm.exc import NoResultFound
 
+from micro_templating.compose import PDF_MIME
+from micro_templating.compose.renderer import compose
 from micro_templating.views.views import TemplateDetailView
 from .auth import Authenticator
-from .compose.renderer import compose
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found
 
@@ -125,11 +126,11 @@ def initialize_api(app: Flask, auth: Authenticator):
            - template
         """
         try:
-            mimetype = "application/pdf"
+
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
             compose_data = request.get_json()
-            pdf_file = compose(template_model, compose_data, mimetype)
-            return send_file(pdf_file, mimetype=mimetype, as_attachment=True,
+            pdf_file = compose(template_model, compose_data, PDF_MIME)
+            return send_file(pdf_file, mimetype=PDF_MIME, as_attachment=True,
                              attachment_filename=f"compose.pdf"), 201
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
@@ -163,11 +164,11 @@ def initialize_api(app: Flask, auth: Authenticator):
            - template
         """
         try:
-            mimetype = "application/pdf"
-            template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
-            pdf_file = compose(template_model, template_model.example_composition, mimetype)
 
-            return send_file(pdf_file, mimetype=mimetype, as_attachment=True,
+            template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
+            pdf_file = compose(template_model, template_model.example_composition, PDF_MIME)
+
+            return send_file(pdf_file, mimetype=PDF_MIME, as_attachment=True,
                              attachment_filename=f"{template_model.id}-example.pdf"), 200
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
