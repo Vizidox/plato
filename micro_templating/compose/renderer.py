@@ -36,6 +36,15 @@ class Renderer(ABC):
         self.template_model = template_model
 
     def compose_html(self, compose_data: dict) -> str:
+        """
+        Creates the template HTML string using the Jinja2 environment.
+
+        Args:
+            compose_data:
+
+        Returns:
+            str: HTML string for composed file.
+        """
         jinjaenv = current_app.config["JINJENV"]
 
         partner_static_directory = f"{TEMPLATE_DIRECTORY}/static/{self.template_model.partner_id}/"
