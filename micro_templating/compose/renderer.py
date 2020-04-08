@@ -53,11 +53,26 @@ class Renderer(ABC):
 
         return composed_html
 
-    @abstractmethod
     def render(self, compose_data: dict) -> io.BytesIO:
         """
         Renders Template onto a a stream according to the Renderer's MIME type.
 
+        """
+        with TemporaryDirectory() as temp_render_directory:
+            compose_data = self.qr_render(temp_render_directory, compose_data)
+            html_string = self.compose_html(compose_data)
+            return self.print(html_string)
+
+    @abstractmethod
+    def print(self, html: str) -> io.BytesIO:
+        """
+        Print the file according to the Renderer MIME type.
+
+        Args:
+            html: The HTML to be printed
+
+        Returns:
+            io.BytesIO: A file stream with the Rendere's MIME type.
         """
         ...
 
@@ -150,15 +165,13 @@ class PdfRenderer(Renderer):
     PDF Renderer which uses weasyprint to generate PDF documents.
     """
 
-    def render(self, compose_data: dict) -> io.BytesIO:
-        with TemporaryDirectory() as temp_render_directory:
-            compose_data = self.qr_render(temp_render_directory, compose_data)
-            html_string = self.compose_html(compose_data)
-            with tempfile.NamedTemporaryFile() as target_file_html:
-                html = HTML(string=html_string)
-                html.write_pdf(target_file_html.name)
-                with open(target_file_html.name, mode='rb') as temp_file_stream:
-                    return io.BytesIO(temp_file_stream.read())
+    def print(self, html_string: str) -> io.BytesIO:
+
+        with tempfile.NamedTemporaryFile() as target_file_html:
+            html = HTML(string=html_string)
+            html.write_pdf(target_file_html.name)
+            with open(target_file_html.name, mode='rb') as temp_file_stream:
+                return io.BytesIO(temp_file_stream.read())
 
     @classmethod
     def mime_type(cls):
