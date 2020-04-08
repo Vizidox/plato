@@ -128,7 +128,7 @@ def initialize_api(app: Flask, auth: Authenticator):
             mimetype = "application/pdf"
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
             compose_data = request.get_json()
-            pdf_file = compose(template_model, mimetype, compose_data)
+            pdf_file = compose(template_model, compose_data, mimetype)
             return send_file(pdf_file, mimetype=mimetype, as_attachment=True,
                              attachment_filename=f"compose.pdf"), 201
         except NoResultFound:
@@ -165,7 +165,7 @@ def initialize_api(app: Flask, auth: Authenticator):
         try:
             mimetype = "application/pdf"
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
-            pdf_file = compose(template_model, mimetype, template_model.example_composition)
+            pdf_file = compose(template_model, template_model.example_composition, mimetype)
 
             return send_file(pdf_file, mimetype=mimetype, as_attachment=True,
                              attachment_filename=f"{template_model.id}-example.pdf"), 200

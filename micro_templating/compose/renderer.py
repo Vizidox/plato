@@ -169,8 +169,20 @@ class PdfRenderer(Renderer):
         return 'application/pdf'
 
 
-def compose(template: Template, mime_type: str, compose_data: dict):
+def compose(template: Template, compose_data: dict, mime_type: str) -> io.BytesIO:
+    """
+    Composes a file of the given mime_type using the compose_data to fill the given template.
 
+    Args:
+        template: The Template model to be used in the composition
+        mime_type: The desired output MIME type.
+        compose_data: The dict with the data to fill the template.
+
+    Raises:
+        jsonschema.exceptions.ValidationError: When the compose_data is not valid for a given template
+    Returns:
+        io.BytesIO: The Byte stream for the composed file.
+    """
     validate_schema(instance=compose_data, schema=template.schema)
 
     partner_static_folder = f"{TEMPLATE_DIRECTORY}/static/{template.partner_id}/"
