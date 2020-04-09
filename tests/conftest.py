@@ -60,9 +60,11 @@ def client():
 
         sleep(3)
 
-        fake_authenticator = MockAuthenticator("", "")
-        micro_templating_app = create_app(project_name=PROJECT_NAME, project_version=PROJECT_VERSION,
-                                          db_url=TEST_DB_URL, jinja_env=None, authenticator=fake_authenticator,)
+        fake_authenticator = MockAuthenticator()
+        micro_templating_app = create_app(db_url=TEST_DB_URL,
+                                          jinja_env=None,
+                                          authenticator=fake_authenticator,
+                                          swagger_ui_config={})
         micro_templating_app.config['TESTING'] = True
 
         with micro_templating_app.test_client() as client:

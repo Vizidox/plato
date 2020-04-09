@@ -5,7 +5,7 @@ import pytest
 from mock import Mock
 from micro_templating.auth import Authenticator
 from micro_templating.error_messages import token_is_invalid_message, unbeary_auth_message, no_auth_header_message
-from tests.conftest import FakeAuthenticator, TEST_AUTH_HOST, TEST_OAUTH2_AUDIENCE
+from tests.auth import FakeAuthenticator
 
 
 def get_decorated_mock(authenticator: Authenticator):
@@ -18,7 +18,7 @@ class TestAuthenticator:
 
     @pytest.fixture(scope='class')
     def authenticator(self):
-        return FakeAuthenticator("", "")
+        return FakeAuthenticator()
 
     def test_missing_header(self, client, authenticator: Authenticator):
 

@@ -1,12 +1,12 @@
 from datetime import time
 from typing import Optional, Union
 
-from micro_templating.auth import Authenticator
+from micro_templating.auth import FlaskAuthenticator
 import time
 from jose import jwk, jwt, jws
 
 
-class FakeAuthenticator(Authenticator):
+class FakeAuthenticator(FlaskAuthenticator):
     rsa_private_key = """-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAlnSU24BTKsrI1aZRZAuK0jfPOmW6gVl5re9M8QrnEORlJLRW
 quehKo+sYE0W4ZAJ9jht1bp0dIKRHIyNUfZAn9O3AZBuuo9r9D0Ya6TVySOMORZE
@@ -45,11 +45,11 @@ wetz7mG/rMIpofJFkoGbU0bBreu0DRztkoo+urP9szO8VlsjG1nBRqVelYBdM6MG
 jQIDAQAB
 -----END PUBLIC KEY-----"""
 
-    def __init__(self, auth_host: str, audience: str):
+    def __init__(self):
         key = jwk.construct(self.rsa_public_key, algorithm='RS256')
         self._jwk_dict = key.to_dict()
 
-        super().__init__(auth_host, audience)
+        super().__init__("", "")
 
     @property
     def jwks(self):
