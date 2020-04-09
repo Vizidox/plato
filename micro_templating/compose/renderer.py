@@ -136,7 +136,7 @@ class Renderer(ABC):
         Render QR codes, altering self.compose_data to replace qr_code properties with the filepath to their renders
         Args:
             output_folder: where to store the QR images renderer
-            compose_data: the data to fill the templatye with
+            compose_data: the data to fill the template with
         Returns:
             dict: altered compose_data
         """
