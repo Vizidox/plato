@@ -46,15 +46,14 @@ def initialize_api(app: Flask, auth: Authenticator):
         tags:
            - template
         """
+        try:
 
-        template: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).first()
+            template: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
+            view = TemplateDetailView.view_from_template(template)
+            return jsonify(view._asdict())
 
-        if template is None:
+        except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
-
-        view = TemplateDetailView.view_from_template(template)
-
-        return jsonify(view._asdict())
 
     @app.route("/templates/", methods=['GET'])
     @auth.token_required
