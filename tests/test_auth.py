@@ -4,7 +4,7 @@ from http import HTTPStatus
 from mock import Mock
 from micro_templating.auth import Authenticator
 from micro_templating.error_messages import token_is_invalid_message, unbeary_auth_message, no_auth_header_message
-from tests.conftest import NoAuthServerAuthenticator
+from tests.conftest import FakeAuthenticator
 
 
 class TestAuthenticator:
@@ -24,7 +24,7 @@ class TestAuthenticator:
             assert message.json["message"] == no_auth_header_message
             assert not mock.called
 
-    def test_no_bearer(self, client, authenticator: NoAuthServerAuthenticator):
+    def test_no_bearer(self, client, authenticator: FakeAuthenticator):
         valid_token = authenticator.sign(issuer=f"{authenticator.auth_host}",
                                          audience=f"{authenticator.audience}",
                                          sub="someone")
@@ -37,7 +37,7 @@ class TestAuthenticator:
             assert message.json["message"] == unbeary_auth_message
             assert not mock.called
 
-    def test_expired(self, client, authenticator: NoAuthServerAuthenticator):
+    def test_expired(self, client, authenticator: FakeAuthenticator):
         yesterday = int(time.time()) - 60*60*24
         token = authenticator.sign(issuer=f"{authenticator.auth_host}",
                                    audience=f"{authenticator.audience}",
@@ -51,7 +51,7 @@ class TestAuthenticator:
             assert response_code == HTTPStatus.UNAUTHORIZED
             assert message.json["message"] == token_is_invalid_message.format('Signature has expired.')
 
-    def test_wrong_audience(self, client, authenticator: NoAuthServerAuthenticator):
+    def test_wrong_audience(self, client, authenticator: FakeAuthenticator):
         token = authenticator.sign(issuer=f"{authenticator.auth_host}",
                                    audience=f"{authenticator.audience}-bad",
                                    sub="someone")
@@ -63,7 +63,7 @@ class TestAuthenticator:
             assert response_code == HTTPStatus.UNAUTHORIZED
             assert message.json["message"] == token_is_invalid_message.format('Invalid audience')
 
-    def test_wrong_iss(self, client, authenticator: NoAuthServerAuthenticator):
+    def test_wrong_iss(self, client, authenticator: FakeAuthenticator):
         token = authenticator.sign(issuer=f"{authenticator.auth_host}-bad",
                                    audience=f"{authenticator.audience}",
                                    sub="someone")
@@ -77,7 +77,7 @@ class TestAuthenticator:
             assert message.json["message"] == token_is_invalid_message.format('Invalid issuer')
             assert not mock.called
 
-    def test_wrong_signature(self, client, authenticator: NoAuthServerAuthenticator):
+    def test_wrong_signature(self, client, authenticator: FakeAuthenticator):
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.asymmetric import rsa
         from cryptography.hazmat.primitives import serialization
@@ -106,7 +106,7 @@ class TestAuthenticator:
             assert message.json["message"] == token_is_invalid_message.format("Signature verification failed.")
             assert not mock.called
 
-    def test_ok(self, client, authenticator: NoAuthServerAuthenticator):
+    def test_ok(self, client, authenticator: FakeAuthenticator):
         token = authenticator.sign(issuer=f"{authenticator.auth_host}",
                                    audience=f"{authenticator.audience}",
                                    sub="someone")

@@ -6,7 +6,7 @@ import time
 from jose import jwk, jwt, jws
 
 
-class NoAuthServerAuthenticator(Authenticator):
+class FakeAuthenticator(Authenticator):
     rsa_private_key = """-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAlnSU24BTKsrI1aZRZAuK0jfPOmW6gVl5re9M8QrnEORlJLRW
 quehKo+sYE0W4ZAJ9jht1bp0dIKRHIyNUfZAn9O3AZBuuo9r9D0Ya6TVySOMORZE
