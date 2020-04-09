@@ -1,23 +1,29 @@
 import time
 from http import HTTPStatus
 
+import pytest
 from mock import Mock
 from micro_templating.auth import Authenticator
 from micro_templating.error_messages import token_is_invalid_message, unbeary_auth_message, no_auth_header_message
-from tests.conftest import FakeAuthenticator
+from tests.conftest import FakeAuthenticator, TEST_AUTH_HOST, TEST_OAUTH2_AUDIENCE
+
+
+def get_decorated_mock(authenticator: Authenticator):
+    mock_function = Mock()
+    decorated_function = authenticator.token_required(mock_function)
+    return mock_function, decorated_function
 
 
 class TestAuthenticator:
 
-    def get_decorated_mock(self, authenticator: Authenticator):
-        mock_function = Mock()
-        decorated_function = authenticator.token_required(mock_function)
-        return mock_function, decorated_function
+    @pytest.fixture(scope='class')
+    def authenticator(self):
+        return FakeAuthenticator("", "")
 
     def test_missing_header(self, client, authenticator: Authenticator):
 
         with client.application.test_request_context():
-            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            mock, decorated_mock = get_decorated_mock(authenticator)
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
@@ -30,7 +36,7 @@ class TestAuthenticator:
                                          sub="someone")
 
         with client.application.test_request_context(headers={"Authorization": f"Basic {valid_token}"}):
-            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            mock, decorated_mock = get_decorated_mock(authenticator)
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
@@ -45,7 +51,7 @@ class TestAuthenticator:
                                    sub="someone")
         with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
 
-            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            mock, decorated_mock = get_decorated_mock(authenticator)
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
@@ -57,7 +63,7 @@ class TestAuthenticator:
                                    sub="someone")
         with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
 
-            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            mock, decorated_mock = get_decorated_mock(authenticator)
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
@@ -70,7 +76,7 @@ class TestAuthenticator:
 
         with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
 
-            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            mock, decorated_mock = get_decorated_mock(authenticator)
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
@@ -99,7 +105,7 @@ class TestAuthenticator:
 
         with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
 
-            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            mock, decorated_mock = get_decorated_mock(authenticator)
             message, response_code = decorated_mock()
 
             assert response_code == HTTPStatus.UNAUTHORIZED
@@ -113,7 +119,7 @@ class TestAuthenticator:
 
         with client.application.test_request_context(headers={"Authorization": f"Bearer {token}"}):
 
-            mock, decorated_mock = self.get_decorated_mock(authenticator)
+            mock, decorated_mock = get_decorated_mock(authenticator)
             decorated_mock()
 
             assert mock.called
