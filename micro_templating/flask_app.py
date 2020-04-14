@@ -47,6 +47,10 @@ def create_app(project_name: str, project_version: str,
         'version': project_version,
         'uiversion': 3,
         'swagger': '2.0',
+        'favicon': "/static/favicon-32x32.png",
+        'swagger_ui_css': "/static/swagger-ui.css",
+        'swagger_ui_standalone_preset_js': '/static/swagger-ui-standalone-preset.js',
+        'description': '',
         "securityDefinitions": {
             "api_auth": {
                 "type": "oauth2",
