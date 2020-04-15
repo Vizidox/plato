@@ -36,6 +36,7 @@ qrcode={ version = "6.1", extras=["pil"] }
 pytest="5.3.1"
 moto="1.3.14"
 testcontainers = { git = "https://github.com/testcontainers/testcontainers-python.git", tag = "v2.6" }
+blinker="1.4"
 
 [build-system]
 requires = ["poetry>=0.12"]
