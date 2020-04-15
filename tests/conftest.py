@@ -1,7 +1,7 @@
 from contextlib import nullcontext
 from functools import wraps
 from pathlib import Path
-from typing import Callable, TypeVar, Any
+from typing import Callable, TypeVar, Any, Dict
 
 import pytest
 from testcontainers.compose import DockerCompose
@@ -22,6 +22,12 @@ F = TypeVar('F', bound=FuncType)
 
 
 class MockAuthenticator(Authenticator):
+
+    authenticated_endpoints: Dict[str, F]
+
+    def __init__(self):
+        self.authenticated_endpoints = dict()
+
     def token_required(self, f: Callable) -> F:
         """
         Does nothing. Replaces token requirement
@@ -44,6 +50,7 @@ class MockAuthenticator(Authenticator):
             """
             return f(*args, **kwargs)
 
+        self.authenticated_endpoints[f.__name__] = f
         return decorated
 
 
@@ -60,10 +67,10 @@ def client():
 
         sleep(3)
 
-        fake_authenticator = MockAuthenticator()
+        authenticator = MockAuthenticator()
         micro_templating_app = create_app(db_url=TEST_DB_URL,
                                           jinja_env=None,
-                                          authenticator=fake_authenticator,
+                                          authenticator=authenticator,
                                           swagger_ui_config={})
         micro_templating_app.config['TESTING'] = True
 
