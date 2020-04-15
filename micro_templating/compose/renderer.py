@@ -157,9 +157,10 @@ class Renderer(ABC):
         for i, qr_schema_path in enumerate(qr_schema_paths):
             with open(f"{output_folder}/{i}.png", mode="wb") as qr_file:
                 qr_value = search(qr_schema_path, compose_data)
-                img = make(qr_value)
-                img.save(qr_file)
-                set_nested(qr_schema_path.split("."), compose_data, qr_file.name)
+                if qr_value is not None:
+                    img = make(qr_value)
+                    img.save(qr_file)
+                    set_nested(qr_schema_path.split("."), compose_data, qr_file.name)
 
         return compose_data
 
