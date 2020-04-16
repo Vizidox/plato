@@ -12,13 +12,21 @@ from json import loads as json_loads
 @pytest.fixture(scope="class")
 def populate_db(client):
     with client.application.test_request_context():
+        partner1 = "Bob"
         for i in range(157):
-            t = Template(partner_id="Bob", id_=str(i),
+            t = Template(partner_id=partner1, id_=str(i),
                          schema={"type": "object",
                                  "properties": {f"{i}": {"type": "string"}}
                                  },
                          type_="text/html", metadata={}, example_composition={}, tags=[])
             db.session.add(t)
+        partner2 = "NotBob"
+        t = Template(partner_id=partner2, id_=partner2,
+                     schema={"type": "object",
+                             "properties": {f"{i}": {"type": "string"}}
+                             },
+                     type_="text/html", metadata={}, example_composition={}, tags=[])
+        db.session.add(t)
         db.session.commit()
 
     yield
@@ -40,10 +48,12 @@ class TestTemplates:
 
     def test_obtain_all_template_info(self, client):
         with partner_id_set(client.application, "Bob"):
-            response = client.get("/templates/")
+            response = client.get(self.GET_TEMPLATES_ENDPOINT)
             assert response.status_code == HTTPStatus.OK
             assert len(response.json) == 157
+
+            template_view_expected_keys = ["template_id", "template_schema", "type", "metadata", "tags"]
+
             for i, template_json in enumerate(response.json):
-                assert all((key in template_json for key in ["template_id", "template_schema", "type", "metadata",
-                                                             "tags"]))
+                assert all((key in template_json for key in template_view_expected_keys))
                 assert i == json_loads(template_json["template_id"])
