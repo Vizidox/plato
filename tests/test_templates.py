@@ -47,8 +47,12 @@ class TestTemplates:
     GET_TEMPLATES_ENDPOINT = '/templates/'
     GET_TEMPLATES_METHOD_NAME = "templates"
 
+    GET_TEMPLATES_BY_ID_ENDPOINT = '/templates/{0}'
+    GET_TEMPLATES_BY_ID_METHOD_NAME = "template_by_id"
+
     def test_auth_protected(self, authenticator: MockAuthenticator):
         assert self.GET_TEMPLATES_METHOD_NAME in authenticator.authenticated_endpoints
+        assert self.GET_TEMPLATES_BY_ID_METHOD_NAME in authenticator.authenticated_endpoints
 
     def test_obtain_all_template_info(self, client):
         with partner_id_set(client.application, PARTNER_1):
@@ -89,6 +93,6 @@ class TestTemplates:
         tentative_template_id = 39
 
         with partner_id_set(client.application, PARTNER_2):
-            response = client.get(f"{self.GET_TEMPLATES_ENDPOINT}{tentative_template_id}")
+            response = client.get(self.GET_TEMPLATES_BY_ID_ENDPOINT.format(tentative_template_id))
             assert response.status_code == HTTPStatus.NOT_FOUND
             assert get_message(response) == template_not_found.format(tentative_template_id)
