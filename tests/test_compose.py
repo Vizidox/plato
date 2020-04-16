@@ -1,8 +1,8 @@
-import io
 from itertools import chain
 
 import pytest
 from fitz import Document
+
 from micro_templating.db import db
 from micro_templating.db.models import Template
 from tests import partner_id_set
@@ -10,7 +10,7 @@ from tests import partner_id_set
 PARTNER_1 = "test_partner"
 PLAIN_TEXT_TEMPLATE_ID = "plain_text"
 PNG_IMAGE_TEMPLATE_ID = "png_image"
-
+PNG_IMAGE_NAME = "balloons.png"
 
 @pytest.fixture(scope="class")
 def template_test_examples(client, template_loader):
@@ -33,7 +33,9 @@ def template_test_examples(client, template_loader):
             '<!DOCTYPE html>' \
             '<html>' \
             '<body>' \
-            '<img id="img_" src="file://{{ template_static }}balloons.png"></img>' \
+            '<img id="img_" src="file://{{ template_static }}' \
+            f'{PNG_IMAGE_NAME}">' \
+            '</img>' \
             '</body>' \
             '</html>'
 
@@ -64,6 +66,8 @@ class TestCompose:
             assert real_text.strip() == expected_test
 
     def test_compose_image_ok(self, client):
+        with open(f'{client.application.config["TEMPLATE_STATIC"]}/{PARTNER_1}/{PNG_IMAGE_TEMPLATE_ID}/{PNG_IMAGE_NAME}', mode="rb") as expected_image_file:
+            expected_image_bytes = expected_image_file.read()
         with partner_id_set(client.application, PARTNER_1):
             response = client.post(self.COMPOSE_ENDPOINT.format(PNG_IMAGE_TEMPLATE_ID), json={})
             assert response.data is not None
@@ -72,4 +76,5 @@ class TestCompose:
             images = [block["image"] for block in blocks]
             assert len(images) == 1
             real_image: bytes = images[0]
+            assert expected_image_bytes == real_image
 
