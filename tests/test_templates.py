@@ -2,7 +2,8 @@ from http import HTTPStatus
 
 import pytest
 
-from tests import partner_id_set
+from micro_templating.error_messages import template_not_found
+from tests import partner_id_set, get_message
 from tests.conftest import MockAuthenticator
 from micro_templating.db.models import Template
 from micro_templating.db import db
@@ -71,3 +72,23 @@ class TestTemplates:
             response = client.get(self.GET_TEMPLATES_ENDPOINT)
             assert response.status_code == HTTPStatus.OK
             assert len(response.json) == 0
+
+    def test_obtain_template_info_by_id_ok(self, client):
+
+        tentative_template_id = 39
+
+        with partner_id_set(client.application, PARTNER_1):
+            response = client.get(f"{self.GET_TEMPLATES_ENDPOINT}{tentative_template_id}")
+            assert response.status_code == HTTPStatus.OK
+            template_info = response.json
+            assert template_info and template_info is not None
+            assert json_loads(template_info["template_id"]) == tentative_template_id
+
+    def test_obtain_template_info_by_id_not_found(self, client):
+
+        tentative_template_id = 39
+
+        with partner_id_set(client.application, PARTNER_2):
+            response = client.get(f"{self.GET_TEMPLATES_ENDPOINT}{tentative_template_id}")
+            assert response.status_code == HTTPStatus.NOT_FOUND
+            assert get_message(response) == template_not_found.format(tentative_template_id)

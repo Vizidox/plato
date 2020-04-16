@@ -13,3 +13,7 @@ def partner_id_set(app, partner_id):
         g.partner_id = partner_id
     with appcontext_pushed.connected_to(handler, app):
         yield
+
+
+def get_message(response):
+    return response.json["message"]
