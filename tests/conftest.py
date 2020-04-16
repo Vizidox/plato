@@ -1,17 +1,18 @@
 from contextlib import nullcontext
 from functools import wraps
 from pathlib import Path
+from time import sleep
 from typing import Callable, TypeVar, Any, Dict
 
 import pytest
+from jinja2 import Environment as JinjaEnv
+from jinja2 import FileSystemLoader, select_autoescape
 from testcontainers.compose import DockerCompose
 from testcontainers.core.utils import inside_container
-from time import sleep
 
 from micro_templating.auth import Authenticator
 from micro_templating.db import db
 from micro_templating.flask_app import create_app
-from micro_templating.settings import PROJECT_NAME, PROJECT_VERSION
 
 TEST_AUTH_HOST = f"http://{'auth:8080' if inside_container() else 'localhost:8788'}/auth/realms/micro-keycloak"
 TEST_DB_URL = f"postgresql://test:test@{'database:5432' if inside_container() else 'localhost:5456'}/test"
@@ -57,20 +58,29 @@ class MockAuthenticator(Authenticator):
 @pytest.fixture(scope='session')
 def client():
 
+    current_folder = str(Path(__file__).resolve().parent)
+
     if inside_container():
         context_manager = nullcontext()
     else:
-        docker_compose_path = f"{str(Path(__file__).resolve().parent)}/docker/"
+        docker_compose_path = f"{current_folder}/docker/"
         context_manager = DockerCompose(filepath=docker_compose_path, compose_file_name="docker-compose.test.yml")
 
     with context_manager:
 
         sleep(3)
 
+        template_environment = JinjaEnv(
+            loader=FileSystemLoader(f"{current_folder}/resources/templates"),
+            autoescape=select_autoescape(["html", "xml"]),
+            auto_reload=True
+        )
+
         authenticator = MockAuthenticator()
         micro_templating_app = create_app(db_url=TEST_DB_URL,
-                                          jinja_env=None,
+                                          jinja_env=template_environment,
                                           authenticator=authenticator,
+                                          template_static_directory=f"{current_folder}/resources/static",
                                           swagger_ui_config={})
         micro_templating_app.config['TESTING'] = True
 
@@ -83,3 +93,8 @@ def client():
 @pytest.fixture(scope='session')
 def authenticator(client):
     yield client.application.config["AUTH"]
+
+
+@pytest.fixture(scope='session')
+def jinjaenv(client):
+    yield client.application.config["JINJENV"]

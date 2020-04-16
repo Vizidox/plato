@@ -19,6 +19,7 @@ swagger_ui_config = setup_swagger_ui(PROJECT_NAME, PROJECT_VERSION,
                                      default_swagger_secret=SWAGGER_AUTH_CLIENT_SECRET)
 app = create_app(db_url=WORKING_DB_URL,
                  authenticator=authenticator,
+                 template_static_directory=f"{TEMPLATE_DIRECTORY}/static",
                  jinja_env=template_environment,
                  swagger_ui_config=swagger_ui_config
                  )

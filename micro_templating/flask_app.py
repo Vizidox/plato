@@ -4,8 +4,6 @@ Flask app creation is handled here by the create_app function.
 Import the function wherever you decide to create a flask app.
 
 """
-from typing import Optional
-
 from flask import Flask
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -18,13 +16,14 @@ from micro_templating.db import db
 from micro_templating.cli import register_cli_commands
 
 
-def create_app(db_url: str, authenticator: Authenticator,
+def create_app(db_url: str, authenticator: Authenticator, template_static_directory: str,
                jinja_env: JinjaEnv, swagger_ui_config: dict) -> Flask:
     """
 
     Args:
         jinja_env: Jinja environment responsible for rendering the templates
         authenticator: Authenticator responsible for validating tokens on API requests
+        template_static_directory: The directory where the static content for the templates
         db_url: Database URI
         swagger_ui_config: The Swagger-UI config to be used with Flasgger.
          As defined in https://github.com/flasgger/flasgger#swagger-ui-and-templates
@@ -43,6 +42,7 @@ def create_app(db_url: str, authenticator: Authenticator,
     swag.init_app(app)
 
     app.config["JINJENV"] = jinja_env
+    app.config["TEMPLATE_STATIC"] = template_static_directory
     app.config["AUTH"] = authenticator
 
     register_cli_commands(app)

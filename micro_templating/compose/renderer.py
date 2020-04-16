@@ -12,7 +12,6 @@ from jsonschema import validate as validate_schema
 
 from micro_templating.compose import PDF_MIME, OCTET_STREAM
 from micro_templating.db.models import Template
-from micro_templating.settings import TEMPLATE_DIRECTORY
 
 
 class Renderer(ABC):
@@ -50,10 +49,9 @@ class Renderer(ABC):
             str: HTML string for composed file.
         """
         jinjaenv = current_app.config["JINJENV"]
-
-        partner_static_directory = f"{TEMPLATE_DIRECTORY}/static/{self.template_model.partner_id}/"
-        template_static_directory = f"{TEMPLATE_DIRECTORY}/static/{self.template_model.partner_id}/" \
-                                    f"{self.template_model.id}/"
+        static_directory = current_app.config["TEMPLATE_STATIC"]
+        partner_static_directory = f"{static_directory}/{self.template_model.partner_id}/"
+        template_static_directory = f"{partner_static_directory}{self.template_model.id}/"
 
         jinja_template = jinjaenv.get_template(
             name=f"{self.template_model.partner_id}/{self.template_model.id}/{self.template_model.id}"
