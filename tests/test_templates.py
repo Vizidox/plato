@@ -8,20 +8,23 @@ from micro_templating.db.models import Template
 from micro_templating.db import db
 from json import loads as json_loads
 
+PARTNER_1 = "Bob"
+PARTNER_2 = "NotBob"
+PARTNER_3 = "NotNotBob"
+
 
 @pytest.fixture(scope="class")
 def populate_db(client):
     with client.application.test_request_context():
-        partner1 = "Bob"
         for i in range(157):
-            t = Template(partner_id=partner1, id_=str(i),
+            t = Template(partner_id=PARTNER_1, id_=str(i),
                          schema={"type": "object",
                                  "properties": {f"{i}": {"type": "string"}}
                                  },
                          type_="text/html", metadata={}, example_composition={}, tags=[])
             db.session.add(t)
-        partner2 = "NotBob"
-        t = Template(partner_id=partner2, id_=partner2,
+
+        t = Template(partner_id=PARTNER_2, id_=PARTNER_2,
                      schema={"type": "object",
                              "properties": {f"{i}": {"type": "string"}}
                              },
@@ -47,7 +50,7 @@ class TestTemplates:
         assert self.GET_TEMPLATES_METHOD_NAME in authenticator.authenticated_endpoints
 
     def test_obtain_all_template_info(self, client):
-        with partner_id_set(client.application, "Bob"):
+        with partner_id_set(client.application, PARTNER_1):
             response = client.get(self.GET_TEMPLATES_ENDPOINT)
             assert response.status_code == HTTPStatus.OK
             assert len(response.json) == 157
@@ -57,3 +60,14 @@ class TestTemplates:
             for i, template_json in enumerate(response.json):
                 assert all((key in template_json for key in template_view_expected_keys))
                 assert i == json_loads(template_json["template_id"])
+
+        with partner_id_set(client.application, PARTNER_2):
+            response = client.get(self.GET_TEMPLATES_ENDPOINT)
+            assert response.status_code == HTTPStatus.OK
+            assert len(response.json) == 1
+            assert response.json[0]["template_id"] == PARTNER_2
+
+        with partner_id_set(client.application, PARTNER_3):
+            response = client.get(self.GET_TEMPLATES_ENDPOINT)
+            assert response.status_code == HTTPStatus.OK
+            assert len(response.json) == 0
