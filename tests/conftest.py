@@ -5,7 +5,7 @@ from time import sleep
 from typing import Callable, TypeVar, Any, Dict
 
 import pytest
-from jinja2 import Environment as JinjaEnv
+from jinja2 import Environment as JinjaEnv, DictLoader
 from jinja2 import FileSystemLoader, select_autoescape
 from testcontainers.compose import DockerCompose
 from testcontainers.core.utils import inside_container
@@ -56,7 +56,11 @@ class MockAuthenticator(Authenticator):
 
 
 @pytest.fixture(scope='session')
-def client():
+def template_loader() -> DictLoader:
+    yield DictLoader(dict())
+
+@pytest.fixture(scope='session')
+def client(template_loader):
 
     current_folder = str(Path(__file__).resolve().parent)
 
@@ -71,7 +75,7 @@ def client():
         sleep(3)
 
         template_environment = JinjaEnv(
-            loader=FileSystemLoader(f"{current_folder}/resources/templates"),
+            loader=template_loader,
             autoescape=select_autoescape(["html", "xml"]),
             auto_reload=True
         )
