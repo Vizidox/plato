@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 from weasyprint import HTML
 from jsonschema import validate as validate_schema
 
-from micro_templating.compose import PDF_MIME, OCTET_STREAM
+from micro_templating.compose import PDF_MIME, OCTET_STREAM, PNG_MIME
 from micro_templating.db.models import Template
 
 
@@ -180,7 +180,28 @@ class PdfRenderer(Renderer):
                 return io.BytesIO(temp_file_stream.read())
 
 
-def compose(template: Template, compose_data: dict, mime_type: str) -> io.BytesIO:
+@Renderer.renderer()
+class PNGRenderer(Renderer):
+    """
+    PDF Renderer which uses weasyprint to generate PDF documents.
+    """
+
+    mime_type = PNG_MIME
+
+    def __init__(self, template_model: Template, resolution: int = 96):
+        self.resolution = resolution
+        super().__init__(template_model)
+
+    def print(self, html_string: str) -> io.BytesIO:
+
+        with tempfile.NamedTemporaryFile() as target_file_html:
+            html = HTML(string=html_string)
+            html.write_png(target_file_html.name, resolution=self.resolution)  # TODO: Check multiple Page behaviour
+            with open(target_file_html.name, mode='rb') as temp_file_stream:
+                return io.BytesIO(temp_file_stream.read())
+
+
+def compose(template: Template, compose_data: dict, mime_type: str, *args, **kwargs) -> io.BytesIO:
     """
     Composes a file of the given mime_type using the compose_data to fill the given template.
 
@@ -188,13 +209,14 @@ def compose(template: Template, compose_data: dict, mime_type: str) -> io.BytesI
         template: The Template model to be used in the composition
         mime_type: The desired output MIME type.
         compose_data: The dict with the data to fill the template.
-
+        args: Additional arguments to be given to the specific renderer
+        kwargs: Additional keyword arguments to be given to the specific renderer
     Raises:
         jsonschema.exceptions.ValidationError: When the compose_data is not valid for a given template
     Returns:
         io.BytesIO: The Byte stream for the composed file.
     """
     validate_schema(instance=compose_data, schema=template.schema)
-    renderer = Renderer.build_renderer(mime_type, template_model=template)
+    renderer = Renderer.build_renderer(mime_type, template_model=template, *args, **kwargs)
 
     return renderer.render(compose_data)
