@@ -4,12 +4,13 @@ from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm.exc import NoResultFound
 
-from micro_templating.compose import PDF_MIME
-from micro_templating.compose.renderer import compose
+from micro_templating.compose import PDF_MIME, AVAILABLE_MIME_TYPES
+from micro_templating.compose.renderer import compose, RendererNotFound
 from micro_templating.views.views import TemplateDetailView
+from mimetypes import guess_extension
 from .auth import Authenticator
 from .db.models import Template
-from .error_messages import invalid_compose_json, template_not_found
+from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type
 
 
 def initialize_api(app: Flask, auth: Authenticator):
@@ -99,6 +100,9 @@ def initialize_api(app: Flask, auth: Authenticator):
         ---
         consumes:
             - application/json
+        produces:
+            - application/pdf
+            - image/png
         parameters:
             - name: template_id
               in: path
@@ -109,6 +113,11 @@ def initialize_api(app: Flask, auth: Authenticator):
               description: body to compose file with, must be according to the template schema
               schema:
                 type: object
+            - in: header
+              name: accept
+              required: false
+              type: string
+              enum: [application/pdf, image/png]
         security:
           - api_auth: [templating]
         responses:
@@ -124,13 +133,16 @@ def initialize_api(app: Flask, auth: Authenticator):
            - compose
            - template
         """
-        try:
+        mime_type = request.headers.get("Accept", PDF_MIME)
 
+        try:
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
             compose_data = request.get_json()
-            pdf_file = compose(template_model, compose_data, PDF_MIME)
-            return send_file(pdf_file, mimetype=PDF_MIME, as_attachment=True,
-                             attachment_filename=f"compose.pdf"), 201
+            composed_file = compose(template_model, compose_data, mime_type)
+            return send_file(composed_file, mimetype=mime_type, as_attachment=True,
+                             attachment_filename=f"compose{guess_extension(mime_type)}"), 201
+        except RendererNotFound:
+            return jsonify({"message": unsupported_mime_type.format(mime_type, ", ".join(AVAILABLE_MIME_TYPES))}), 415
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
         except ValidationError as ve:

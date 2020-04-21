@@ -11,4 +11,5 @@ token_is_invalid_message = "Token is invalid: {0}"
 #templating
 invalid_compose_json = "Invalid compose json: {0}"
 template_not_found = "Template '{0}' not found"
+unsupported_mime_type = "Unsupported format: {0}, Available formats: {1}"
 

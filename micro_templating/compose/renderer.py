@@ -14,6 +14,10 @@ from micro_templating.compose import PDF_MIME, OCTET_STREAM, PNG_MIME
 from micro_templating.db.models import Template
 
 
+class RendererNotFound(Exception):
+    pass
+
+
 class Renderer(ABC):
     """
     Renderer is a factory for every Renderer subclass.
@@ -105,12 +109,13 @@ class Renderer(ABC):
             mime_type: the desired renderer output as a MIME type. e.g 'application/PDF'
             *args: the arguments to be passed to the specific constructor, by default same as Renderer.__init__.
         Raises:
-            AssertionError: when mime_type is not part of the registered renderers.
+            RendererNotFound: When there is no Renderer for the given mime_type
         Returns:
             Renderer: renderer for the desired mime_type output.
         """
 
-        assert mime_type in cls.renderers
+        if mime_type not in cls.renderers:
+            raise RendererNotFound(mime_type)
         sub_renderer = cls.renderers.get(mime_type)
 
         return sub_renderer(*args, **kwargs)
@@ -213,6 +218,7 @@ def compose(template: Template, compose_data: dict, mime_type: str, *args, **kwa
         kwargs: Additional keyword arguments to be given to the specific renderer
     Raises:
         jsonschema.exceptions.ValidationError: When the compose_data is not valid for a given template
+        RendererNotFound: When there is no Renderer for the given mime_type
     Returns:
         io.BytesIO: The Byte stream for the composed file.
     """
