@@ -129,6 +129,8 @@ def initialize_api(app: Flask, auth: Authenticator):
             description: Invalid compose data for template schema
           404:
              description: Template not found
+          406:
+             description: Unsupported MIME type for file
         tags:
            - compose
            - template
@@ -142,7 +144,7 @@ def initialize_api(app: Flask, auth: Authenticator):
             return send_file(composed_file, mimetype=mime_type, as_attachment=True,
                              attachment_filename=f"compose{guess_extension(mime_type)}"), 201
         except RendererNotFound:
-            return jsonify({"message": unsupported_mime_type.format(mime_type, ", ".join(AVAILABLE_MIME_TYPES))}), 415
+            return jsonify({"message": unsupported_mime_type.format(mime_type, ", ".join(AVAILABLE_MIME_TYPES))}), 406
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
         except ValidationError as ve:
