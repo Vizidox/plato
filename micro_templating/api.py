@@ -10,12 +10,16 @@ from micro_templating.views.views import TemplateDetailView
 from mimetypes import guess_extension
 from .auth import Authenticator
 from .db.models import Template
-from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type
+from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, missing_accept_header
 from accept_types import get_best_match
 
 
-class UnsupportedMimetype(Exception):
+class UnsupportedMIMEType(Exception):
+    """
+    Exception to be raised when the mime type requested is not supported
+    """
     ...
+
 
 def initialize_api(app: Flask, auth: Authenticator):
     """
@@ -139,19 +143,23 @@ def initialize_api(app: Flask, auth: Authenticator):
            - compose
            - template
         """
-        mime_type = get_best_match(request.headers.get("Accept"), AVAILABLE_MIME_TYPES)
+        accept_header = request.headers.get("Accept")
+        if accept_header is None or not accept_header:
+            return jsonify({"message": missing_accept_header}), 400
+        mime_type = get_best_match(accept_header, AVAILABLE_MIME_TYPES)
 
         try:
             if mime_type is None:
-                raise UnsupportedMimetype()
+                raise UnsupportedMIMEType(accept_header)
 
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
             compose_data = request.get_json()
             composed_file = compose(template_model, compose_data, mime_type)
             return send_file(composed_file, mimetype=mime_type, as_attachment=True,
                              attachment_filename=f"compose{guess_extension(mime_type)}"), 201
-        except (RendererNotFound, UnsupportedMimetype):
-            return jsonify({"message": unsupported_mime_type.format(mime_type, ", ".join(AVAILABLE_MIME_TYPES))}), 406
+        except (RendererNotFound, UnsupportedMIMEType):
+            return jsonify(
+                {"message": unsupported_mime_type.format(accept_header, ", ".join(AVAILABLE_MIME_TYPES))}), 406
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
         except ValidationError as ve:
