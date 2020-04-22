@@ -103,7 +103,7 @@ class Renderer(ABC):
         File extension for the renderer. Guesses it using mimetypes.py library.
         e.g: 'text/plain', 'application/pdf'
         """
-        return guess_extension(cls.mime_type())
+        return guess_extension(cls.mime_type)
 
     @classmethod
     def build_renderer(cls, mime_type: str, *args, **kwargs) -> Optional[Type['Renderer']]:
