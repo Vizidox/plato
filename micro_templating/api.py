@@ -171,11 +171,19 @@ def initialize_api(app: Flask, auth: Authenticator):
         ---
         consumes:
             - application/json
+        produces:
+            - application/pdf
+            - image/png
         parameters:
             - name: template_id
               in: path
               type: string
               required: true
+            - in: header
+              name: accept
+              required: false
+              type: string
+              enum: [application/pdf, image/png]
         security:
           - api_auth: [templating]
         responses:
@@ -185,16 +193,24 @@ def initialize_api(app: Flask, auth: Authenticator):
               type: file
           404:
              description: Template not found
+          406:
+             description: Unsupported MIME type for file
         tags:
            - compose
            - template
         """
+        accept_header = request.headers.get("Accept", PDF_MIME)
+        mime_type = get_best_match(accept_header, AVAILABLE_MIME_TYPES)
+
         try:
-
+            if mime_type is None:
+                raise UnsupportedMIMEType(mime_type)
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
-            pdf_file = compose(template_model, template_model.example_composition, PDF_MIME)
+            example_file = compose(template_model, template_model.example_composition, mime_type)
 
-            return send_file(pdf_file, mimetype=PDF_MIME, as_attachment=True,
-                             attachment_filename=f"{template_model.id}-example.pdf"), 200
+            return send_file(example_file, mimetype=mime_type, as_attachment=True,
+                             attachment_filename=f"{template_model.id}-example{guess_extension(mime_type)}"), 200
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
+        except (RendererNotFound, UnsupportedMIMEType):
+            return jsonify({"message": unsupported_mime_type.format(accept_header, ", ".join(AVAILABLE_MIME_TYPES))}), 406
