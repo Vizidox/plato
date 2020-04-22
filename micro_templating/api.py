@@ -11,7 +11,11 @@ from mimetypes import guess_extension
 from .auth import Authenticator
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type
+from accept_types import get_best_match
 
+
+class UnsupportedMimetype(Exception):
+    ...
 
 def initialize_api(app: Flask, auth: Authenticator):
     """
@@ -135,15 +139,18 @@ def initialize_api(app: Flask, auth: Authenticator):
            - compose
            - template
         """
-        mime_type = request.headers.get("Accept", PDF_MIME)
+        mime_type = get_best_match(request.headers.get("Accept"), AVAILABLE_MIME_TYPES)
 
         try:
+            if mime_type is None:
+                raise UnsupportedMimetype()
+
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
             compose_data = request.get_json()
             composed_file = compose(template_model, compose_data, mime_type)
             return send_file(composed_file, mimetype=mime_type, as_attachment=True,
                              attachment_filename=f"compose{guess_extension(mime_type)}"), 201
-        except RendererNotFound:
+        except (RendererNotFound, UnsupportedMimetype):
             return jsonify({"message": unsupported_mime_type.format(mime_type, ", ".join(AVAILABLE_MIME_TYPES))}), 406
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
