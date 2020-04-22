@@ -206,7 +206,8 @@ class PNGRenderer(Renderer):
 
         with tempfile.NamedTemporaryFile() as target_file_html:
             html = HTML(string=html_string)
-            html.write_png(target_file_html.name, resolution=self.resolution)  # TODO: Check multiple Page behaviour
+            weasy_doc = html.render(enable_hinting=True)
+            weasy_doc.write_png(target=target_file_html.name, resolution=self.resolution)
             with open(target_file_html.name, mode='rb') as temp_file_stream:
                 return io.BytesIO(temp_file_stream.read())
 
