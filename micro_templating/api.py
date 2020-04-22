@@ -10,7 +10,7 @@ from micro_templating.views.views import TemplateDetailView
 from mimetypes import guess_extension
 from .auth import Authenticator
 from .db.models import Template
-from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, missing_accept_header
+from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type
 from accept_types import get_best_match
 
 
@@ -213,4 +213,5 @@ def initialize_api(app: Flask, auth: Authenticator):
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
         except (RendererNotFound, UnsupportedMIMEType):
-            return jsonify({"message": unsupported_mime_type.format(accept_header, ", ".join(AVAILABLE_MIME_TYPES))}), 406
+            return jsonify(
+                {"message": unsupported_mime_type.format(accept_header, ", ".join(AVAILABLE_MIME_TYPES))}), 406
