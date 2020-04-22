@@ -143,9 +143,7 @@ def initialize_api(app: Flask, auth: Authenticator):
            - compose
            - template
         """
-        accept_header = request.headers.get("Accept")
-        if accept_header is None or not accept_header:
-            return jsonify({"message": missing_accept_header}), 400
+        accept_header = request.headers.get("Accept", PDF_MIME)
         mime_type = get_best_match(accept_header, AVAILABLE_MIME_TYPES)
 
         try:
