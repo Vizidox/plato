@@ -10,12 +10,17 @@ from tempfile import TemporaryDirectory
 from weasyprint import HTML
 from jsonschema import validate as validate_schema
 
-from micro_templating.compose import PDF_MIME, OCTET_STREAM, PNG_MIME
 from micro_templating.db.models import Template
 
+PDF_MIME = "application/pdf"
+PNG_MIME = "image/png"
+OCTET_STREAM = "application/octet-stream"
 
 class RendererNotFound(Exception):
-    pass
+    """
+    Exception to be raised when there is no renderer for the requested MIME type
+    """
+    ...
 
 
 class Renderer(ABC):
