@@ -4,13 +4,14 @@ from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm.exc import NoResultFound
 
-from micro_templating.compose import PDF_MIME, AVAILABLE_MIME_TYPES
+from micro_templating.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
 from micro_templating.compose.renderer import compose, RendererNotFound
 from micro_templating.views.views import TemplateDetailView
 from mimetypes import guess_extension
 from .auth import Authenticator
 from .db.models import Template
-from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type
+from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
+    resizing_unsupported
 from accept_types import get_best_match
 
 
@@ -126,6 +127,17 @@ def initialize_api(app: Flask, auth: Authenticator):
               required: false
               type: string
               enum: [application/pdf, image/png]
+              description: MIME type(s) to determine what kind of file is outputted
+            - in: query
+              name: height
+              required: false
+              type: integer
+              description: Intended height for image output
+            - in: query
+              name: width
+              required: false
+              type: integer
+              description: Intended width for image output
         security:
           - api_auth: [templating]
         responses:
@@ -143,12 +155,22 @@ def initialize_api(app: Flask, auth: Authenticator):
            - compose
            - template
         """
+
+        width = request.args.get("width", type=int)
+        height = request.args.get("height", type=int)
+
         accept_header = request.headers.get("Accept", PDF_MIME)
-        mime_type = get_best_match(accept_header, AVAILABLE_MIME_TYPES)
+        mime_type = get_best_match(accept_header, ALL_AVAILABLE_MIME_TYPES)
 
         try:
             if mime_type is None:
                 raise UnsupportedMIMEType(accept_header)
+
+            if width is not None and height is not None:
+                return jsonify({"message": aspect_ratio_compromised}), 400
+
+            if (width is not None or height is not None) and mime_type == PDF_MIME:
+                return jsonify({"message": resizing_unsupported.format(mime_type)}), 400
 
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
             compose_data = request.get_json()
@@ -157,7 +179,7 @@ def initialize_api(app: Flask, auth: Authenticator):
                              attachment_filename=f"compose{guess_extension(mime_type)}"), 201
         except (RendererNotFound, UnsupportedMIMEType):
             return jsonify(
-                {"message": unsupported_mime_type.format(accept_header, ", ".join(AVAILABLE_MIME_TYPES))}), 406
+                {"message": unsupported_mime_type.format(accept_header, ", ".join(ALL_AVAILABLE_MIME_TYPES))}), 406
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
         except ValidationError as ve:
