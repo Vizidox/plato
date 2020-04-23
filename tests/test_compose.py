@@ -86,7 +86,7 @@ class TestCompose:
             expected_test = "This is some plain text"
             json_request = {"plain": expected_test}
             response = client.post(self.COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID), json=json_request)
-            assert response.status_code == HTTPStatus.CREATED
+            assert response.status_code == HTTPStatus.OK
             assert response.data is not None
             pdf_document = Document(filetype="bytes", stream=response.data)
             real_text = "".join((page.getText() for page in pdf_document))
@@ -96,7 +96,7 @@ class TestCompose:
         with partner_id_set(client.application, PARTNER_1):
             response = client.post(self.COMPOSE_ENDPOINT.format(PNG_IMAGE_TEMPLATE_ID), json={})
             assert response.data is not None
-            assert response.status_code == HTTPStatus.CREATED
+            assert response.status_code == HTTPStatus.OK
             pdf_document = Document(filetype="bytes", stream=response.data)
             blocks = chain.from_iterable((page.getText("dict")["blocks"] for page in pdf_document))
             images = [block["image"] for block in blocks]
@@ -104,7 +104,7 @@ class TestCompose:
 
             response = client.post(self.COMPOSE_ENDPOINT.format(NO_IMAGE_TEMPLATE_ID), json={})
             assert response.data is not None
-            assert response.status_code == HTTPStatus.CREATED
+            assert response.status_code == HTTPStatus.OK
             no_image_document = Document(filetype="bytes", stream=response.data)
             blocks = chain.from_iterable((page.getText("dict")["blocks"] for page in no_image_document))
             images = [block["image"] for block in blocks]
