@@ -16,6 +16,7 @@ PDF_MIME = "application/pdf"
 PNG_MIME = "image/png"
 OCTET_STREAM = "application/octet-stream"
 
+
 class RendererNotFound(Exception):
     """
     Exception to be raised when there is no renderer for the requested MIME type
@@ -197,9 +198,34 @@ class PNGRenderer(Renderer):
     """
 
     mime_type = PNG_MIME
+    _width: Optional[int] = None
+    _height: Optional[int] = None
 
-    def __init__(self, template_model: Template, resolution: int = 96):
-        self.resolution = resolution
+    @property
+    def height(self):
+        return self._height
+
+    @height.setter
+    def height(self, value):
+        if self._width is not None:
+            raise ValueError("Unable to use both height and width in order to maintain aspect ratio")
+        self._height = value
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, value):
+        if self._height is not None:
+            raise ValueError("Unable to use both height and width in order to maintain aspect ratio")
+        self._width = value
+
+    def __init__(self, template_model: Template,
+                 intended_height: Optional[int] = None,
+                 intended_width: Optional[int] = None):
+        self.height = intended_height
+        self.width = intended_width
         super().__init__(template_model)
 
     def print(self, html_string: str) -> io.BytesIO:
@@ -207,7 +233,14 @@ class PNGRenderer(Renderer):
         with tempfile.NamedTemporaryFile() as target_file_html:
             html = HTML(string=html_string)
             weasy_doc = html.render(enable_hinting=True)
-            weasy_doc.write_png(target=target_file_html.name, resolution=self.resolution)
+
+            page0 = weasy_doc.pages[0]  # Resizing assumes all pages are same size
+            if self.height is not None:
+                resolution_multiplier = self.intended_height / page0.height
+            elif self.width is not None:
+                resolution_multiplier = self.intended_width / page0.width
+
+            weasy_doc.write_png(target=target_file_html.name, resolution=resolution_multiplier * 96)
             with open(target_file_html.name, mode='rb') as temp_file_stream:
                 return io.BytesIO(temp_file_stream.read())
 
