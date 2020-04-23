@@ -143,7 +143,7 @@ def initialize_api(app: Flask, auth: Authenticator):
         security:
           - api_auth: [templating]
         responses:
-          201:
+          200:
             description: composed file
             schema:
               type: file
@@ -157,7 +157,7 @@ def initialize_api(app: Flask, auth: Authenticator):
            - compose
            - template
         """
-        return _compose(template_id, lambda t: request.get_json())
+        return _compose(template_id, "compose", lambda t: request.get_json())
 
     @app.route("/template/<string:template_id>/example", methods=["GET"])
     @auth.token_required
@@ -205,9 +205,11 @@ def initialize_api(app: Flask, auth: Authenticator):
            - compose
            - template
         """
-        return _compose(template_id, lambda t: t.example_composition)
+        return _compose(template_id, "example", lambda t: t.example_composition)
 
-    def _compose(template_id: str, compose_retrieval_function: Callable[[Template], dict]):
+    def _compose(template_id: str,
+                 file_name: str,
+                 compose_retrieval_function: Callable[[Template], dict]):
         width = request.args.get("width", type=int)
         height = request.args.get("height", type=int)
 
@@ -224,11 +226,17 @@ def initialize_api(app: Flask, auth: Authenticator):
             if (width is not None or height is not None) and mime_type == PDF_MIME:
                 return jsonify({"message": resizing_unsupported.format(mime_type)}), 400
 
+            compose_params = {}
+            if width is not None:
+                compose_params["width"] = width
+            if height is not None:
+                compose_params["height"] = height
+
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
             compose_data = compose_retrieval_function(template_model)
-            composed_file = compose(template_model, compose_data, mime_type)
+            composed_file = compose(template_model, compose_data, mime_type, **compose_params)
             return send_file(composed_file, mimetype=mime_type, as_attachment=True,
-                             attachment_filename=f"compose{guess_extension(mime_type)}"), 201
+                             attachment_filename=f"{file_name}{guess_extension(mime_type)}"), 200
         except (RendererNotFound, UnsupportedMIMEType):
             return jsonify(
                 {"message": unsupported_mime_type.format(accept_header, ", ".join(ALL_AVAILABLE_MIME_TYPES))}), 406

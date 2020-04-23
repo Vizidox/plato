@@ -222,11 +222,12 @@ class PNGRenderer(Renderer):
         self._width = value
 
     def __init__(self, template_model: Template,
-                 intended_height: Optional[int] = None,
-                 intended_width: Optional[int] = None):
-        self.height = intended_height
-        self.width = intended_width
+                 height: Optional[int] = None,
+                 width: Optional[int] = None):
+        self.height = height
+        self.width = width
         super().__init__(template_model)
+
 
     def print(self, html_string: str) -> io.BytesIO:
 
@@ -238,9 +239,9 @@ class PNGRenderer(Renderer):
             resolution_multiplier = 1
 
             if self.height is not None:
-                resolution_multiplier = self.intended_height / page0.height
+                resolution_multiplier = self.height / page0.height
             elif self.width is not None:
-                resolution_multiplier = self.intended_width / page0.width
+                resolution_multiplier = self.width / page0.width
 
             weasy_doc.write_png(target=target_file_html.name, resolution=resolution_multiplier * 96)
             with open(target_file_html.name, mode='rb') as temp_file_stream:
