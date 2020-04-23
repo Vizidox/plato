@@ -94,20 +94,19 @@ class TestCompose:
 
     def test_compose_image_exists(self, client):
         with partner_id_set(client.application, PARTNER_1):
-            response = client.post(self.COMPOSE_ENDPOINT.format(PNG_IMAGE_TEMPLATE_ID), json={})
-            assert response.data is not None
-            assert response.status_code == HTTPStatus.OK
-            pdf_document = Document(filetype="bytes", stream=response.data)
-            blocks = chain.from_iterable((page.getText("dict")["blocks"] for page in pdf_document))
-            images = [block["image"] for block in blocks]
+            def get_images_from_template(template_id: str):
+                response = client.post(self.COMPOSE_ENDPOINT.format(template_id), json={})
+                assert response.data is not None
+                assert response.status_code == HTTPStatus.OK
+                pdf_document = Document(filetype="bytes", stream=response.data)
+                blocks = chain.from_iterable((page.getText("dict")["blocks"] for page in pdf_document))
+                images = [block["image"] for block in blocks]
+                return images
+
+            images = get_images_from_template(PNG_IMAGE_TEMPLATE_ID)
             assert len(images) == 1
 
-            response = client.post(self.COMPOSE_ENDPOINT.format(NO_IMAGE_TEMPLATE_ID), json={})
-            assert response.data is not None
-            assert response.status_code == HTTPStatus.OK
-            no_image_document = Document(filetype="bytes", stream=response.data)
-            blocks = chain.from_iterable((page.getText("dict")["blocks"] for page in no_image_document))
-            images = [block["image"] for block in blocks]
+            images = get_images_from_template(NO_IMAGE_TEMPLATE_ID)
             assert len(images) == 0
 
 
