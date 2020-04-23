@@ -1,3 +1,5 @@
+from typing import Callable
+
 from flask import jsonify, request, g, Flask, send_file
 from jsonschema import ValidationError
 from sqlalchemy import String, cast as db_cast
@@ -205,7 +207,7 @@ def initialize_api(app: Flask, auth: Authenticator):
         """
         return _compose(template_id, lambda t: t.example_composition)
 
-    def _compose(template_id: str, compose_retrieval_function):
+    def _compose(template_id: str, compose_retrieval_function: Callable[[Template], dict]):
         width = request.args.get("width", type=int)
         height = request.args.get("height", type=int)
 
