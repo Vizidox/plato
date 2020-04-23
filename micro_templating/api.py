@@ -178,6 +178,16 @@ def initialize_api(app: Flask, auth: Authenticator):
               required: false
               type: string
               enum: [application/pdf, image/png]
+            - in: query
+              name: height
+              required: false
+              type: integer
+              description: Intended height for image output
+            - in: query
+              name: width
+              required: false
+              type: integer
+              description: Intended width for image output
         security:
           - api_auth: [templating]
         responses:
