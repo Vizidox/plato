@@ -235,6 +235,8 @@ class PNGRenderer(Renderer):
             weasy_doc = html.render(enable_hinting=True)
 
             page0 = weasy_doc.pages[0]  # Resizing assumes all pages are same size
+            resolution_multiplier = 1
+
             if self.height is not None:
                 resolution_multiplier = self.intended_height / page0.height
             elif self.width is not None:
