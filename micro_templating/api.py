@@ -155,35 +155,7 @@ def initialize_api(app: Flask, auth: Authenticator):
            - compose
            - template
         """
-
-        width = request.args.get("width", type=int)
-        height = request.args.get("height", type=int)
-
-        accept_header = request.headers.get("Accept", PDF_MIME)
-        mime_type = get_best_match(accept_header, ALL_AVAILABLE_MIME_TYPES)
-
-        try:
-            if mime_type is None:
-                raise UnsupportedMIMEType(accept_header)
-
-            if width is not None and height is not None:
-                return jsonify({"message": aspect_ratio_compromised}), 400
-
-            if (width is not None or height is not None) and mime_type == PDF_MIME:
-                return jsonify({"message": resizing_unsupported.format(mime_type)}), 400
-
-            template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
-            compose_data = request.get_json()
-            composed_file = compose(template_model, compose_data, mime_type)
-            return send_file(composed_file, mimetype=mime_type, as_attachment=True,
-                             attachment_filename=f"compose{guess_extension(mime_type)}"), 201
-        except (RendererNotFound, UnsupportedMIMEType):
-            return jsonify(
-                {"message": unsupported_mime_type.format(accept_header, ", ".join(ALL_AVAILABLE_MIME_TYPES))}), 406
-        except NoResultFound:
-            return jsonify({"message": template_not_found.format(template_id)}), 404
-        except ValidationError as ve:
-            return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
+        return _compose(template_id, lambda t: request.get_json())
 
     @app.route("/template/<string:template_id>/example", methods=["GET"])
     @auth.token_required
@@ -221,19 +193,34 @@ def initialize_api(app: Flask, auth: Authenticator):
            - compose
            - template
         """
+        return _compose(template_id, lambda t: t.example_composition)
+
+    def _compose(template_id: str, compose_retrieval_function):
+        width = request.args.get("width", type=int)
+        height = request.args.get("height", type=int)
+
         accept_header = request.headers.get("Accept", PDF_MIME)
-        mime_type = get_best_match(accept_header, AVAILABLE_MIME_TYPES)
+        mime_type = get_best_match(accept_header, ALL_AVAILABLE_MIME_TYPES)
 
         try:
             if mime_type is None:
-                raise UnsupportedMIMEType(mime_type)
-            template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
-            example_file = compose(template_model, template_model.example_composition, mime_type)
+                raise UnsupportedMIMEType(accept_header)
 
-            return send_file(example_file, mimetype=mime_type, as_attachment=True,
-                             attachment_filename=f"{template_model.id}-example{guess_extension(mime_type)}"), 200
-        except NoResultFound:
-            return jsonify({"message": template_not_found.format(template_id)}), 404
+            if width is not None and height is not None:
+                return jsonify({"message": aspect_ratio_compromised}), 400
+
+            if (width is not None or height is not None) and mime_type == PDF_MIME:
+                return jsonify({"message": resizing_unsupported.format(mime_type)}), 400
+
+            template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
+            compose_data = compose_retrieval_function(template_model)
+            composed_file = compose(template_model, compose_data, mime_type)
+            return send_file(composed_file, mimetype=mime_type, as_attachment=True,
+                             attachment_filename=f"compose{guess_extension(mime_type)}"), 201
         except (RendererNotFound, UnsupportedMIMEType):
             return jsonify(
-                {"message": unsupported_mime_type.format(accept_header, ", ".join(AVAILABLE_MIME_TYPES))}), 406
+                {"message": unsupported_mime_type.format(accept_header, ", ".join(ALL_AVAILABLE_MIME_TYPES))}), 406
+        except NoResultFound:
+            return jsonify({"message": template_not_found.format(template_id)}), 404
+        except ValidationError as ve:
+            return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
