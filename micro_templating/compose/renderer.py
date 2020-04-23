@@ -194,7 +194,7 @@ class PdfRenderer(Renderer):
 @Renderer.renderer()
 class PNGRenderer(Renderer):
     """
-    PDF Renderer which uses weasyprint to generate PDF documents.
+    PNG Renderer which uses weasyprint to generate PNG documents.
     """
 
     mime_type = PNG_MIME
