@@ -1,6 +1,8 @@
+import io
 from http import HTTPStatus
 from itertools import chain
-
+from PIL import Image
+from math import isclose
 import pytest
 from fitz import Document
 from pkg_resources import resource_filename, resource_listdir
@@ -79,7 +81,6 @@ def template_test_examples(client, template_loader):
 
 @pytest.mark.usefixtures("template_test_examples")
 class TestCompose:
-
     COMPOSE_ENDPOINT = "/template/{0}/compose"
     COMPOSE_METHOD_NAME = "compose_file"
 
@@ -125,5 +126,32 @@ class TestCompose:
             pdf_document = Document(filetype="bytes", stream=response.data)
             real_text = "".join((page.getText() for page in pdf_document))
             assert real_text.strip() == expected_text
+
+    def test_resize_ok(self, client):
+        error = 1
+        expected_width = 200
+        with partner_id_set(client.application, PARTNER_1):
+            response = client.get(
+                f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}",
+                headers={"accept": "image/png"}
+            )
+            assert response.status_code == HTTPStatus.OK
+            assert response.data is not None
+            img = Image.open(io.BytesIO(response.data))
+            width, height = img.size
+            expected_resolution = height / width
+
+            response = client.get(
+                f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?width={expected_width}",
+                headers={"accept": "image/png"}
+            )
+            assert response.status_code == HTTPStatus.OK
+            assert response.data is not None
+            img = Image.open(io.BytesIO(response.data))
+            real_width, real_height = img.size
+            real_resolution = real_height / real_width
+            assert isclose(expected_width, real_width, abs_tol=error)
+            assert isclose(expected_resolution, real_resolution, abs_tol=error/10)
+
 
 
