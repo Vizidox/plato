@@ -1,18 +1,36 @@
 import os
 
+from micro_templating.db.models import Template
+from typing import Dict, Any
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 import pathlib
-
-from smart_open import s3_iter_bucket
+import smart_open
 
 from .auth import Authenticator
-
 
 class SetupError(Exception):
     """
     Error for any setup Exception to occur when running this module's functions.
     """
     ...
+
+
+class WrongFormattedTemplate(SetupError):
+    """
+    raised when there is a template whose data is not available on S3
+    """
+    def __init__(self, partner_id: str, template_id: str):
+        """
+        Exception initialization
+
+        :param partner_id: the id of the partner
+        :type partner_id: string
+
+        :param template_id: the id of the template
+        :type template_id: string
+        """
+        message = f"Incorrect template format. partner_id: {partner_id}, template_id: {template_id}"
+        super(WrongFormattedTemplate, self).__init__(message)
 
 
 def setup_authenticator(auth_host_url: str, oauth2_audience: str, auth_host_origin: str = "") -> Authenticator:
@@ -29,29 +47,58 @@ def setup_authenticator(auth_host_url: str, oauth2_audience: str, auth_host_orig
     """
     return Authenticator(auth_host_url, oauth2_audience, auth_host_origin)
 
-
-def load_templates(s3_bucket: str, target_directory: str):
+def get_file_s3(bucket_name: str, url: str) -> Dict[str, Any]:
     """
-    Gets templates from the AWS S3 bucket. Assumes every file inside the bucket is a template.
+    get files from s3 and save them in the form of a dict. If a folder is inserted as the url, all files in that folder
+        will be returned
+
+    :param bucket_name: the bucket_name we want to retrieve file from
+    :type bucket_name: string
+
+    :param url: the url leading to the file/folder
+    :type url: string
+
+    :return: A dictionary with key as file's localtion on s3-bucket and value as file's content
+    :rtype: Dict[str, Any]
+    """
+    key_content_mapping: dict = {}
+    for key, content in smart_open.s3_iter_bucket(bucket_name=bucket_name, prefix=url):
+        if key[-1] == '/' or not content:
+            # Is a directory
+            continue
+        key_content_mapping[key] = content
+    return key_content_mapping
+
+def load_templates(s3_bucket: str, target_directory: str) -> None:
+    """
+    Gets templates from the AWS S3 bucket which are associated with ones available in the DB.
     Expected directory structure is /{auth_id}/{template_id}
     Args:
         s3_bucket: AWS S3 Bucket where the templates are
         target_directory: Target directory to store the templates in
     """
-    try:
-        for key, content in s3_iter_bucket(s3_bucket):
-            if key[-1] == '/' or not content:
-                # Is a directory
-                continue
+    templates: Template = Template.query.filter_by(partner_id='relying-party').all()
 
-            path = pathlib.Path(f"{target_directory}/{key}")
-            path.parent.mkdir(parents=True, exist_ok=True)
+    for template in templates:
+        partner_id = str(template.partner_id)
+        template_id = str(template.id)
 
-            with open(path, mode="wb") as file:
-                file.write(content)
-    except Exception as e:
-        raise SetupError(e, "Unable to obtain templates from S3")
+        static_file = f"static/{partner_id}/{template_id}"
+        template_file = f"templates/{partner_id}/{template_id}/{template_id}"
 
+        file_urls = [static_file, template_file]
+
+        for file_url in file_urls:
+            data_files = get_file_s3(bucket_name=s3_bucket, url=file_url)
+
+            if not data_files:
+                raise WrongFormattedTemplate(partner_id, template_id)
+
+            for key, content in data_files.items():
+                path = pathlib.Path(f"{target_directory}/{key}")
+                path.parent.mkdir(parents=True, exist_ok=True)
+                with open(path, mode="wb") as file:
+                    file.write(content)
 
 def create_template_environment(template_directory_path: str) -> JinjaEnv:
     """
@@ -69,21 +116,6 @@ def create_template_environment(template_directory_path: str) -> JinjaEnv:
     )
 
     return env
-
-
-def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
-    """
-    Obtains the templates from the S3 bucket and makes them available as part of the JinjaEnv
-
-    Args:
-        s3_bucket: string representing which bucket is to be accessed
-        target_directory: path to the directory where the templates should be stored
-
-    Returns:
-        JinjaEnv: environment loaded for target_directory with all templates from bucket
-    """
-    load_templates(s3_bucket, target_directory)
-    return create_template_environment(f"{target_directory}/templates")
 
 
 def inside_container():
