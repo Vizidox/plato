@@ -89,6 +89,20 @@ def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
 def setup_swagger_ui(project_name: str, project_version: str,
                      auth_host_origin: str, swagger_scope: str,
                      default_swagger_client: str = "", default_swagger_secret: str = "") -> dict:
+    """
+    Configurations to be used on the Swagger-ui page.
+
+    Args:
+        project_name: The project name to be displayed
+        project_version: The project version to be displayed
+        auth_host_origin: The authentication host
+        swagger_scope: The scope to be requested to the auth server for access
+        default_swagger_client: Default for the client id, not to be used in Production
+        default_swagger_secret: Default for the client secret, NEVER to be used in production
+
+    Returns:
+        dict: The swagger ui configuration to be used with Flasgger
+    """
     swagger_ui_config = {
         'title': project_name,
         'version': project_version,
@@ -116,6 +130,7 @@ def setup_swagger_ui(project_name: str, project_version: str,
     }
 
     return swagger_ui_config
+
 
 def inside_container():
     """
