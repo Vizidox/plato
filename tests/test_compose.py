@@ -15,6 +15,7 @@ PNG_IMAGE_TEMPLATE_ID = "png_image"
 NO_IMAGE_TEMPLATE_ID = PNG_IMAGE_TEMPLATE_ID.replace('p', 'u')
 PNG_IMAGE_NAME = "balloons.png"
 
+
 @pytest.fixture(scope="class")
 def template_test_examples(client, template_loader):
     with client.application.test_request_context():
@@ -22,7 +23,8 @@ def template_test_examples(client, template_loader):
                                              schema={"type": "object",
                                                      "properties": {"plain": {"type": "string"}}
                                                      },
-                                             type_="text/html", metadata={}, example_composition={}, tags=[])
+                                             type_="text/html", metadata={},
+                                             example_composition={"plain": "plain_example"}, tags=[])
         db.session.add(plain_text_template_model)
 
         plain_text_jinja_id = f"{PARTNER_1}/{PLAIN_TEXT_TEMPLATE_ID}/{PLAIN_TEXT_TEMPLATE_ID}"
@@ -81,16 +83,19 @@ class TestCompose:
     COMPOSE_ENDPOINT = "/template/{0}/compose"
     COMPOSE_METHOD_NAME = "compose_file"
 
+    EXAMPLE_COMPOSE_ENDPOINT = "/template/{0}/example"
+    EXAMPLE_COMPOSE_METHOD_NAME = "example_compose"
+
     def test_compose_plain_ok(self, client):
         with partner_id_set(client.application, PARTNER_1):
-            expected_test = "This is some plain text"
-            json_request = {"plain": expected_test}
+            expected_text = "This is some plain text"
+            json_request = {"plain": expected_text}
             response = client.post(self.COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID), json=json_request)
             assert response.status_code == HTTPStatus.OK
             assert response.data is not None
             pdf_document = Document(filetype="bytes", stream=response.data)
             real_text = "".join((page.getText() for page in pdf_document))
-            assert real_text.strip() == expected_test
+            assert real_text.strip() == expected_text
 
     def test_compose_image_exists(self, client):
         with partner_id_set(client.application, PARTNER_1):
@@ -100,13 +105,25 @@ class TestCompose:
                 assert response.status_code == HTTPStatus.OK
                 pdf_document = Document(filetype="bytes", stream=response.data)
                 blocks = chain.from_iterable((page.getText("dict")["blocks"] for page in pdf_document))
-                images = [block["image"] for block in blocks]
-                return images
+                return [block["image"] for block in blocks]
 
             images = get_images_from_template(PNG_IMAGE_TEMPLATE_ID)
             assert len(images) == 1
 
             images = get_images_from_template(NO_IMAGE_TEMPLATE_ID)
             assert len(images) == 0
+
+    def test_example_ok(self, client):
+        with client.application.app_context():
+            test_template = Template.query.filter_by(partner_id=PARTNER_1, id=PLAIN_TEXT_TEMPLATE_ID).one()
+            expected_text = test_template.example_composition["plain"]
+
+        with partner_id_set(client.application, PARTNER_1):
+            response = client.get(self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID))
+            assert response.status_code == HTTPStatus.OK
+            assert response.data is not None
+            pdf_document = Document(filetype="bytes", stream=response.data)
+            real_text = "".join((page.getText() for page in pdf_document))
+            assert real_text.strip() == expected_text
 
 
