@@ -228,7 +228,6 @@ class PNGRenderer(Renderer):
         self.width = width
         super().__init__(template_model)
 
-
     def print(self, html_string: str) -> io.BytesIO:
 
         with tempfile.NamedTemporaryFile() as target_file_html:
