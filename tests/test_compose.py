@@ -141,27 +141,31 @@ class TestCompose:
             width, height = img.size
             expected_resolution = height / width
 
+            assert height != expected_resize
+            assert width != expected_resize
+
             response = client.get(
                 f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?width={expected_resize}",
                 headers={"accept": "image/png"}
             )
-            assert response.status_code == HTTPStatus.OK
-            assert response.data is not None
-            img = Image.open(io.BytesIO(response.data))
-            real_width, real_height = img.size
-            real_resolution = real_height / real_width
+
+            def maintains_aspect_ratio(response):
+                assert response.status_code == HTTPStatus.OK
+                assert response.data is not None
+                img_ = Image.open(io.BytesIO(response.data))
+                width_, height_ = img_.size
+                real_resolution = height_ / width_
+                assert isclose(expected_resolution, real_resolution, abs_tol=error / 10)
+                return width_, height_
+
+            real_width, _ = maintains_aspect_ratio(response)
             assert isclose(expected_resize, real_width, abs_tol=error)
-            assert isclose(expected_resolution, real_resolution, abs_tol=error/10)
 
             response = client.get(
                 f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?height={expected_resize}",
                 headers={"accept": "image/png"}
             )
-            assert response.status_code == HTTPStatus.OK
-            assert response.data is not None
-            img = Image.open(io.BytesIO(response.data))
-            real_width, real_height = img.size
-            real_resolution = real_height / real_width
+
+            _, real_height = maintains_aspect_ratio(response)
             assert isclose(expected_resize, real_height, abs_tol=error)
-            assert isclose(expected_resolution, real_resolution, abs_tol=error/10)
 
