@@ -7,9 +7,10 @@ import pytest
 from fitz import Document
 from pkg_resources import resource_filename, resource_listdir
 
+from micro_templating.compose import ALL_AVAILABLE_MIME_TYPES
 from micro_templating.db import db
 from micro_templating.db.models import Template
-from micro_templating.error_messages import aspect_ratio_compromised, resizing_unsupported
+from micro_templating.error_messages import aspect_ratio_compromised, resizing_unsupported, unsupported_mime_type
 from tests import partner_id_set, get_message
 
 PARTNER_1 = "test_partner"
@@ -140,7 +141,6 @@ class TestCompose:
             assert response.data is not None
             with Image.open(io.BytesIO(response.data)) as img:
                 width, height = img.size
-            expected_resolution = height / width
 
             expected_resolution = height / width
             assert height != expected_resize
@@ -192,3 +192,14 @@ class TestCompose:
         )
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert get_message(response) == resizing_unsupported.format(pdf_mimetype)
+
+    def test_unsupported_mimetype(self, client):
+        jpeg_mimetype = "image/jpeg"
+
+        response = client.get(
+            f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}",
+            headers={"accept": jpeg_mimetype}
+        )
+
+        assert response.status_code == HTTPStatus.NOT_ACCEPTABLE
+        assert get_message(response) == unsupported_mime_type.format(jpeg_mimetype, ", ".join(ALL_AVAILABLE_MIME_TYPES))
