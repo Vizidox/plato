@@ -129,7 +129,7 @@ class TestCompose:
 
     def test_resize_ok(self, client):
         error = 1
-        expected_width = 200
+        expected_resize = 200
         with partner_id_set(client.application, PARTNER_1):
             response = client.get(
                 f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}",
@@ -142,7 +142,7 @@ class TestCompose:
             expected_resolution = height / width
 
             response = client.get(
-                f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?width={expected_width}",
+                f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?width={expected_resize}",
                 headers={"accept": "image/png"}
             )
             assert response.status_code == HTTPStatus.OK
@@ -150,8 +150,18 @@ class TestCompose:
             img = Image.open(io.BytesIO(response.data))
             real_width, real_height = img.size
             real_resolution = real_height / real_width
-            assert isclose(expected_width, real_width, abs_tol=error)
+            assert isclose(expected_resize, real_width, abs_tol=error)
             assert isclose(expected_resolution, real_resolution, abs_tol=error/10)
 
-
+            response = client.get(
+                f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?height={expected_resize}",
+                headers={"accept": "image/png"}
+            )
+            assert response.status_code == HTTPStatus.OK
+            assert response.data is not None
+            img = Image.open(io.BytesIO(response.data))
+            real_width, real_height = img.size
+            real_resolution = real_height / real_width
+            assert isclose(expected_resize, real_height, abs_tol=error)
+            assert isclose(expected_resolution, real_resolution, abs_tol=error/10)
 
