@@ -4,6 +4,7 @@ from micro_templating.db.models import Template
 from typing import Dict, Any
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 import pathlib
+import shutil
 import smart_open
 
 from .auth import Authenticator
@@ -15,9 +16,9 @@ class SetupError(Exception):
     ...
 
 
-class WrongFormattedTemplate(SetupError):
+class NoStaticContentFound(SetupError):
     """
-    raised when there is a template whose data is not available on S3
+    raised when no static content fount on S3
     """
     def __init__(self, partner_id: str, template_id: str):
         """
@@ -29,8 +30,25 @@ class WrongFormattedTemplate(SetupError):
         :param template_id: the id of the template
         :type template_id: string
         """
-        message = f"Incorrect template format. partner_id: {partner_id}, template_id: {template_id}"
-        super(WrongFormattedTemplate, self).__init__(message)
+        message = f"No static content found. partner_id: {partner_id}, template_id: {template_id}"
+        super(NoStaticContentFound, self).__init__(message)
+
+class NoIndexTemplateFound(SetupError):
+    """
+    raised when no template found on S3
+    """
+    def __init__(self, partner_id: str, template_id: str):
+        """
+        Exception initialization
+
+        :param partner_id: the id of the partner
+        :type partner_id: string
+
+        :param template_id: the id of the template
+        :type template_id: string
+        """
+        message = f"No index template file found. partner_id: {partner_id}, template_id: {template_id}"
+        super(NoIndexTemplateFound, self).__init__(message)
 
 
 def setup_authenticator(auth_host_url: str, oauth2_audience: str, auth_host_origin: str = "") -> Authenticator:
@@ -58,7 +76,7 @@ def get_file_s3(bucket_name: str, url: str) -> Dict[str, Any]:
     :param url: the url leading to the file/folder
     :type url: string
 
-    :return: A dictionary with key as file's localtion on s3-bucket and value as file's content
+    :return: A dictionary with key as file's location on s3-bucket and value as file's content
     :rtype: Dict[str, Any]
     """
     key_content_mapping: dict = {}
@@ -77,22 +95,30 @@ def load_templates(s3_bucket: str, target_directory: str) -> None:
         s3_bucket: AWS S3 Bucket where the templates are
         target_directory: Target directory to store the templates in
     """
-    templates: Template = Template.query.filter_by(partner_id='relying-party').all()
+    # delete all old templates
+    deleted_path = pathlib.Path(target_directory)
+    if deleted_path.exists():
+        shutil.rmtree(deleted_path)
+
+    templates: Template = Template.query.all()
 
     for template in templates:
         partner_id = str(template.partner_id)
         template_id = str(template.id)
 
-        static_file = f"static/{partner_id}/{template_id}"
-        template_file = f"templates/{partner_id}/{template_id}/{template_id}"
+        static_folder = f"static/{partner_id}/{template_id}"
+        template_file = f"templates/{partner_id}/{template_id}/{template_id}1"
 
-        file_urls = [static_file, template_file]
+        file_urls = [static_folder, template_file]
 
         for file_url in file_urls:
             data_files = get_file_s3(bucket_name=s3_bucket, url=file_url)
 
             if not data_files:
-                raise WrongFormattedTemplate(partner_id, template_id)
+                if file_url == static_folder:
+                    raise NoStaticContentFound(partner_id, template_id)
+                else:
+                    raise NoIndexTemplateFound(partner_id, template_id)
 
             for key, content in data_files.items():
                 path = pathlib.Path(f"{target_directory}/{key}")
