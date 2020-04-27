@@ -9,7 +9,8 @@ from pkg_resources import resource_filename, resource_listdir
 
 from micro_templating.db import db
 from micro_templating.db.models import Template
-from tests import partner_id_set
+from micro_templating.error_messages import aspect_ratio_compromised, resizing_unsupported
+from tests import partner_id_set, get_message
 
 PARTNER_1 = "test_partner"
 PLAIN_TEXT_TEMPLATE_ID = "plain_text"
@@ -137,10 +138,11 @@ class TestCompose:
             )
             assert response.status_code == HTTPStatus.OK
             assert response.data is not None
-            img = Image.open(io.BytesIO(response.data))
-            width, height = img.size
+            with Image.open(io.BytesIO(response.data)) as img:
+                width, height = img.size
             expected_resolution = height / width
 
+            expected_resolution = height / width
             assert height != expected_resize
             assert width != expected_resize
 
@@ -152,8 +154,8 @@ class TestCompose:
             def maintains_aspect_ratio(response):
                 assert response.status_code == HTTPStatus.OK
                 assert response.data is not None
-                img_ = Image.open(io.BytesIO(response.data))
-                width_, height_ = img_.size
+                with Image.open(io.BytesIO(response.data)) as img_:
+                    width_, height_ = img_.size
                 real_resolution = height_ / width_
                 assert isclose(expected_resolution, real_resolution, abs_tol=error / 10)
                 return width_, height_
@@ -169,3 +171,24 @@ class TestCompose:
             _, real_height = maintains_aspect_ratio(response)
             assert isclose(expected_resize, real_height, abs_tol=error)
 
+    def test_resize_nok(self, client):
+        intended_resize = 200
+
+        response = client.get(
+            f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}"
+            f"?width={intended_resize}&height={intended_resize}",
+            headers={"accept": "image/png"}
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert get_message(response) == aspect_ratio_compromised
+
+        pdf_mimetype = "application/pdf"
+
+        response = client.get(
+            f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}"
+            f"?width={intended_resize}",
+            headers={"accept": pdf_mimetype}
+        )
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert get_message(response) == resizing_unsupported.format(pdf_mimetype)
