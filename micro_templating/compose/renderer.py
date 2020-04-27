@@ -207,7 +207,7 @@ class PNGRenderer(Renderer):
 
     @height.setter
     def height(self, value):
-        if self._width is not None:
+        if self.width is not None and value is not None:
             raise ValueError("Unable to use both height and width in order to maintain aspect ratio")
         self._height = value
 
@@ -217,7 +217,7 @@ class PNGRenderer(Renderer):
 
     @width.setter
     def width(self, value):
-        if self._height is not None:
+        if self.height is not None and value is not None:
             raise ValueError("Unable to use both height and width in order to maintain aspect ratio")
         self._width = value
 
