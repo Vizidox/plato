@@ -5,7 +5,6 @@ from PIL import Image
 from math import isclose
 import pytest
 from fitz import Document
-from pkg_resources import resource_filename, resource_listdir
 
 from micro_templating.compose import ALL_AVAILABLE_MIME_TYPES
 from micro_templating.db import db
