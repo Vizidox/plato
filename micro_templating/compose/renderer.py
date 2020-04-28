@@ -242,6 +242,7 @@ class PNGRenderer(Renderer):
             elif self.width is not None:
                 resolution_multiplier = self.width / page0.width
 
+            # 96 is the default resolution provided by weasyprint to maintain aspect ratio
             weasy_doc.write_png(target=target_file_html.name, resolution=resolution_multiplier * 96)
             with open(target_file_html.name, mode='rb') as temp_file_stream:
                 return io.BytesIO(temp_file_stream.read())
