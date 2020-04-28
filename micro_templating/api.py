@@ -1,18 +1,40 @@
+from typing import Callable
+
 from flask import jsonify, request, g, Flask, send_file
-from jsonschema import ValidationError, validate
+from jsonschema import ValidationError
 from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm.exc import NoResultFound
 
-from .error_messages import invalid_compose_json, template_not_found
-from .compose.renderer import PdfRenderer
+from micro_templating.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
+from micro_templating.compose.renderer import compose, RendererNotFound
+from micro_templating.views.views import TemplateDetailView
+from mimetypes import guess_extension
 from .auth import Authenticator
 from .db.models import Template
-from micro_templating.views.views import TemplateDetailView
-from .settings import TEMPLATE_DIRECTORY
+from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
+    resizing_unsupported
+from accept_types import get_best_match
 
 
-def initalize_api(app: Flask, auth: Authenticator):
+class UnsupportedMIMEType(Exception):
+    """
+    Exception to be raised when the mime type requested is not supported
+    """
+    ...
 
+
+def initialize_api(app: Flask, auth: Authenticator):
+    """
+    Initializes Flask app with the microservice endpoints.
+
+    Args:
+        app: The Flask app
+        auth: The authenticator to provide security on the endpoints.
+
+    Returns:
+
+    """
     @app.route("/templates/<string:template_id>", methods=['GET'])
     @auth.token_required
     def template_by_id(template_id: str):
@@ -36,15 +58,14 @@ def initalize_api(app: Flask, auth: Authenticator):
         tags:
            - template
         """
+        try:
 
-        template: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).first()
+            template: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
+            view = TemplateDetailView.view_from_template(template)
+            return jsonify(view._asdict())
 
-        if template is None:
+        except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
-
-        view = TemplateDetailView.view_from_template(template)
-
-        return jsonify(view._asdict())
 
     @app.route("/templates/", methods=['GET'])
     @auth.token_required
@@ -90,6 +111,9 @@ def initalize_api(app: Flask, auth: Authenticator):
         ---
         consumes:
             - application/json
+        produces:
+            - application/pdf
+            - image/png
         parameters:
             - name: template_id
               in: path
@@ -100,10 +124,26 @@ def initalize_api(app: Flask, auth: Authenticator):
               description: body to compose file with, must be according to the template schema
               schema:
                 type: object
+            - in: header
+              name: accept
+              required: false
+              type: string
+              enum: [application/pdf, image/png]
+              description: MIME type(s) to determine what kind of file is outputted
+            - in: query
+              name: height
+              required: false
+              type: integer
+              description: Intended height for image output
+            - in: query
+              name: width
+              required: false
+              type: integer
+              description: Intended width for image output
         security:
           - api_auth: [templating]
         responses:
-          201:
+          200:
             description: composed file
             schema:
               type: file
@@ -111,31 +151,96 @@ def initalize_api(app: Flask, auth: Authenticator):
             description: Invalid compose data for template schema
           404:
              description: Template not found
+          406:
+             description: Unsupported MIME type for file
         tags:
            - compose
            - template
         """
-        template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).first()
+        return _compose(template_id, "compose", lambda t: request.get_json())
 
-        if template_model is None:
-            return jsonify({"message": template_not_found.format(template_id)}), 404
+    @app.route("/template/<string:template_id>/example", methods=["GET"])
+    @auth.token_required
+    def example_compose(template_id: str):
+        """
+        Gets example file based on the template
+        ---
+        consumes:
+            - application/json
+        produces:
+            - application/pdf
+            - image/png
+        parameters:
+            - name: template_id
+              in: path
+              type: string
+              required: true
+            - in: header
+              name: accept
+              required: false
+              type: string
+              enum: [application/pdf, image/png]
+            - in: query
+              name: height
+              required: false
+              type: integer
+              description: Intended height for image output
+            - in: query
+              name: width
+              required: false
+              type: integer
+              description: Intended width for image output
+        security:
+          - api_auth: [templating]
+        responses:
+          200:
+            description: composed file
+            schema:
+              type: file
+          404:
+             description: Template not found
+          406:
+             description: Unsupported MIME type for file
+        tags:
+           - compose
+           - template
+        """
+        return _compose(template_id, "example", lambda t: t.example_composition)
 
-        compose_data = request.get_json()
+    def _compose(template_id: str,
+                 file_name: str,
+                 compose_retrieval_function: Callable[[Template], dict]):
+        width = request.args.get("width", type=int)
+        height = request.args.get("height", type=int)
+
+        accept_header = request.headers.get("Accept", PDF_MIME)
+        mime_type = get_best_match(accept_header, ALL_AVAILABLE_MIME_TYPES)
+
         try:
-            validate(instance=compose_data, schema=template_model.schema)
+            if mime_type is None:
+                raise UnsupportedMIMEType(accept_header)
+
+            if width is not None and height is not None:
+                return jsonify({"message": aspect_ratio_compromised}), 400
+
+            if (width is not None or height is not None) and mime_type == PDF_MIME:
+                return jsonify({"message": resizing_unsupported.format(mime_type)}), 400
+
+            compose_params = {}
+            if width is not None:
+                compose_params["width"] = width
+            if height is not None:
+                compose_params["height"] = height
+
+            template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
+            compose_data = compose_retrieval_function(template_model)
+            composed_file = compose(template_model, compose_data, mime_type, **compose_params)
+            return send_file(composed_file, mimetype=mime_type, as_attachment=True,
+                             attachment_filename=f"{file_name}{guess_extension(mime_type)}"), 200
+        except (RendererNotFound, UnsupportedMIMEType):
+            return jsonify(
+                {"message": unsupported_mime_type.format(accept_header, ", ".join(ALL_AVAILABLE_MIME_TYPES))}), 406
+        except NoResultFound:
+            return jsonify({"message": template_not_found.format(template_id)}), 404
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
-
-        partner_static_folder = f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/"
-        template_static_folder = f"{TEMPLATE_DIRECTORY}/static/{g.partner_id}/{template_id}/"
-
-        renderer = PdfRenderer(
-            template_model=template_model,
-            compose_data=compose_data,
-            partner_static_directory=partner_static_folder,
-            template_static_directory=template_static_folder
-        )
-
-        render = renderer.render()
-        return send_file(render, mimetype=renderer.mime_type(), as_attachment=True,
-                         attachment_filename=f"compose{renderer.file_extension()}"), 201

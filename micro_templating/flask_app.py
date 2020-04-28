@@ -9,28 +9,24 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 
 from jinja2 import Environment as JinjaEnv
-from micro_templating.api import initalize_api
+from micro_templating.api import initialize_api
 from micro_templating.auth import Authenticator
 from micro_templating.views import swag
 from micro_templating.db import db
 from micro_templating.cli import register_cli_commands
 
 
-def create_app(project_name: str, project_version: str,
-               db_url: str, authenticator: Authenticator, jinja_env: JinjaEnv,
-               swagger_scope: str = "templating",
-               default_swagger_client: str = "", default_swagger_secret: str = "",) -> Flask:
+def create_app(db_url: str, authenticator: Authenticator, template_static_directory: str,
+               jinja_env: JinjaEnv, swagger_ui_config: dict) -> Flask:
     """
 
     Args:
         jinja_env: Jinja environment responsible for rendering the templates
         authenticator: Authenticator responsible for validating tokens on API requests
-        project_name: Name of the flask app
-        project_version: Version of the flask app
+        template_static_directory: The directory where the static content for the templates
         db_url: Database URI
-        swagger_scope: Scope name be used in swagger-ui
-        default_swagger_client: Default value for client in client_credentials for swagger-ui
-        default_swagger_secret: Default value for secret in client_credentials for swagger-ui
+        swagger_ui_config: The Swagger-UI config to be used with Flasgger.
+         As defined in https://github.com/flasgger/flasgger#swagger-ui-and-templates
 
     Returns:
 
@@ -42,38 +38,14 @@ def create_app(project_name: str, project_version: str,
     migrate = Migrate(app, db)
     cors = CORS(app)
 
-    app.config['SWAGGER'] = {
-        'title': project_name,
-        'version': project_version,
-        'uiversion': 3,
-        'swagger': '2.0',
-        'favicon': "/static/favicon-32x32.png",
-        'swagger_ui_css': "/static/swagger-ui.css",
-        'swagger_ui_standalone_preset_js': '/static/swagger-ui-standalone-preset.js',
-        'description': '',
-        "securityDefinitions": {
-            "api_auth": {
-                "type": "oauth2",
-                "flow": "application",
-                "tokenUrl": f"{authenticator.auth_host_origin}/protocol/openid-connect/token",
-                "scopes": {f"{swagger_scope}": "gives access to the templating engine"}
-            }
-        },
-        # 'auth' configuration used to initialize Oauth in swagger-ui as per the initOAuth method
-        # https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
-        # this is not standard flasgger behavior but it is possible because we overrode the swagger-ui templates
-        "auth": {
-            "clientId": f"{default_swagger_client}",
-            "clientSecret": f"{default_swagger_secret}"
-        }
-    }
-
+    app.config['SWAGGER'] = swagger_ui_config
     swag.init_app(app)
 
     app.config["JINJENV"] = jinja_env
+    app.config["TEMPLATE_STATIC"] = template_static_directory
     app.config["AUTH"] = authenticator
 
     register_cli_commands(app)
-    initalize_api(app, authenticator)
+    initialize_api(app, authenticator)
 
     return app

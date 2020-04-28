@@ -1,5 +1,6 @@
 """Module containing any function or class regarding authentication
 """
+from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Callable, TypeVar, Any, cast
 from .error_messages import unbeary_auth_message, no_auth_header_message, token_is_invalid_message
@@ -11,17 +12,34 @@ FuncType = Callable[..., Any]
 F = TypeVar('F', bound=FuncType)
 
 
-class Authenticator:
+class Authenticator(ABC):
     """
-    Authenticator is the class responsible for cross-checking any information regarding the bearer token.
+    Authenticator is the abstract class responsible for cross-checking any information regarding the bearer token.
+    """
+
+    @abstractmethod
+    def token_required(self, f: Callable) -> F:
+        """
+        Validates token to access the decorated resource
+        Args:
+            f: the method to be decorated
+        Returns:
+            F: the decorated method
+        """
+        ...
+
+
+class FlaskAuthenticator(Authenticator):
+    """
+    The Authenticator to be used with Flask.
     Currently coupled to our Authentication provider, Keycloak.
 
     Attributes:
         auth_host: URL representing the keycloak realm, e.g http://localhost:8080/auth/realms/example_realm
         auth_host_origin: URL keycloak signs with, defaults to auth_host
         oauth_config_url: URL for OIDC well known resources on server
-        oauth_config: JSON response for well known server resources
         audience: Audience used for JWT validation
+
     """
 
     def __init__(self, auth_host: str, audience: str, auth_host_origin: str = ""):
