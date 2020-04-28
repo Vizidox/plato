@@ -12,12 +12,13 @@ from json import loads as json_loads
 PARTNER_1 = "Bob"
 PARTNER_2 = "NotBob"
 PARTNER_3 = "NotNotBob"
+NUMBER_OF_TEMPLATES_FOR_PARTNER_1 = 157
 
 
 @pytest.fixture(scope="class")
 def populate_db(client):
     with client.application.test_request_context():
-        for i in range(157):
+        for i in range(NUMBER_OF_TEMPLATES_FOR_PARTNER_1):
             t = Template(partner_id=PARTNER_1, id_=str(i),
                          schema={"type": "object",
                                  "properties": {f"{i}": {"type": "string"}}
@@ -58,7 +59,7 @@ class TestTemplates:
         with partner_id_set(client.application, PARTNER_1):
             response = client.get(self.GET_TEMPLATES_ENDPOINT)
             assert response.status_code == HTTPStatus.OK
-            assert len(response.json) == 157
+            assert len(response.json) == NUMBER_OF_TEMPLATES_FOR_PARTNER_1
 
             template_view_expected_keys = ["template_id", "template_schema", "type", "metadata", "tags"]
 
@@ -80,6 +81,7 @@ class TestTemplates:
     def test_obtain_template_info_by_id_ok(self, client):
 
         tentative_template_id = 39
+        assert tentative_template_id < NUMBER_OF_TEMPLATES_FOR_PARTNER_1
 
         with partner_id_set(client.application, PARTNER_1):
             response = client.get(f"{self.GET_TEMPLATES_ENDPOINT}{tentative_template_id}")
@@ -91,6 +93,7 @@ class TestTemplates:
     def test_obtain_template_info_by_id_not_found(self, client):
 
         tentative_template_id = 39
+        assert tentative_template_id < NUMBER_OF_TEMPLATES_FOR_PARTNER_1
 
         with partner_id_set(client.application, PARTNER_2):
             response = client.get(self.GET_TEMPLATES_BY_ID_ENDPOINT.format(tentative_template_id))
