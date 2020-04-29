@@ -27,7 +27,7 @@ marker = "sys_platform == \"win32\""
 name = "atomicwrites"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.3.0"
+version = "1.4.0"
 
 [[package]]
 category = "main"
@@ -106,10 +106,10 @@ description = "The AWS SDK for Python"
 name = "boto3"
 optional = false
 python-versions = "*"
-version = "1.12.47"
+version = "1.12.48"
 
 [package.dependencies]
-botocore = ">=1.15.47,<1.16.0"
+botocore = ">=1.15.48,<1.16.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.3.0,<0.4.0"
 
@@ -119,7 +119,7 @@ description = "Low-level, data-driven core of boto 3."
 name = "botocore"
 optional = false
 python-versions = "*"
-version = "1.15.47"
+version = "1.15.48"
 
 [package.dependencies]
 docutils = ">=0.10,<0.16"
@@ -1038,8 +1038,8 @@ category = "main"
 description = "Utils for streaming large files (S3, HDFS, GCS, gzip, bz2...)"
 name = "smart-open"
 optional = false
-python-versions = "*"
-version = "1.11.1"
+python-versions = ">=3.5.*"
+version = "2.0.0"
 
 [package.dependencies]
 boto = "*"
@@ -1098,7 +1098,7 @@ description = "Library provides lightweight, throwaway instances of common datab
 name = "testcontainers"
 optional = false
 python-versions = "~=3.5"
-version = "2.6.0"
+version = "3.0.0"
 
 [package.dependencies]
 blindspin = "*"
@@ -1110,9 +1110,11 @@ wrapt = "*"
 docker-compose = ["docker-compose"]
 google-cloud-pubsub = ["google-cloud-pubsub"]
 mongo = ["pymongo"]
+mssqlserver = ["pyodbc"]
 mysql = ["sqlalchemy", "pymysql"]
 oracle = ["sqlalchemy", "cx-oracle"]
 postgresql = ["sqlalchemy", "psycopg2-binary"]
+redis = ["redis"]
 selenium = ["selenium"]
 
 [[package]]
@@ -1243,7 +1245,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "70d826312c6547789c2197458c81432b893ad0b26c6c94c88143e773d153ae85"
+content-hash = "b7ce38c3704be3734918c99414e4fa836dcc99fcbd580d99e97ce870588425af"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1255,8 +1257,8 @@ alembic = [
     {file = "alembic-1.4.2.tar.gz", hash = "sha256:035ab00497217628bf5d0be82d664d8713ab13d37b630084da8e1f98facf4dbf"},
 ]
 atomicwrites = [
-    {file = "atomicwrites-1.3.0-py2.py3-none-any.whl", hash = "sha256:03472c30eb2c5d1ba9227e4c2ca66ab8287fbfbbda3888aa93dc2e28fc6811b4"},
-    {file = "atomicwrites-1.3.0.tar.gz", hash = "sha256:75a9445bac02d8d058d5e1fe689654ba5a6556a1dfd8ce6ec55a0ed79866cfa6"},
+    {file = "atomicwrites-1.4.0-py2.py3-none-any.whl", hash = "sha256:6d1784dea7c0c8d4a5172b6c620f40b6e4cbfdf96d783691f2e1302a7b88e197"},
+    {file = "atomicwrites-1.4.0.tar.gz", hash = "sha256:ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"},
 ]
 attrs = [
     {file = "attrs-19.3.0-py2.py3-none-any.whl", hash = "sha256:08a96c641c3a74e44eb59afb61a24f2cb9f4d7188748e76ba4bb5edfa3cb7d1c"},
@@ -1281,12 +1283,12 @@ boto = [
     {file = "boto-2.49.0.tar.gz", hash = "sha256:ea0d3b40a2d852767be77ca343b58a9e3a4b00d9db440efb8da74b4e58025e5a"},
 ]
 boto3 = [
-    {file = "boto3-1.12.47-py2.py3-none-any.whl", hash = "sha256:7f8b822e383c0d7656488d3b6fdc3e9c42a56fab3ed1a27c2cbc65876093cb21"},
-    {file = "boto3-1.12.47.tar.gz", hash = "sha256:84daba6d2f0c8d55477ba0b8196ffa7eb7f79d9099f768ac93eb968955877a3f"},
+    {file = "boto3-1.12.48-py2.py3-none-any.whl", hash = "sha256:d345f2ba820f022ab45627913cb427b1fa56d7c1f8e19312eee20874ba800007"},
+    {file = "boto3-1.12.48.tar.gz", hash = "sha256:39ef75f1351d9dce9542c71602bbe4dbae001df1aa5c75bdacea933d60cc1e7f"},
 ]
 botocore = [
-    {file = "botocore-1.15.47-py2.py3-none-any.whl", hash = "sha256:cceeb6d2a1bbbd062ab54552ded5065a12b14e845aa35613fc91fd68312020c0"},
-    {file = "botocore-1.15.47.tar.gz", hash = "sha256:6c6e9db7a6e420431794faee111923e4627b4920d4d9d8b16e1a578a389b2283"},
+    {file = "botocore-1.15.48-py2.py3-none-any.whl", hash = "sha256:f3569216d2f0067a34608e26ae1d0035b84fa29ad68d6c5fd26124a4cc86e8c9"},
+    {file = "botocore-1.15.48.tar.gz", hash = "sha256:ef4fa3055421cb95a7bf559e715f8c5f656aca30fafef070eca21b13ca3f0f81"},
 ]
 cairocffi = [
     {file = "cairocffi-1.1.0.tar.gz", hash = "sha256:f1c0c5878f74ac9ccb5d48b2601fcc75390c881ce476e79f4cfedd288b1b05db"},
@@ -1794,7 +1796,7 @@ six = [
     {file = "six-1.14.0.tar.gz", hash = "sha256:236bdbdce46e6e6a3d61a337c0f8b763ca1e8717c03b369e87a7ec7ce1319c0a"},
 ]
 smart-open = [
-    {file = "smart_open-1.11.1.tar.gz", hash = "sha256:221cc08ae926af6ad72d141f208d228e1e801b1ee9b15f3e466eecf89d931002"},
+    {file = "smart_open-2.0.0.tar.gz", hash = "sha256:555962abf982faff8a8aeb65e0695474e3091f604826055782beffa8400e4e4e"},
 ]
 sqlalchemy = [
     {file = "SQLAlchemy-1.3.16-cp27-cp27m-macosx_10_13_x86_64.whl", hash = "sha256:8d8c21e9d4efef01351bf28513648ceb988031be4159745a7ad1b3e28c8ff68a"},
@@ -1822,7 +1824,7 @@ sshpubkeys = [
     {file = "sshpubkeys-3.1.0.tar.gz", hash = "sha256:b388399caeeccdc145f06fd0d2665eeecc545385c60b55c282a15a022215af80"},
 ]
 testcontainers = [
-    {file = "testcontainers-2.6.0.tar.gz", hash = "sha256:16f5cda7484b1f19bcd5de5dacea26f2aa99d79a744ed5f2f141c6c23eac4f4a"},
+    {file = "testcontainers-3.0.0.tar.gz", hash = "sha256:ead47008f05a9fe7884dacebe36fe81f073d53fea2c82b7b19f44703a9d770e1"},
 ]
 tinycss2 = [
     {file = "tinycss2-1.0.2-py3-none-any.whl", hash = "sha256:9fdacc0e22d344ddd2ca053837c133900fe820ae1222f63b79617490a498507a"},

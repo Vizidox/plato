@@ -5,7 +5,7 @@ volumes:
 
 services:
   database:
-    image: postgres:12.1
+    image: postgres:12.2
     restart: unless-stopped
     volumes:
       - pg_data:/data/db
