@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "micro-templating"
-version = "1.0.0"
+version = "1.1.0"
 description = "Templating as a microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>"]
 
@@ -8,34 +8,41 @@ authors = ["Tiago Santos <tiago.santos@vizidox.com>"]
 python = "^3.7"
 
 flasgger = "0.9.4"
-flask = "1.1.1"
+flask = "1.1.2"
 Flask-Cors="3.0.8"
-uWSGI="2.0.18"
+gunicorn="20.0.4"
+meinheld="1.0.1"
 
 # auth
 python-jose="3.1.0"
 
 # S3
-smart-open="1.9.0"
+smart-open={version="2.0.0", extras=["aws"]}
 
 # settings
-python-dotenv="0.10.3"
+python-dotenv="0.13.0"
 tomlkit="0.5.8"
 
 # Database
-SQLAlchemy = {version="1.3.12", extras=["postgresql_psycopg2binary"]}
+SQLAlchemy = {version="1.3.16", extras=["postgresql_psycopg2binary"]}
 Flask-SQLAlchemy="2.4.1"
-Flask-Migrate="2.5.2"
+Flask-Migrate="2.5.3"
+
+#HTTP
+accept-types="0.4.1"
 
 # Templating
 WeasyPrint="51"
 qrcode={ version = "6.1", extras=["pil"] }
 
 [tool.poetry.dev-dependencies]
-pytest="5.3.1"
+pytest="5.4.1"
+pytest-cov="2.8.1"
 moto="1.3.14"
-testcontainers = { git = "https://github.com/testcontainers/testcontainers-python.git", tag = "v2.6" }
+testcontainers = "3.0.0"
+blinker="1.4"
+PyMuPDF="1.16.18"
 
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=1.0"]
 build-backend = "poetry.masonry.api"
