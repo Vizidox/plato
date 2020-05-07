@@ -65,6 +65,7 @@ def setup_authenticator(auth_host_url: str, oauth2_audience: str, auth_host_orig
     """
     return FlaskAuthenticator(auth_host_url, oauth2_audience, auth_host_origin)
 
+
 def get_file_s3(bucket_name: str, url: str) -> Dict[str, Any]:
     """
     get files from s3 and save them in the form of a dict. If a folder is inserted as the url, all files in that folder
@@ -87,6 +88,24 @@ def get_file_s3(bucket_name: str, url: str) -> Dict[str, Any]:
         key_content_mapping[key] = content
     return key_content_mapping
 
+
+def write_files(files: Dict[str, Any], target_directory: str) -> None:
+    """
+    Write files to a target directory
+    :param files: a dict representing files needing to be written in the target directory
+        with key as the file url and the value as file content
+    :type files: Dict[str, Any]
+
+    :param target_directory: the directory all the files will reside in
+    :type target_directory: string
+    """
+    for key, content in files.items():
+        path = pathlib.Path(f"{target_directory}/{key}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, mode="wb") as file:
+            file.write(content)
+
+
 def load_templates(s3_bucket: str, target_directory: str) -> None:
     """
     Gets templates from the AWS S3 bucket which are associated with ones available in the DB.
@@ -103,28 +122,24 @@ def load_templates(s3_bucket: str, target_directory: str) -> None:
     templates: Template = Template.query.with_entities(Template.partner_id, Template.id).all()
 
     for template in templates:
-        partner_id = str(template.partner_id)
-        template_id = str(template.id)
+        partner_id = template.partner_id
+        template_id = template.id
 
         static_folder = f"static/{partner_id}/{template_id}"
         template_file = f"templates/{partner_id}/{template_id}/{template_id}"
 
-        file_urls = [static_folder, template_file]
+        # get static files
+        static_files = get_file_s3(bucket_name=s3_bucket, url=static_folder)
+        if not static_files:
+            raise NoStaticContentFound(partner_id, template_id)
+        write_files(files=static_files, target_directory=target_directory)
 
-        for file_url in file_urls:
-            data_files = get_file_s3(bucket_name=s3_bucket, url=file_url)
+        # get template content
+        template_files = get_file_s3(bucket_name=s3_bucket, url=template_file)
+        if not template_files:
+            raise NoStaticContentFound(partner_id, template_id)
+        write_files(files=template_files, target_directory=target_directory)
 
-            if not data_files:
-                if file_url == static_folder:
-                    raise NoStaticContentFound(partner_id, template_id)
-                else:
-                    raise NoIndexTemplateFound(partner_id, template_id)
-
-            for key, content in data_files.items():
-                path = pathlib.Path(f"{target_directory}/{key}")
-                path.parent.mkdir(parents=True, exist_ok=True)
-                with open(path, mode="wb") as file:
-                    file.write(content)
 
 def create_template_environment(template_directory_path: str) -> JinjaEnv:
     """
