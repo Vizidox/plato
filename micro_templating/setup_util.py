@@ -137,7 +137,7 @@ def load_templates(s3_bucket: str, target_directory: str) -> None:
         # get template content
         template_files = get_file_s3(bucket_name=s3_bucket, url=template_file)
         if not template_files:
-            raise NoStaticContentFound(partner_id, template_id)
+            raise NoIndexTemplateFound(partner_id, template_id)
         write_files(files=template_files, target_directory=target_directory)
 
 
