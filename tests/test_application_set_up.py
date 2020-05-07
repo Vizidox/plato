@@ -35,7 +35,7 @@ def create_template(template_dir: str, partner_id: str, template_id: str) -> Tem
     Create necessary stuff for testing that is bundled into 1 TemplateMeta instance
     """
     template = Template(partner_id=partner_id, id_=template_id, schema={},
-                        type_="text/html", tags=['test_tags'], metadata={})
+                        type_="text/html", tags=['test_tags'], metadata={}, example_composition="place_holder")
     static_files = [f"{template_dir}/static/{partner_id}/{template_id}/abc.png"]
     template_files = [f"{template_dir}/templates/{partner_id}/{template_id}/{template_id}"]
     template_meta = TemplateMeta(partner_id=partner_id, template_id=template_id, static_files=static_files, template_files=template_files, template=template)
