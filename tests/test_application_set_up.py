@@ -20,6 +20,11 @@ def get_static_file_path(partner_id: str, template_id: str, file_name: str):
     return STATIC_FILE_PATH_FORMAT.format(partner_id, template_id, file_name)
 
 
+def create_child_temp_folder(main_directory: str) -> None:
+    template_dir_name = main_directory + "/abc"
+    pathlib.Path(template_dir_name).mkdir(parents=True, exist_ok=True)
+    return template_dir_name
+
 def write_to_s3(bucket_name, file_path):
     encoding = "utf-8"
     with s3.open(bucket_name, key_id=file_path, mode="wb") as file:
@@ -93,8 +98,8 @@ class TestApplicationSetup:
         bucket_name = populate_s3
         with client.application.test_request_context():
             with TemporaryDirectory() as temp:
-                template_dir_name = temp + "/abc"
-                pathlib.Path(template_dir_name).mkdir(parents=True, exist_ok=True)
+                # as we cannot directly delete any folder created by TemporaryDirectory, we create another temporary one inside it
+                template_dir_name = create_child_temp_folder(temp)
                 load_templates(bucket_name, template_dir_name)
 
     def test_missing_static_file(self, client, populate_s3_with_missing_static_file):
@@ -102,8 +107,8 @@ class TestApplicationSetup:
         with client.application.test_request_context():
             with TemporaryDirectory() as temp:
                 with pytest.raises(NoStaticContentFound):
-                    template_dir_name = temp + "/abc"
-                    pathlib.Path(template_dir_name).mkdir(parents=True, exist_ok=True)
+                    # as we cannot directly delete any folder created by TemporaryDirectory, we create another temporary one inside it
+                    template_dir_name = create_child_temp_folder(temp)
                     load_templates(bucket_name, template_dir_name)
 
     def test_missing_template_file(self, client, populate_s3_with_missing_template_file):
@@ -111,6 +116,6 @@ class TestApplicationSetup:
         with client.application.test_request_context():
             with pytest.raises(NoIndexTemplateFound):
                 with TemporaryDirectory() as temp:
-                    template_dir_name = temp + "/abc"
-                    pathlib.Path(template_dir_name).mkdir(parents=True, exist_ok=True)
+                    # as we cannot directly delete any folder created by TemporaryDirectory, we create another temporary one inside it
+                    template_dir_name = create_child_temp_folder(temp)
                     load_templates(bucket_name, template_dir_name)
