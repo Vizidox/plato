@@ -4,23 +4,25 @@ from typing import Union
 from babel import dates
 from num2words import num2words
 
+# If a new formatter is implemented, it should be added to the FORMATTERS list in the __init__.py file so that it
+# is loaded into the Jinja environment
+
 
 def format_dates(date_str: str, format='d MMMM yyyy') -> str:
     date = datetime.fromisoformat(date_str)
     return dates.format_datetime(date, format)
 
 
-def ordinal_day_of_month_year(date_str: str) -> str:
+def of_month_year(date_str: str) -> str:
     """
 
     Args:
         date_str:
 
     Returns:
-
     """
     date = datetime.fromisoformat(date_str)
-    return f'{num_to_ordinal(date.day)} of {format_month(date)} {format_year(date)}'
+    return f' of {format_month(date)} {format_year(date)}'
 
 
 def format_year(date: datetime) -> str:
