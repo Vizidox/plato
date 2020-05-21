@@ -87,7 +87,7 @@ def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
     """
     #load_templates(s3_bucket, target_directory)
     env = create_template_environment(f"{target_directory}/templates")
-    env.filters.update({formatter.__name__: formatter} for formatter in FORMATTERS)
+    env.filters.update({formatter.__name__: formatter for formatter in FORMATTERS})
     return env
 
 
