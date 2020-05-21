@@ -11,9 +11,11 @@ from num2words import num2words
 def format_dates(date_str: str, format_='d MMMM yyyy') -> str:
     """
     Formats a date in ISO 8601 format to any valid babel format given as input.
-    For example:
-        - format_dates('2020-01-01') -> 1 January 2020
-        - format_dates('2020-01-01', 'dd-MMM-yy') -> 01-Jan-20
+
+    >>> format_dates('2020-01-01')
+    '1 January 2020'
+    >>> format_dates('2020-01-01', 'dd-MMM-yy')
+    '01-Jan-20'
 
     To check additional formats: http://babel.pocoo.org/en/latest/dates.html#date-fields
 
@@ -31,10 +33,13 @@ def format_dates(date_str: str, format_='d MMMM yyyy') -> str:
 def num_to_ordinal(number: Union[int, str]) -> str:
     """
     Formats a given cardinal number (can be int or string) into an ordinal number.
-    For example:
-    - num_to_ordinal(1) -> 1st
-    - num_to_ordinal(3) -> 3rd
-    - num_to_ordinal(10) -> 10th
+
+    >>> num_to_ordinal(1)
+    '1st'
+    >>> num_to_ordinal(3)
+    '3rd'
+    >>> num_to_ordinal(10)
+    '10th'
 
     Args:
         number: A cardinal number in string or int format
