@@ -72,8 +72,24 @@ def num_to_ordinal(number: Union[int, str]) -> str:
     - num_to_ordinal(10) -> 10th
 
     Args:
-        number: A cardinal number in string format
+        number: A cardinal number in string or int format
 
     Returns: The number in ordinal format, also as a string
     """
     return num2words(number, to='ordinal_num')
+
+
+def nth(number: Union[str, int]) -> str:
+    """
+    Returns the suffix of an ordinal number, obtained from the cardinal number
+    For example:
+    - nth(1) -> st
+    - nth(3) -> rd
+    - nth(10) -> th
+
+    Args:
+        number: A cardinal number in string or int format
+
+    Returns: The suffix of the ordinal number
+    """
+    return num_to_ordinal(number)[-2:]
