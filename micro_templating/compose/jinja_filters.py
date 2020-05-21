@@ -53,9 +53,12 @@ def nth(number: Union[str, int]) -> str:
     """
     Returns the suffix of an ordinal number, obtained from the cardinal number
     For example:
-    - nth(1) -> st
-    - nth(3) -> rd
-    - nth(10) -> th
+    >>> nth(1)
+    'st'
+    >>> nth(3)
+    'rd'
+    >>> nth(10)
+    'th'
 
     Args:
         number: A cardinal number in string or int format
