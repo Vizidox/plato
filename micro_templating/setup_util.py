@@ -5,7 +5,7 @@ import pathlib
 
 from smart_open import s3_iter_bucket
 
-from .compose import jinja_formatters, FORMATTERS
+from .compose import FILTERS
 from .auth import FlaskAuthenticator, Authenticator
 
 
@@ -87,7 +87,7 @@ def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
     """
     load_templates(s3_bucket, target_directory)
     env = create_template_environment(f"{target_directory}/templates")
-    env.filters.update({formatter.__name__: formatter for formatter in FORMATTERS})
+    env.filters.update({filter.__name__: filter for filter in FILTERS})
     return env
 
 

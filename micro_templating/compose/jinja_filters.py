@@ -4,7 +4,7 @@ from typing import Union
 from babel import dates
 from num2words import num2words
 
-# If a new formatter is implemented, it should be added to the FORMATTERS list in the __init__.py file so that it
+# If a new formatter is implemented, it should be added to the FILTERS list in the __init__.py file so that it
 # is loaded into the Jinja environment
 
 
