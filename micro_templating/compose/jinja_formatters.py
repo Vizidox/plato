@@ -28,41 +28,6 @@ def format_dates(date_str: str, format_='d MMMM yyyy') -> str:
     return dates.format_datetime(date, format_)
 
 
-def of_month_year(date_str: str) -> str:
-    """
-    Formates a date string into a full month and year format.
-    For example, of_month_year('2020-01-01') -> 'of January 2020'
-    Args:
-        date_str: The date string in ISO 8601 format
-
-    Returns: A formatted string with the month and year in the date
-    """
-    date = datetime.fromisoformat(date_str)
-    return f' of {format_month(date)} {format_year(date)}'
-
-
-def format_year(date: datetime) -> str:
-    """
-    Format a datetime value to a full year string (e.g., 2020)
-    Args:
-        date: The datetime object
-
-    Returns: The full year value in the given datetime
-    """
-    return dates.format_datetime(date, 'yyyy')
-
-
-def format_month(date: datetime) -> str:
-    """
-    Format a datetime value to a full month string (e.g., January)
-    Args:
-        date: The datetime object
-
-    Returns: The full name of the month in the given datetime
-    """
-    return dates.format_datetime(date, 'MMMM')
-
-
 def num_to_ordinal(number: Union[int, str]) -> str:
     """
     Formats a given cardinal number (can be int or string) into an ordinal number.
