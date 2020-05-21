@@ -5,6 +5,7 @@ import pathlib
 
 from smart_open import s3_iter_bucket
 
+from .compose import jinja_formatters, FORMATTERS
 from .auth import FlaskAuthenticator, Authenticator
 
 
@@ -73,7 +74,9 @@ def create_template_environment(template_directory_path: str) -> JinjaEnv:
 
 def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
     """
-    Obtains the templates from the S3 bucket and makes them available as part of the JinjaEnv
+    Obtains the templates from the S3 bucket and makes them available as part of the JinjaEnv.
+    Also adds all available filters to the JinjaEnv, which are available to be directly used within the template HTML files.
+    Example usage of filter: {{ p.date | filter_function(args) }}
 
     Args:
         s3_bucket: string representing which bucket is to be accessed
@@ -82,8 +85,10 @@ def setup_jinja_environment(s3_bucket: str, target_directory: str) -> JinjaEnv:
     Returns:
         JinjaEnv: environment loaded for target_directory with all templates from bucket
     """
-    load_templates(s3_bucket, target_directory)
-    return create_template_environment(f"{target_directory}/templates")
+    #load_templates(s3_bucket, target_directory)
+    env = create_template_environment(f"{target_directory}/templates")
+    env.filters.update({formatter.__name__: formatter} for formatter in FORMATTERS)
+    return env
 
 
 def setup_swagger_ui(project_name: str, project_version: str,
