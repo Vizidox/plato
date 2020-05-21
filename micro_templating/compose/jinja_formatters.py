@@ -8,7 +8,7 @@ from num2words import num2words
 # is loaded into the Jinja environment
 
 
-def format_dates(date_str: str, format='d MMMM yyyy') -> str:
+def format_dates(date_str: str, format_='d MMMM yyyy') -> str:
     """
     Formats a date in ISO 8601 format to any valid babel format given as input.
     For example:
@@ -19,13 +19,13 @@ def format_dates(date_str: str, format='d MMMM yyyy') -> str:
 
     Args:
         date_str: The date string in ISO 8601 format
-        format: The intended format for the date, using babel syntax
+        format_: The intended format for the date, using babel syntax
 
     Returns: The formatted string with the specified date format, or the default one
 
     """
     date = datetime.fromisoformat(date_str)
-    return dates.format_datetime(date, format)
+    return dates.format_datetime(date, format_)
 
 
 def of_month_year(date_str: str) -> str:
