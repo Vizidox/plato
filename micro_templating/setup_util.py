@@ -7,6 +7,7 @@ import pathlib
 import shutil
 import smart_open
 
+from .compose import FILTERS
 from .auth import FlaskAuthenticator, Authenticator
 
 class SetupError(Exception):
@@ -119,7 +120,7 @@ def load_templates(s3_bucket: str, target_directory: str) -> None:
     if deleted_path.exists():
         shutil.rmtree(deleted_path)
 
-    templates: Template = Template.query.with_entities(Template.partner_id, Template.id).all()
+    templates = Template.query.with_entities(Template.partner_id, Template.id).all()
 
     for template in templates:
         partner_id = template.partner_id
@@ -144,6 +145,8 @@ def load_templates(s3_bucket: str, target_directory: str) -> None:
 def create_template_environment(template_directory_path: str) -> JinjaEnv:
     """
     Setup jinja2 templating engine from a given directory path.
+    Also adds all available filters to the JinjaEnv, which are available to be directly used within the template HTML files.
+    Example usage of filter: {{ p.date | filter_function(args) }}
 
     Args:
         template_directory_path: Path to the directory where templates are stored
@@ -152,10 +155,10 @@ def create_template_environment(template_directory_path: str) -> JinjaEnv:
         JinjaEnv: Jinja2 Environment with templating
     """
     env = JinjaEnv(
-        loader=FileSystemLoader(template_directory_path),
+        loader=FileSystemLoader(f"{template_directory_path}/templates"),
         autoescape=select_autoescape(["html", "xml"])
     )
-
+    env.filters.update({filter_.__name__: filter_ for filter_ in FILTERS})
     return env
 
 
