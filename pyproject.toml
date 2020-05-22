@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "micro-templating"
-version = "1.1.0"
+version = "1.1.1"
 description = "Templating as a microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>"]
 
@@ -34,6 +34,8 @@ accept-types="0.4.1"
 # Templating
 WeasyPrint="51"
 qrcode={ version = "6.1", extras=["pil"] }
+babel="2.8.0"
+num2words="0.5.10"
 
 [tool.poetry.dev-dependencies]
 pytest="5.4.1"
