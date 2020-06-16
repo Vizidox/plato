@@ -258,7 +258,7 @@ class HTMLRenderer(Renderer):
     mime_type = HTML_MIME
 
     def print(self, html_string: str) -> io.BytesIO:
-        return io.BytesIO(bytes(html_string))
+        return io.BytesIO(bytes(html_string, encoding="utf-8"))
 
 
 def compose(template: Template, compose_data: dict, mime_type: str, *args, **kwargs) -> io.BytesIO:
