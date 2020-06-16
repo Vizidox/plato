@@ -102,15 +102,6 @@ class TestApplicationSetup:
                 template_dir_name = create_child_temp_folder(temp)
                 load_templates(bucket_name, template_dir_name)
 
-    def test_missing_static_file(self, client, populate_s3_with_missing_static_file):
-        bucket_name = populate_s3_with_missing_static_file
-        with client.application.test_request_context():
-            with TemporaryDirectory() as temp:
-                with pytest.raises(NoStaticContentFound):
-                    # as we cannot directly delete any folder created by TemporaryDirectory, we create another temporary one inside it
-                    template_dir_name = create_child_temp_folder(temp)
-                    load_templates(bucket_name, template_dir_name)
-
     def test_missing_template_file(self, client, populate_s3_with_missing_template_file):
         bucket_name = populate_s3_with_missing_template_file
         with client.application.test_request_context():
