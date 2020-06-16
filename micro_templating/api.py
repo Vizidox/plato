@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm.exc import NoResultFound
 
 from micro_templating.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
-from micro_templating.compose.renderer import compose, RendererNotFound
+from micro_templating.compose.renderer import compose, RendererNotFound, PNG_MIME
 from micro_templating.views.views import TemplateDetailView
 from mimetypes import guess_extension
 from .auth import Authenticator
@@ -114,6 +114,7 @@ def initialize_api(app: Flask, auth: Authenticator):
         produces:
             - application/pdf
             - image/png
+            - text/html
         parameters:
             - name: template_id
               in: path
@@ -128,7 +129,7 @@ def initialize_api(app: Flask, auth: Authenticator):
               name: accept
               required: false
               type: string
-              enum: [application/pdf, image/png]
+              enum: [application/pdf, image/png, text/html]
               description: MIME type(s) to determine what kind of file is outputted
             - in: query
               name: height
@@ -170,6 +171,7 @@ def initialize_api(app: Flask, auth: Authenticator):
         produces:
             - application/pdf
             - image/png
+            - text/html
         parameters:
             - name: template_id
               in: path
@@ -179,7 +181,7 @@ def initialize_api(app: Flask, auth: Authenticator):
               name: accept
               required: false
               type: string
-              enum: [application/pdf, image/png]
+              enum: [application/pdf, image/png, text/html]
             - in: query
               name: height
               required: false
@@ -220,11 +222,11 @@ def initialize_api(app: Flask, auth: Authenticator):
             if mime_type is None:
                 raise UnsupportedMIMEType(accept_header)
 
+            if (width is not None or height is not None) and mime_type != PNG_MIME:
+                return jsonify({"message": resizing_unsupported.format(mime_type)}), 400
+
             if width is not None and height is not None:
                 return jsonify({"message": aspect_ratio_compromised}), 400
-
-            if (width is not None or height is not None) and mime_type == PDF_MIME:
-                return jsonify({"message": resizing_unsupported.format(mime_type)}), 400
 
             compose_params = {}
             if width is not None:
