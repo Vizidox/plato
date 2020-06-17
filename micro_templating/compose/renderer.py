@@ -13,6 +13,7 @@ from jsonschema import validate as validate_schema
 from micro_templating.db.models import Template
 
 PDF_MIME = "application/pdf"
+HTML_MIME = "text/html"
 PNG_MIME = "image/png"
 OCTET_STREAM = "application/octet-stream"
 
@@ -246,6 +247,18 @@ class PNGRenderer(Renderer):
             weasy_doc.write_png(target=target_file_html.name, resolution=resolution_multiplier * 96)
             with open(target_file_html.name, mode='rb') as temp_file_stream:
                 return io.BytesIO(temp_file_stream.read())
+
+
+@Renderer.renderer()
+class HTMLRenderer(Renderer):
+    """
+    HTML Renderer which uses does nothing but return the plain HTML.
+    """
+
+    mime_type = HTML_MIME
+
+    def print(self, html_string: str) -> io.BytesIO:
+        return io.BytesIO(bytes(html_string, encoding="utf-8"))
 
 
 def compose(template: Template, compose_data: dict, mime_type: str, *args, **kwargs) -> io.BytesIO:
