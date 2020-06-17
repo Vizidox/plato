@@ -20,22 +20,25 @@ def get_static_file_path(partner_id: str, template_id: str, file_name: str):
     return STATIC_FILE_PATH_FORMAT.format(partner_id, template_id, file_name)
 
 
-def create_child_temp_folder(main_directory: str) -> None:
+def create_child_temp_folder(main_directory: str) -> str:
     template_dir_name = main_directory + "/abc"
     pathlib.Path(template_dir_name).mkdir(parents=True, exist_ok=True)
     return template_dir_name
 
-def write_to_s3(bucket_name, file_path):
+
+def write_to_s3(bucket_name: str, file_paths: list):
     encoding = "utf-8"
-    with s3.open(bucket_name, key_id=file_path, mode="wb") as file:
-        file.write(f"I am file !".encode(encoding))
+    for file_path in file_paths:
+        with s3.open(bucket_name, key_id=file_path, mode="wb") as file:
+            file.write(f"I am file !".encode(encoding))
 
 
 @pytest.fixture(scope="class")
 def populate_db(client):
     with client.application.test_request_context():
         template = Template(partner_id="partner_id", id_="0", schema={},
-                            type_="text/html", tags=['test_tags'], metadata={}, example_composition="place_holder")
+                            type_="text/html", tags=['test_tags'], metadata={},
+                            example_composition={'place_holder': 'value'})
         db.session.add(template)
         db.session.commit()
 
@@ -53,24 +56,12 @@ def populate_s3() -> str:
     conn = boto3.resource('s3', region_name='eu-central-1')
     conn.create_bucket(Bucket=bucket_name)
 
-    static_file = get_static_file_path(partner_id="partner_id", file_name="abc", template_id="0")
-    write_to_s3(bucket_name=bucket_name, file_path=static_file)
+    static_file_1 = get_static_file_path(partner_id="partner_id", file_name="abc_1", template_id="0")
+    static_file_2 = get_static_file_path(partner_id="partner_id", file_name="abc_2", template_id="0")
+    write_to_s3(bucket_name=bucket_name, file_paths=[static_file_1, static_file_2])
 
-    template_file = get_template_file_path(partner_id="partner_id", template_id="0")
-    write_to_s3(bucket_name=bucket_name, file_path=template_file)
-
-    return bucket_name
-
-
-@pytest.fixture(scope='function')
-@mock_s3
-def populate_s3_with_missing_static_file() -> str:
-    bucket_name = 'test_template_bucket_2'
-    conn = boto3.resource('s3', region_name='eu-central-1')
-    conn.create_bucket(Bucket=bucket_name)
-
-    template_file = get_template_file_path(partner_id="partner_id", template_id="0")
-    write_to_s3(bucket_name=bucket_name, file_path=template_file)
+    template_file_1 = get_template_file_path(partner_id="partner_id", template_id="0")
+    write_to_s3(bucket_name=bucket_name, file_paths=[template_file_1])
 
     return bucket_name
 
@@ -83,7 +74,7 @@ def populate_s3_with_missing_template_file() -> str:
     conn.create_bucket(Bucket=bucket_name)
 
     static_file = get_static_file_path(partner_id="partner_id", file_name="abc", template_id="0")
-    write_to_s3(bucket_name=bucket_name, file_path=static_file)
+    write_to_s3(bucket_name=bucket_name, file_paths=[static_file])
 
     return bucket_name
 
@@ -102,14 +93,16 @@ class TestApplicationSetup:
                 template_dir_name = create_child_temp_folder(temp)
                 load_templates(bucket_name, template_dir_name)
 
-    def test_missing_static_file(self, client, populate_s3_with_missing_static_file):
-        bucket_name = populate_s3_with_missing_static_file
-        with client.application.test_request_context():
-            with TemporaryDirectory() as temp:
-                with pytest.raises(NoStaticContentFound):
-                    # as we cannot directly delete any folder created by TemporaryDirectory, we create another temporary one inside it
-                    template_dir_name = create_child_temp_folder(temp)
-                    load_templates(bucket_name, template_dir_name)
+                static_file_1 = template_dir_name + '/' + get_static_file_path(partner_id="partner_id",
+                                                                               file_name="abc_1", template_id="0")
+                static_file_2 = template_dir_name + '/' + get_static_file_path(partner_id="partner_id",
+                                                                               file_name="abc_2", template_id="0")
+                template_file_1 = template_dir_name + '/' + get_template_file_path(partner_id="partner_id",
+                                                                                   template_id="0")
+
+                assert pathlib.Path(static_file_1).is_file() == True
+                assert pathlib.Path(static_file_2).is_file() == True
+                assert pathlib.Path(template_file_1).is_file() == True
 
     def test_missing_template_file(self, client, populate_s3_with_missing_template_file):
         bucket_name = populate_s3_with_missing_template_file
