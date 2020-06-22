@@ -126,7 +126,7 @@ def load_templates(s3_bucket: str, target_directory: str) -> None:
         partner_id = template.partner_id
         template_id = template.id
 
-        static_folder = f"static/{partner_id}/{template_id}"
+        static_folder = f"static/{partner_id}"
         template_file = f"templates/{partner_id}/{template_id}/{template_id}"
 
         # get static files
