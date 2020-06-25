@@ -6,6 +6,8 @@ from flask.cli import with_appcontext
 import json
 from .db import db
 from .db.models import Template
+from .settings import S3_BUCKET, TEMPLATE_DIRECTORY
+from .setup_util import load_templates
 
 
 def register_cli_commands(app: Flask):
@@ -49,3 +51,8 @@ def register_cli_commands(app: Flask):
             template_id = click.prompt("Please enter the id for the template you wish to export")
         template = Template.query.filter_by(partner_id=partner_id, id=template_id).one()
         json.dump(template.json_dict(), output)
+
+    @app.cli.command("refresh")
+    @with_appcontext
+    def refresh_local_templates():
+        load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
