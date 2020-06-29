@@ -37,6 +37,8 @@ cp .env.local .env
 Make sure you fill in the Template directory with an absolute path.
 You may use a subdirectory inside of your DATA_DIR.
 
+First, make sure you actually *have* a DATA_DIR, by creating a folder named 'data' within the main project directory.
+
 e.g TEMPLATE_DIRECTORY=/home/carloscoda/projects/templating/data/templates
 
 If using a different S3 bucket than "micro-templating" then change S3_BUCKET to whichever bucket you want to use.
@@ -48,7 +50,7 @@ The templating service uses Postgresql and Keycloak for authentication.
 To set up local servers for both you may use the docker-compose file supplied.
  
 ```bash
-cp docker/docker-compose.local.override.yml .
+cp docker/docker-compose.local.override.yml docker-compose.override.yml
 ```
 
 Then spin up both containers by running:
@@ -79,6 +81,8 @@ This will make the application available at http://localhost:5000/apidocs/
 where you can use swagger-ui to interact with the application. Make sure you authenticate with your example client. 
 By clicking one of the locks on the page and _Authorize_.
 
+*Note*: If you run the app through a server instead of main, make sure you run `flask refresh`
+so it can obtain the most recent templates from S3.  
 
 ## Running the tests
 
