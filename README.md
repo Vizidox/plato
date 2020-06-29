@@ -81,6 +81,8 @@ This will make the application available at http://localhost:5000/apidocs/
 where you can use swagger-ui to interact with the application. Make sure you authenticate with your example client. 
 By clicking one of the locks on the page and _Authorize_.
 
+*Note*: If you run the app through a server instead of main, make sure you run `flask refresh`
+so it can obtain the most recent templates from S3.  
 
 ## Running the tests
 
