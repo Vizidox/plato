@@ -1,17 +1,37 @@
 version: "3.5"
 services:
+
+  user-db:
+    image: postgres:${POSTGRES_VER}
+    restart: unless-stopped
+    volumes:
+    - ${DATA_DIR}/user_db:/data/db/
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASS}
+      PGDATA: /data/db/
+    ports:
+    - 127.0.0.1:5429:5432
+
   auth:
-    image: jboss/keycloak:8.0.1
+    image: jboss/keycloak:4.8.3.Final
     volumes:
       - ./micro-templating-keycloak-realm.json:/opt/jboss/keycloak/realm.json
     command:
       - "-b 0.0.0.0"
       - "-Dkeycloak.import=/opt/jboss/keycloak/realm.json"
     environment:
+      DB_VENDOR: POSTGRES
+        DB_ADDR: ${AUTH_DB_HOST}
+        DB_DATABASE: ${AUTH_DB_DATABASE}
+        DB_USER: ${AUTH_DB_USER}
+        DB_PASSWORD: ${AUTH_DB_PASS}
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: pass
       PROXY_ADDRESS_FORWARDING: "true"
     restart: unless-stopped
+    links:
+      - user-db
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth.rule=Host(`${HOSTNAME}`) && PathPrefix(`/auth/`)"
