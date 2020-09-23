@@ -14,7 +14,7 @@ services:
     - 127.0.0.1:5429:5432
 
   auth:
-    image: jboss/keycloak:4.8.3.Final
+    image: jboss/keycloak:8.0.1
     volumes:
       - ./micro-templating-keycloak-realm.json:/opt/jboss/keycloak/realm.json
     command:
