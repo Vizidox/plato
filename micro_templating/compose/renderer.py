@@ -195,7 +195,7 @@ class PdfRenderer(Renderer):
 
     mime_type = PDF_MIME
 
-    def print(self, html_string: str, single_page: bool = False) -> io.BytesIO:
+    def print(self, html_string: str) -> io.BytesIO:
 
         with tempfile.NamedTemporaryFile() as target_file_html:
             html = HTML(string=html_string)
