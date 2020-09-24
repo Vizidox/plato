@@ -95,7 +95,7 @@ class Renderer(ABC):
             html: The HTML to be printed
 
         Returns:
-            io.BytesIO: A file stream with the Rendere's MIME type.
+            io.BytesIO: A file stream with the Renderer's MIME type.
         """
         ...
 
@@ -183,7 +183,7 @@ class PdfRenderer(Renderer):
 
     mime_type = PDF_MIME
 
-    def print(self, html_string: str) -> io.BytesIO:
+    def print(self, html_string: str, single_page: bool = False) -> io.BytesIO:
 
         with tempfile.NamedTemporaryFile() as target_file_html:
             html = HTML(string=html_string)
@@ -201,6 +201,7 @@ class PNGRenderer(Renderer):
     mime_type = PNG_MIME
     _width: Optional[int] = None
     _height: Optional[int] = None
+    _page: int = 0
 
     @property
     def height(self):
@@ -222,11 +223,23 @@ class PNGRenderer(Renderer):
             raise ValueError("Unable to use both height and width in order to maintain aspect ratio")
         self._width = value
 
+    @property
+    def page(self):
+        return self._page
+
+    @page.setter
+    def page(self, value):
+        if value < 0:
+            raise ValueError("A negative number is not allowed as a page value")
+        self._page = value
+
     def __init__(self, template_model: Template,
                  height: Optional[int] = None,
-                 width: Optional[int] = None):
+                 width: Optional[int] = None,
+                 page: int = 0):
         self.height = height
         self.width = width
+        self.page = page
         super().__init__(template_model)
 
     def print(self, html_string: str) -> io.BytesIO:
@@ -235,16 +248,19 @@ class PNGRenderer(Renderer):
             html = HTML(string=html_string)
             weasy_doc = html.render(enable_hinting=True)
 
-            page0 = weasy_doc.pages[0]  # Resizing assumes all pages are same size
+            if self.page >= len(weasy_doc.pages):
+                raise ValueError("Page number is higher than the number of pages")
+
+            page_to_print = weasy_doc.pages[self.page]   # Print only the requested page
             resolution_multiplier = 1
 
             if self.height is not None:
-                resolution_multiplier = self.height / page0.height
+                resolution_multiplier = self.height / page_to_print.height
             elif self.width is not None:
-                resolution_multiplier = self.width / page0.width
+                resolution_multiplier = self.width / page_to_print.width
 
             # 96 is the default resolution provided by weasyprint to maintain aspect ratio
-            weasy_doc.write_png(target=target_file_html.name, resolution=resolution_multiplier * 96)
+            weasy_doc.copy([page_to_print]).write_png(target=target_file_html.name, resolution=resolution_multiplier * 96)
             with open(target_file_html.name, mode='rb') as temp_file_stream:
                 return io.BytesIO(temp_file_stream.read())
 
