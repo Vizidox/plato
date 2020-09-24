@@ -13,7 +13,7 @@ from mimetypes import guess_extension
 from .auth import Authenticator
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
-    resizing_unsupported, single_page_unsupported
+    resizing_unsupported, single_page_unsupported, negative_number_invalid
 from accept_types import get_best_match
 
 
@@ -241,6 +241,9 @@ def initialize_api(app: Flask, auth: Authenticator):
 
             if width is not None and height is not None:
                 return jsonify({"message": aspect_ratio_compromised}), 400
+
+            if page is not None and page < 0:
+                return jsonify({"message": negative_number_invalid.format(page)}), 400
 
             compose_params = {}
             if width is not None:
