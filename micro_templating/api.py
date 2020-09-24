@@ -13,7 +13,7 @@ from mimetypes import guess_extension
 from .auth import Authenticator
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
-    resizing_unsupported
+    resizing_unsupported, single_page_unsupported
 from accept_types import get_best_match
 
 
@@ -132,6 +132,11 @@ def initialize_api(app: Flask, auth: Authenticator):
               enum: [application/pdf, image/png, text/html]
               description: MIME type(s) to determine what kind of file is outputted
             - in: query
+              name: page
+              required: false
+              type: integer
+              description: Intended page to print
+            - in: query
               name: height
               required: false
               type: integer
@@ -183,6 +188,11 @@ def initialize_api(app: Flask, auth: Authenticator):
               type: string
               enum: [application/pdf, image/png, text/html]
             - in: query
+              name: page
+              required: false
+              type: integer
+              description: Intended page to print
+            - in: query
               name: height
               required: false
               type: integer
@@ -214,6 +224,7 @@ def initialize_api(app: Flask, auth: Authenticator):
                  compose_retrieval_function: Callable[[Template], dict]):
         width = request.args.get("width", type=int)
         height = request.args.get("height", type=int)
+        page = request.args.get("page", type=int)
 
         accept_header = request.headers.get("Accept", PDF_MIME)
         mime_type = get_best_match(accept_header, ALL_AVAILABLE_MIME_TYPES)
@@ -225,6 +236,9 @@ def initialize_api(app: Flask, auth: Authenticator):
             if (width is not None or height is not None) and mime_type != PNG_MIME:
                 return jsonify({"message": resizing_unsupported.format(mime_type)}), 400
 
+            if page is not None and mime_type != PNG_MIME:
+                return jsonify({"message": single_page_unsupported.format(mime_type)}), 400
+
             if width is not None and height is not None:
                 return jsonify({"message": aspect_ratio_compromised}), 400
 
@@ -233,6 +247,8 @@ def initialize_api(app: Flask, auth: Authenticator):
                 compose_params["width"] = width
             if height is not None:
                 compose_params["height"] = height
+            if page is not None:
+                compose_params["page"] = page
 
             template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
             compose_data = compose_retrieval_function(template_model)
