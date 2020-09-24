@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm.exc import NoResultFound
 
 from micro_templating.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
-from micro_templating.compose.renderer import compose, RendererNotFound, PNG_MIME
+from micro_templating.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
 from micro_templating.views.views import TemplateDetailView
 from mimetypes import guess_extension
 from .auth import Authenticator
@@ -261,6 +261,8 @@ def initialize_api(app: Flask, auth: Authenticator):
         except (RendererNotFound, UnsupportedMIMEType):
             return jsonify(
                 {"message": unsupported_mime_type.format(accept_header, ", ".join(ALL_AVAILABLE_MIME_TYPES))}), 406
+        except InvalidPageNumber as e:
+            return jsonify({"message": e.message}), 400
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), 404
         except ValidationError as ve:
