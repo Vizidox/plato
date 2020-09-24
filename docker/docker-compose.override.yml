@@ -11,10 +11,10 @@ services:
       POSTGRES_PASSWORD: ${AUTH_DB_PASS}
       PGDATA: /data/db/
     ports:
-    - 127.0.0.1:5429:5432
+    - 127.0.0.1:5420:5432
 
   auth:
-    image: jboss/keycloak:8.0.1
+    image: jboss/keycloak:9.0.0
     volumes:
       - ./micro-templating-keycloak-realm.json:/opt/jboss/keycloak/realm.json
     command:
