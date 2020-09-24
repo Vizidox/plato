@@ -261,7 +261,7 @@ class PNGRenderer(Renderer):
             weasy_doc = html.render(enable_hinting=True)
 
             if self.page >= len(weasy_doc.pages):
-                raise InvalidPageNumber(f"Page number ({self.page}) is higher than the number of pages ({len(weasy_doc.pages)})")
+                raise InvalidPageNumber(f"Page number ({self.page}) is larger than the maximum page number ({len(weasy_doc.pages)-1})")
 
             page_to_print = weasy_doc.pages[self.page]   # Print only the requested page
             resolution_multiplier = 1
