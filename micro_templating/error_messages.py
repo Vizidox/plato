@@ -15,3 +15,4 @@ unsupported_mime_type = "No supported format in ACCEPT header: {0}, Available fo
 aspect_ratio_compromised = "Specifying both width and height compromises the template's aspect ratio"
 resizing_unsupported = "Resizing unsupported on provided mime_type: {0}"
 single_page_unsupported = "Single page printing unsupported on provided mime_type: {0}"
+negative_number_invalid = "A negative number is not allowed: {0}"
