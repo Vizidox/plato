@@ -25,6 +25,18 @@ class RendererNotFound(Exception):
     ...
 
 
+class InvalidPageNumber(ValueError):
+    """
+    Exception to be raised when the given page number is invalid, either by being a negative number or by
+    being higher than the number of pages on the template
+    """
+    message: str
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__()
+
+
 class Renderer(ABC):
     """
     Renderer is a factory for every Renderer subclass.
@@ -230,7 +242,7 @@ class PNGRenderer(Renderer):
     @page.setter
     def page(self, value):
         if value < 0:
-            raise ValueError("A negative number is not allowed as a page value")
+            raise InvalidPageNumber(f"A negative number is not allowed as a page value: {value}")
         self._page = value
 
     def __init__(self, template_model: Template,
@@ -249,7 +261,7 @@ class PNGRenderer(Renderer):
             weasy_doc = html.render(enable_hinting=True)
 
             if self.page >= len(weasy_doc.pages):
-                raise ValueError("Page number is higher than the number of pages")
+                raise InvalidPageNumber(f"Page number ({self.page}) is higher than the number of pages ({len(weasy_doc.pages)})")
 
             page_to_print = weasy_doc.pages[self.page]   # Print only the requested page
             resolution_multiplier = 1
