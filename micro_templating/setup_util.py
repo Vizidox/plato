@@ -8,7 +8,7 @@ import shutil
 import smart_open
 
 from .compose import FILTERS
-from .auth import FlaskAuthenticator, Authenticator
+
 
 class SetupError(Exception):
     """
@@ -34,37 +34,20 @@ class NoStaticContentFound(SetupError):
         message = f"No static content found. partner_id: {partner_id}, template_id: {template_id}"
         super(NoStaticContentFound, self).__init__(message)
 
+
 class NoIndexTemplateFound(SetupError):
     """
     raised when no template found on S3
     """
-    def __init__(self, partner_id: str, template_id: str):
+    def __init__(self, template_id: str):
         """
         Exception initialization
-
-        :param partner_id: the id of the partner
-        :type partner_id: string
 
         :param template_id: the id of the template
         :type template_id: string
         """
-        message = f"No index template file found. partner_id: {partner_id}, template_id: {template_id}"
+        message = f"No index template file found. Template_id: {template_id}"
         super(NoIndexTemplateFound, self).__init__(message)
-
-
-def setup_authenticator(auth_host_url: str, oauth2_audience: str, auth_host_origin: str = "") -> Authenticator:
-    """
-    Convenience method to setup the authenticator to gather all setup functions in one module.
-
-    Args:
-        auth_host_url: url for keycloak host e.g https://keycloak.org/auth/realms/vizidox/
-        auth_host_origin: the url keycloak signs with, defaults to auth_host_url
-        oauth2_audience: audience for JWT token validation
-
-    Returns:
-        Authenticator: authenticator be used for token validation
-    """
-    return FlaskAuthenticator(auth_host_url, oauth2_audience, auth_host_origin)
 
 
 def get_file_s3(bucket_name: str, url: str) -> Dict[str, Any]:
@@ -160,9 +143,7 @@ def create_template_environment(template_directory_path: str) -> JinjaEnv:
     return env
 
 
-def setup_swagger_ui(project_name: str, project_version: str,
-                     auth_host_origin: str, swagger_scope: str,
-                     default_swagger_client: str = "", default_swagger_secret: str = "") -> dict:
+def setup_swagger_ui(project_name: str, project_version: str) -> dict:
     """
     Configurations to be used on the Swagger-ui page.
 
@@ -185,22 +166,7 @@ def setup_swagger_ui(project_name: str, project_version: str,
         'favicon': "/static/favicon-32x32.png",
         'swagger_ui_css': "/static/swagger-ui.css",
         'swagger_ui_standalone_preset_js': '/static/swagger-ui-standalone-preset.js',
-        'description': '',
-        "securityDefinitions": {
-            "api_auth": {
-                "type": "oauth2",
-                "flow": "application",
-                "tokenUrl": f"{auth_host_origin}/protocol/openid-connect/token",
-                "scopes": {f"{swagger_scope}": "gives access to the templating engine"}
-            }
-        },
-        # 'auth' configuration used to initialize Oauth in swagger-ui as per the initOAuth method
-        # https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
-        # this is not standard flasgger behavior but it is possible because we overrode the swagger-ui templates
-        "auth": {
-            "clientId": f"{default_swagger_client}",
-            "clientSecret": f"{default_swagger_secret}"
-        }
+        'description': ''
     }
 
     return swagger_ui_config

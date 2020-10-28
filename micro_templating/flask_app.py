@@ -10,19 +10,17 @@ from flask_migrate import Migrate
 
 from jinja2 import Environment as JinjaEnv
 from micro_templating.api import initialize_api
-from micro_templating.auth import Authenticator
 from micro_templating.views import swag
 from micro_templating.db import db
 from micro_templating.cli import register_cli_commands
 
 
-def create_app(db_url: str, authenticator: Authenticator, template_static_directory: str,
+def create_app(db_url: str, template_static_directory: str,
                jinja_env: JinjaEnv, swagger_ui_config: dict) -> Flask:
     """
 
     Args:
         jinja_env: Jinja environment responsible for rendering the templates
-        authenticator: Authenticator responsible for validating tokens on API requests
         template_static_directory: The directory where the static content for the templates
         db_url: Database URI
         swagger_ui_config: The Swagger-UI config to be used with Flasgger.
@@ -43,9 +41,8 @@ def create_app(db_url: str, authenticator: Authenticator, template_static_direct
 
     app.config["JINJENV"] = jinja_env
     app.config["TEMPLATE_STATIC"] = template_static_directory
-    app.config["AUTH"] = authenticator
 
     register_cli_commands(app)
-    initialize_api(app, authenticator)
+    initialize_api(app)
 
     return app
