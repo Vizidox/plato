@@ -103,14 +103,13 @@ def load_templates(s3_bucket: str, target_directory: str) -> None:
     if deleted_path.exists():
         shutil.rmtree(deleted_path)
 
-    templates = Template.query.with_entities(Template.partner_id, Template.id).all()
+    templates = Template.query.with_entities(Template.id).all()
 
     for template in templates:
-        partner_id = template.partner_id
         template_id = template.id
 
-        static_folder = f"static/{partner_id}"
-        template_file = f"templates/{partner_id}/{template_id}/{template_id}"
+        static_folder = f"static"
+        template_file = f"templates/{template_id}/{template_id}"
 
         # get static files
         static_files = get_file_s3(bucket_name=s3_bucket, url=static_folder)
