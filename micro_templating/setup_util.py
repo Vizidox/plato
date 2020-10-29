@@ -118,7 +118,7 @@ def load_templates(s3_bucket: str, target_directory: str) -> None:
         # get template content
         template_files = get_file_s3(bucket_name=s3_bucket, url=template_file)
         if not template_files:
-            raise NoIndexTemplateFound(partner_id, template_id)
+            raise NoIndexTemplateFound(template_id)
         write_files(files=template_files, target_directory=target_directory)
 
 
@@ -149,11 +149,6 @@ def setup_swagger_ui(project_name: str, project_version: str) -> dict:
     Args:
         project_name: The project name to be displayed
         project_version: The project version to be displayed
-        auth_host_origin: The authentication host
-        swagger_scope: The scope to be requested to the auth server for access
-        default_swagger_client: Default for the client id, not to be used in Production
-        default_swagger_secret: Default for the client secret, NEVER to be used in production
-
     Returns:
         dict: The swagger ui configuration to be used with Flasgger
     """
