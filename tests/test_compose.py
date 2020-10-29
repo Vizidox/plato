@@ -12,7 +12,6 @@ from micro_templating.db.models import Template
 from micro_templating.error_messages import aspect_ratio_compromised, resizing_unsupported, unsupported_mime_type
 from tests import partner_id_set, get_message
 
-PARTNER_1 = "test_partner"
 PLAIN_TEXT_TEMPLATE_ID = "plain_text"
 PNG_IMAGE_TEMPLATE_ID = "png_image"
 NO_IMAGE_TEMPLATE_ID = PNG_IMAGE_TEMPLATE_ID.replace('p', 'u')
@@ -22,7 +21,7 @@ PNG_IMAGE_NAME = "balloons.png"
 @pytest.fixture(scope="class")
 def template_test_examples(client, template_loader):
     with client.application.test_request_context():
-        plain_text_template_model = Template(partner_id=PARTNER_1, id_=PLAIN_TEXT_TEMPLATE_ID,
+        plain_text_template_model = Template(id_=PLAIN_TEXT_TEMPLATE_ID,
                                              schema={"type": "object",
                                                      "properties": {"plain": {"type": "string"}}
                                                      },
@@ -30,17 +29,17 @@ def template_test_examples(client, template_loader):
                                              example_composition={"plain": "plain_example"}, tags=[])
         db.session.add(plain_text_template_model)
 
-        plain_text_jinja_id = f"{PARTNER_1}/{PLAIN_TEXT_TEMPLATE_ID}/{PLAIN_TEXT_TEMPLATE_ID}"
+        plain_text_jinja_id = f"{PLAIN_TEXT_TEMPLATE_ID}/{PLAIN_TEXT_TEMPLATE_ID}"
         template_loader.mapping[plain_text_jinja_id] = "{{ p.plain }}"
 
-        png_image_template_model = Template(partner_id=PARTNER_1, id_=PNG_IMAGE_TEMPLATE_ID,
+        png_image_template_model = Template(id_=PNG_IMAGE_TEMPLATE_ID,
                                             schema={"type": "object",
                                                     "properties": {}
                                                     },
                                             type_="text/html", metadata={}, example_composition={}, tags=[])
         db.session.add(png_image_template_model)
 
-        png_template_jinja_id = f"{PARTNER_1}/{PNG_IMAGE_TEMPLATE_ID}/{PNG_IMAGE_TEMPLATE_ID}"
+        png_template_jinja_id = f"{PNG_IMAGE_TEMPLATE_ID}/{PNG_IMAGE_TEMPLATE_ID}"
         template_loader.mapping[png_template_jinja_id] = \
             '<!DOCTYPE html>' \
             '<html>' \
@@ -51,13 +50,13 @@ def template_test_examples(client, template_loader):
             '</body>' \
             '</html>'
 
-        no_image_template_model = Template(partner_id=PARTNER_1, id_=NO_IMAGE_TEMPLATE_ID,
+        no_image_template_model = Template(id_=NO_IMAGE_TEMPLATE_ID,
                                            schema={"type": "object",
                                                    "properties": {}
                                                    },
                                            type_="text/html", metadata={}, example_composition={}, tags=[])
         db.session.add(no_image_template_model)
-        no_image_template_jinja_id = f"{PARTNER_1}/{NO_IMAGE_TEMPLATE_ID}/{NO_IMAGE_TEMPLATE_ID}"
+        no_image_template_jinja_id = f"{NO_IMAGE_TEMPLATE_ID}/{NO_IMAGE_TEMPLATE_ID}"
         template_loader.mapping[no_image_template_jinja_id] = \
             '<!DOCTYPE html>' \
             '<html>' \
@@ -89,7 +88,7 @@ class TestCompose:
     EXAMPLE_COMPOSE_METHOD_NAME = "example_compose"
 
     def test_compose_plain_ok(self, client):
-        with partner_id_set(client.application, PARTNER_1):
+        with partner_id_set(client.application):
             expected_text = "This is some plain text"
             json_request = {"plain": expected_text}
             response = client.post(self.COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID), json=json_request)
@@ -100,7 +99,7 @@ class TestCompose:
             assert real_text.strip() == expected_text
 
     def test_compose_image_exists(self, client):
-        with partner_id_set(client.application, PARTNER_1):
+        with partner_id_set(client.application):
             def get_images_from_template(template_id: str):
                 response = client.post(self.COMPOSE_ENDPOINT.format(template_id), json={})
                 assert response.data is not None
@@ -117,10 +116,10 @@ class TestCompose:
 
     def test_example_ok(self, client):
         with client.application.app_context():
-            test_template = Template.query.filter_by(partner_id=PARTNER_1, id=PLAIN_TEXT_TEMPLATE_ID).one()
+            test_template = Template.query.filter_by(id=PLAIN_TEXT_TEMPLATE_ID).one()
             expected_text = test_template.example_composition["plain"]
 
-        with partner_id_set(client.application, PARTNER_1):
+        with partner_id_set(client.application):
             response = client.get(self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID))
             assert response.status_code == HTTPStatus.OK
             assert response.data is not None
@@ -131,7 +130,7 @@ class TestCompose:
     def test_resize_ok(self, client):
         error = 1
         expected_resize = 200
-        with partner_id_set(client.application, PARTNER_1):
+        with partner_id_set(client.application):
             response = client.get(
                 f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}",
                 headers={"accept": "image/png"}

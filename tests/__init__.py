@@ -1,16 +1,18 @@
 from contextlib import contextmanager
 from flask import appcontext_pushed, g
 
+
 @contextmanager
-def partner_id_set(app, partner_id):
+def partner_id_set(app):
     """
     Sets partner_id in g as a context
     Args:
         app:
-        partner_id:
     """
+
     def handler(sender, **kwargs):
-        g.partner_id = partner_id
+        pass
+
     with appcontext_pushed.connected_to(handler, app):
         yield
 
