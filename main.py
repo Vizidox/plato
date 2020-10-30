@@ -5,9 +5,7 @@ Either create a Flask run configuration on this module or set up to run it local
 """
 
 from micro_templating.flask_app import create_app
-from micro_templating.settings import WORKING_DB_URL, AUTH_SERVER, PROJECT_NAME, PROJECT_VERSION,\
-    SWAGGER_AUTH_CLIENT_SECRET, SWAGGER_AUTH_CLIENT, CLIENT_ID, SWAGGER_AUTH_SCOPE, S3_BUCKET, TEMPLATE_DIRECTORY,\
-    AUTH_SERVER_ORIGIN
+from micro_templating.settings import WORKING_DB_URL, PROJECT_NAME, PROJECT_VERSION, S3_BUCKET, TEMPLATE_DIRECTORY
 from micro_templating.setup_util import create_template_environment, load_templates, setup_swagger_ui
 
 template_environment = create_template_environment(TEMPLATE_DIRECTORY)
