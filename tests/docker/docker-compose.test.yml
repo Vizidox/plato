@@ -19,5 +19,19 @@ services:
     networks:
       - templating_test
 
+  test-templating:
+    image: templating
+    environment:
+      DATA_DIR: /templating-data/
+      TEMPLATE_DIRECTORY: /templating-data/templates/
+      DB_HOST: localhost
+      DB_PORT: 5456
+      DB_USERNAME: test
+      DB_PASSWORD: test
+      DB_DATABASE: test
+      S3_BUCKET: ${S3_BUCKET}
+    networks:
+      - templating_test
+
 networks:
   templating_test:
