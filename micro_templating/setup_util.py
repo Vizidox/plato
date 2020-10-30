@@ -21,17 +21,14 @@ class NoStaticContentFound(SetupError):
     """
     raised when no static content fount on S3
     """
-    def __init__(self, partner_id: str, template_id: str):
+    def __init__(self, template_id: str):
         """
         Exception initialization
-
-        :param partner_id: the id of the partner
-        :type partner_id: string
 
         :param template_id: the id of the template
         :type template_id: string
         """
-        message = f"No static content found. partner_id: {partner_id}, template_id: {template_id}"
+        message = f"No static content found. template_id: {template_id}"
         super(NoStaticContentFound, self).__init__(message)
 
 
