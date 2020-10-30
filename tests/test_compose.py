@@ -10,7 +10,7 @@ from micro_templating.compose import ALL_AVAILABLE_MIME_TYPES
 from micro_templating.db import db
 from micro_templating.db.models import Template
 from micro_templating.error_messages import aspect_ratio_compromised, resizing_unsupported, unsupported_mime_type
-from tests import partner_id_set, get_message
+from tests import get_message
 
 PLAIN_TEXT_TEMPLATE_ID = "plain_text"
 PNG_IMAGE_TEMPLATE_ID = "png_image"
@@ -88,86 +88,80 @@ class TestCompose:
     EXAMPLE_COMPOSE_METHOD_NAME = "example_compose"
 
     def test_compose_plain_ok(self, client):
-        with partner_id_set(client.application):
-            expected_text = "This is some plain text"
-            json_request = {"plain": expected_text}
-            response = client.post(self.COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID), json=json_request)
-            assert response.status_code == HTTPStatus.OK
-            assert response.data is not None
-            pdf_document = Document(filetype="bytes", stream=response.data)
-            real_text = "".join((page.getText() for page in pdf_document))
-            assert real_text.strip() == expected_text
+        expected_text = "This is some plain text"
+        json_request = {"plain": expected_text}
+        response = client.post(self.COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID), json=json_request)
+        assert response.status_code == HTTPStatus.OK
+        assert response.data is not None
+        pdf_document = Document(filetype="bytes", stream=response.data)
+        real_text = "".join((page.getText() for page in pdf_document))
+        assert real_text.strip() == expected_text
 
     def test_compose_image_exists(self, client):
-        with partner_id_set(client.application):
-            def get_images_from_template(template_id: str):
-                response = client.post(self.COMPOSE_ENDPOINT.format(template_id), json={})
-                assert response.data is not None
-                assert response.status_code == HTTPStatus.OK
-                pdf_document = Document(filetype="bytes", stream=response.data)
-                blocks = chain.from_iterable((page.getText("dict")["blocks"] for page in pdf_document))
-                return [block["image"] for block in blocks]
+        def get_images_from_template(template_id: str):
+            response = client.post(self.COMPOSE_ENDPOINT.format(template_id), json={})
+            assert response.data is not None
+            assert response.status_code == HTTPStatus.OK
+            pdf_document = Document(filetype="bytes", stream=response.data)
+            blocks = chain.from_iterable((page.getText("dict")["blocks"] for page in pdf_document))
+            return [block["image"] for block in blocks]
 
-            images = get_images_from_template(PNG_IMAGE_TEMPLATE_ID)
-            assert len(images) == 1
+        images = get_images_from_template(PNG_IMAGE_TEMPLATE_ID)
+        assert len(images) == 1
 
-            images = get_images_from_template(NO_IMAGE_TEMPLATE_ID)
-            assert len(images) == 0
+        images = get_images_from_template(NO_IMAGE_TEMPLATE_ID)
+        assert len(images) == 0
 
     def test_example_ok(self, client):
         with client.application.app_context():
             test_template = Template.query.filter_by(id=PLAIN_TEXT_TEMPLATE_ID).one()
             expected_text = test_template.example_composition["plain"]
 
-        with partner_id_set(client.application):
-            response = client.get(self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID))
-            assert response.status_code == HTTPStatus.OK
-            assert response.data is not None
-            pdf_document = Document(filetype="bytes", stream=response.data)
-            real_text = "".join((page.getText() for page in pdf_document))
-            assert real_text.strip() == expected_text
+        response = client.get(self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID))
+        assert response.status_code == HTTPStatus.OK
+        assert response.data is not None
+        pdf_document = Document(filetype="bytes", stream=response.data)
+        real_text = "".join((page.getText() for page in pdf_document))
+        assert real_text.strip() == expected_text
 
     def test_resize_ok(self, client):
         error = 1
         expected_resize = 200
-        with partner_id_set(client.application):
-            response = client.get(
-                f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}",
-                headers={"accept": "image/png"}
-            )
+
+        response = client.get(
+            f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}",
+            headers={"accept": "image/png"}
+        )
+        assert response.status_code == HTTPStatus.OK
+        assert response.data is not None
+        with Image.open(io.BytesIO(response.data)) as img:
+            width, height = img.size
+        expected_resolution = height / width
+        assert height != expected_resize
+        assert width != expected_resize
+
+        response = client.get(
+            f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?width={expected_resize}",
+            headers={"accept": "image/png"}
+        )
+
+        def maintains_aspect_ratio(response):
             assert response.status_code == HTTPStatus.OK
             assert response.data is not None
-            with Image.open(io.BytesIO(response.data)) as img:
-                width, height = img.size
+            with Image.open(io.BytesIO(response.data)) as img_:
+                width_, height_ = img_.size
+            real_resolution = height_ / width_
+            assert isclose(expected_resolution, real_resolution, abs_tol=error / 10)
+            return width_, height_
 
-            expected_resolution = height / width
-            assert height != expected_resize
-            assert width != expected_resize
-
-            response = client.get(
-                f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?width={expected_resize}",
-                headers={"accept": "image/png"}
-            )
-
-            def maintains_aspect_ratio(response):
-                assert response.status_code == HTTPStatus.OK
-                assert response.data is not None
-                with Image.open(io.BytesIO(response.data)) as img_:
-                    width_, height_ = img_.size
-                real_resolution = height_ / width_
-                assert isclose(expected_resolution, real_resolution, abs_tol=error / 10)
-                return width_, height_
-
-            real_width, _ = maintains_aspect_ratio(response)
-            assert isclose(expected_resize, real_width, abs_tol=error)
-
-            response = client.get(
-                f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?height={expected_resize}",
-                headers={"accept": "image/png"}
-            )
-
-            _, real_height = maintains_aspect_ratio(response)
-            assert isclose(expected_resize, real_height, abs_tol=error)
+        real_width, _ = maintains_aspect_ratio(response)
+        assert isclose(expected_resize, real_width, abs_tol=error)
+        response = client.get(
+            f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?height={expected_resize}",
+            headers={"accept": "image/png"}
+        )
+        _, real_height = maintains_aspect_ratio(response)
+        assert isclose(expected_resize, real_height, abs_tol=error)
 
     def test_resize_nok(self, client):
         intended_resize = 200
