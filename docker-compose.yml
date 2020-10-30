@@ -1,7 +1,7 @@
 version: "3.5"
 services:
-  deploy:
-    image: doxerv
+  templating:
+    image: templating
     build:
         context: .
         dockerfile: ./Dockerfile
@@ -13,14 +13,9 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DATABASE: ${DB_DATABASE}
-      AUTH_SERVER: ${AUTH_SERVER}
-      AUTH_SERVER_ORIGIN: ${AUTH_SERVER_ORIGIN} # optional
-      CLIENT_ID: ${CLIENT_ID}
       S3_BUCKET: ${S3_BUCKET}
-      SWAGGER_AUTH_CLIENT: ${SWAGGER_AUTH_CLIENT} # optional
-      SWAGGER_AUTH_CLIENT_SECRET: ${SWAGGER_AUTH_CLIENT_SECRET} # optional
-      SWAGGER_AUTH_SCOPE: ${SWAGGER_AUTH_SCOPE} # optional
       WORKER_CLASS: "egg:meinheld#gunicorn_worker"
     volumes:
       - ${DATA_DIR}/aws:/root/.aws
-
+    ports:
+      - 5000:80
