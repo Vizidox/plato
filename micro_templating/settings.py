@@ -1,5 +1,5 @@
 import tomlkit
-from os import environ, getenv
+from os import environ
 from dotenv import load_dotenv, find_dotenv
 from .setup_util import inside_container
 
@@ -29,16 +29,6 @@ DB_PORT = environ["DB_PORT"]
 DB_USERNAME = environ["DB_USERNAME"]
 DB_PASSWORD = environ["DB_PASSWORD"]
 DB_DATABASE = environ["DB_DATABASE"]
-
-# Auth
-AUTH_SERVER = environ["AUTH_SERVER"]
-AUTH_SERVER_ORIGIN = getenv("AUTH_SERVER_ORIGIN", AUTH_SERVER)
-CLIENT_ID = environ["CLIENT_ID"]
-
-# Swagger-UI (optional)
-SWAGGER_AUTH_CLIENT = getenv("SWAGGER_AUTH_CLIENT", "")
-SWAGGER_AUTH_CLIENT_SECRET = getenv("SWAGGER_AUTH_CLIENT_SECRET", "")
-SWAGGER_AUTH_SCOPE = getenv("SWAGGER_AUTH_SCOPE", "")
 
 
 def db_url(database_name: str) -> str:
