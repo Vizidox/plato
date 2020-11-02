@@ -1,3 +1,4 @@
+project_version=''
 nexus_api_image_name = 'nexus.morphotech.co.uk/templating'
 local_api_image_name = 'templating'
 
@@ -39,9 +40,9 @@ pipeline {
         }
         stage('Push to Nexus') {
             steps {
-                sh "docker tag ${local_api_image_name} ${nexus_api_image_name}:${env.project_version}"
-                sh "docker push ${nexus_api_image_name}:${env.project_version}"
-                sh "docker tag ${nexus_api_image_name}:${env.project_version} ${local_api_image_name}" // tag the image with the original name for later docker-compose cleanup
+                sh "docker tag ${local_api_image_name} ${nexus_api_image_name}:${project_version}"
+                sh "docker push ${nexus_api_image_name}:${project_version}"
+                sh "docker tag ${nexus_api_image_name}:${project_version} ${local_api_image_name}" // tag the image with the original name for later docker-compose cleanup
             }
         }
         stage('Sonarqube code inspection') {
