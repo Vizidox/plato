@@ -25,7 +25,7 @@ pipeline {
                     if(!params.get('skipTests', false)) {
                         sh 'docker-compose -f tests/docker/docker-compose.test.yml build'
                         sh 'docker-compose -f tests/docker/docker-compose.test.yml up -d database'
-                        sh "docker-compose -f tests/docker/docker-compose.test.yml run --rm test-templating pytest --cov=${sonar_analyzed_dir}"
+                        sh "docker-compose -f tests/docker/docker-compose.test.yml run --rm test-templating pytest --junitxml=/app/coverage/pytest-report.xml --cov-report=xml:/app/coverage/coverage.xml --cov=${sonar_analyzed_dir}"
                     }
                 }
             }
@@ -51,8 +51,8 @@ pipeline {
                 -Dsonar.projectKey=${sonar_project_key}\
                 -Dsonar.login=${env.sonar_account}\
                 -Dsonar.password=${env.sonar_password}\
-                -Dsonar.python.coverage.reportPaths=coverage/coverage.xml\
-                -Dsonar.python.xunit.reportPath=coverage/pytest-report.xml\
+                -Dsonar.python.coverage.reportPaths=app/coverage/coverage.xml\
+                -Dsonar.python.xunit.reportPath=app/coverage/pytest-report.xml\
                 -Dsonar.projectBaseDir=${sonar_analyzed_dir}\
                 -Dsonar.exclusions=\"/static/**/*, /templates/**/*\""
             }

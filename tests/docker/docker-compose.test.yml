@@ -30,6 +30,8 @@ services:
       DB_PASSWORD: test
       DB_DATABASE: test
       S3_BUCKET: ${S3_BUCKET}
+      COVERAGE : /app/coverage/coverage.xml
+      PYTEST_REPORT: /app/coverage/pytest-report.xml
     networks:
       - templating_test
 
