@@ -51,7 +51,7 @@ pipeline {
                 -Dsonar.projectKey=${sonar_project_key}\
                 -Dsonar.login=${env.sonar_account}\
                 -Dsonar.password=${env.sonar_password}\
-                -Dsonar.python.coverage.reportPaths=coverage/coverage.xml\
+                -Dsonar.python.coverage.reportPath=coverage/coverage.xml\
                 -Dsonar.python.xunit.reportPath=coverage/pytest-report.xml\
                 -Dsonar.projectBaseDir=${sonar_analyzed_dir}\
                 -Dsonar.exclusions=\"/static/**/*, /templates/**/*\""
