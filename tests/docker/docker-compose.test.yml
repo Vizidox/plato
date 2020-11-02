@@ -32,7 +32,7 @@ services:
       DB_DATABASE: test
       S3_BUCKET: ${S3_BUCKET}
     volumes:
-      - coverage:/app/coverage
+      - coverage:/coverage
     networks:
       - templating_test
 
