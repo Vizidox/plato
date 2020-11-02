@@ -2,7 +2,7 @@ version: "3.5"
 
 volumes:
   pg_data:
-  coverage:
+
 
 services:
   database:
@@ -32,7 +32,7 @@ services:
       DB_DATABASE: test
       S3_BUCKET: ${S3_BUCKET}
     volumes:
-      - coverage:/coverage
+      - coverage:/app/coverage
     networks:
       - templating_test
 
