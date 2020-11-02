@@ -1,5 +1,17 @@
 version: "3.5"
 services:
+  user-db:
+    image: postgres:${POSTGRES_VER}
+    restart: unless-stopped
+    volumes:
+      - ${DATA_DIR}/user_db:/data/db/
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASS}
+      PGDATA: /data/db/
+    ports:
+      - 127.0.0.1:5420:5432
+
   database:
     build:
       dockerfile: docker/postgres.Dockerfile
@@ -19,7 +31,7 @@ services:
       - 127.0.0.1:5455:5432
 
   auth:
-    image: jboss/keycloak:8.0.1
+    image: jboss/keycloak:9.0.0
     volumes:
       - ./micro-templating-keycloak-realm.json:/opt/jboss/keycloak/realm.json
     command:
@@ -30,6 +42,8 @@ services:
       KEYCLOAK_PASSWORD: pass
       PROXY_ADDRESS_FORWARDING: ${KEYCLOAK_PROXY_ALLOWED:-false}
     restart: unless-stopped
+    links:
+      - user-db
     ports:
       - 8787:8080
 
