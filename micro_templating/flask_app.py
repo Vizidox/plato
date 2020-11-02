@@ -33,8 +33,8 @@ def create_app(db_url: str, template_static_directory: str,
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
-    migrate = Migrate(app, db)
-    cors = CORS(app)
+    Migrate(app, db)
+    CORS(app)
 
     app.config['SWAGGER'] = swagger_ui_config
     swag.init_app(app)
