@@ -8,8 +8,8 @@ from micro_templating.setup_util import load_templates, NoIndexTemplateFound
 from tempfile import TemporaryDirectory
 from micro_templating.db.models import Template, db
 
-TEMPLATE_FILE_PATH_FORMAT = "templates/{0}/{1}"
-STATIC_FILE_PATH_FORMAT = "static/{0}/{1}"
+TEMPLATE_FILE_PATH_FORMAT = "templating/templates/{0}/{1}"
+STATIC_FILE_PATH_FORMAT = "templating/static/{0}/{1}"
 
 
 def get_template_file_path(template_id: str):
@@ -20,8 +20,8 @@ def get_static_file_path(template_id: str, file_name: str):
     return STATIC_FILE_PATH_FORMAT.format(template_id, file_name)
 
 
-def create_child_temp_folder(main_directory: str) -> str:
-    template_dir_name = main_directory + "/abc"
+def create_child_temp_folder(main_directory: str, base_dir: str) -> str:
+    template_dir_name = base_dir + main_directory + "/abc"
     pathlib.Path(template_dir_name).mkdir(parents=True, exist_ok=True)
     return template_dir_name
 
@@ -87,8 +87,9 @@ class TestApplicationSetup:
         with client.application.test_request_context():
             with TemporaryDirectory() as temp:
                 # as we cannot directly delete any folder created by TemporaryDirectory, we create another temporary one inside it
-                template_dir_name = create_child_temp_folder(temp)
-                load_templates(bucket_name, template_dir_name)
+                base_dir = 'templating'
+                template_dir_name = create_child_temp_folder(temp, base_dir)
+                load_templates(bucket_name, template_dir_name, base_dir)
 
                 static_file_1 = template_dir_name + '/' + get_static_file_path(file_name="abc_1", template_id="0")
                 static_file_2 = template_dir_name + '/' + get_static_file_path(file_name="abc_2", template_id="0")
@@ -104,5 +105,6 @@ class TestApplicationSetup:
             with pytest.raises(NoIndexTemplateFound):
                 with TemporaryDirectory() as temp:
                     # as we cannot directly delete any folder created by TemporaryDirectory, we create another temporary one inside it
-                    template_dir_name = create_child_temp_folder(temp)
-                    load_templates(bucket_name, template_dir_name)
+                    base_dir = 'templating'
+                    template_dir_name = create_child_temp_folder(temp, base_dir)
+                    load_templates(bucket_name, template_dir_name, base_dir)
