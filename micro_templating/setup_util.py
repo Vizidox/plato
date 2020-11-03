@@ -8,6 +8,7 @@ import shutil
 import smart_open
 
 from .compose import FILTERS
+from .settings import S3_TEMPLATE_DIR
 
 
 class SetupError(Exception):
@@ -90,7 +91,7 @@ def write_files(files: Dict[str, Any], target_directory: str) -> None:
 def load_templates(s3_bucket: str, target_directory: str) -> None:
     """
     Gets templates from the AWS S3 bucket which are associated with ones available in the DB.
-    Expected directory structure is /{auth_id}/{template_id}
+    Expected directory structure is /{template_id}
     Args:
         s3_bucket: AWS S3 Bucket where the templates are
         target_directory: Target directory to store the templates in
@@ -105,8 +106,8 @@ def load_templates(s3_bucket: str, target_directory: str) -> None:
     for template in templates:
         template_id = template.id
 
-        static_folder = f"static"
-        template_file = f"templates/{template_id}/{template_id}"
+        static_folder = f"{S3_TEMPLATE_DIR}/static"
+        template_file = f"{S3_TEMPLATE_DIR}/templates/{template_id}/{template_id}"
 
         # get static files
         static_files = get_file_s3(bucket_name=s3_bucket, url=static_folder)
