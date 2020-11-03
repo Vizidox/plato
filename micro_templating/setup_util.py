@@ -8,7 +8,7 @@ import shutil
 import smart_open
 
 from .compose import FILTERS
-from .settings import S3_TEMPLATE_DIR
+from micro_templating.settings import S3_TEMPLATE_DIR
 
 
 class SetupError(Exception):
