@@ -106,5 +106,5 @@ class TestApplicationSetup:
                 with TemporaryDirectory() as temp:
                     # as we cannot directly delete any folder created by TemporaryDirectory, we create another temporary one inside it
                     base_dir = 'templating'
-                    template_dir_name = create_child_temp_folder(temp, base_dir)
+                    template_dir_name = create_child_temp_folder(temp)
                     load_templates(bucket_name, template_dir_name, base_dir)
