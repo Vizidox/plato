@@ -5,8 +5,7 @@ from typing import Dict, Any
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 import pathlib
 import shutil
-import smart_open
-
+from smart_open import s3
 from .compose import FILTERS
 
 
@@ -21,6 +20,7 @@ class NoStaticContentFound(SetupError):
     """
     raised when no static content fount on S3
     """
+
     def __init__(self, template_id: str):
         """
         Exception initialization
@@ -36,6 +36,7 @@ class NoIndexTemplateFound(SetupError):
     """
     raised when no template found on S3
     """
+
     def __init__(self, template_id: str):
         """
         Exception initialization
@@ -47,9 +48,9 @@ class NoIndexTemplateFound(SetupError):
         super(NoIndexTemplateFound, self).__init__(message)
 
 
-def get_file_s3(bucket_name: str, url: str) -> Dict[str, Any]:
+def get_file_s3(bucket_name: str, url: str, s3_template_directory: str) -> Dict[str, Any]:
     """
-    get files from s3 and save them in the form of a dict. If a folder is inserted as the url, all files in that folder
+    Get files from s3 and save them in the form of a dict. If a folder is inserted as the url, all files in that folder
         will be returned
 
     :param bucket_name: the bucket_name we want to retrieve file from
@@ -58,15 +59,20 @@ def get_file_s3(bucket_name: str, url: str) -> Dict[str, Any]:
     :param url: the url leading to the file/folder
     :type url: string
 
-    :return: A dictionary with key as file's location on s3-bucket and value as file's content
+    :param s3_template_directory: the s3-bucket path for the templates directory
+    :type s3_template_directory: string
+
+    :return: A dictionary with key as file's relative location on s3-bucket and value as file's content
     :rtype: Dict[str, Any]
     """
     key_content_mapping: dict = {}
-    for key, content in smart_open.s3_iter_bucket(bucket_name=bucket_name, prefix=url):
+    for key, content in s3.iter_bucket(bucket_name=bucket_name, prefix=url):
         if key[-1] == '/' or not content:
             # Is a directory
             continue
-        key_content_mapping[key] = content
+        # based on https://www.python.org/dev/peps/pep-0616/
+        new_key = key[len(s3_template_directory):]
+        key_content_mapping[new_key] = content
     return key_content_mapping
 
 
@@ -110,11 +116,11 @@ def load_templates(s3_bucket: str, target_directory: str, s3_template_directory:
         template_file = f"{s3_template_directory}/templates/{template_id}/{template_id}"
 
         # get static files
-        static_files = get_file_s3(bucket_name=s3_bucket, url=static_folder)
+        static_files = get_file_s3(bucket_name=s3_bucket, url=static_folder, s3_template_directory=s3_template_directory)
         write_files(files=static_files, target_directory=target_directory)
 
         # get template content
-        template_files = get_file_s3(bucket_name=s3_bucket, url=template_file)
+        template_files = get_file_s3(bucket_name=s3_bucket, url=template_file, s3_template_directory=s3_template_directory)
         if not template_files:
             raise NoIndexTemplateFound(template_id)
         write_files(files=template_files, target_directory=target_directory)
