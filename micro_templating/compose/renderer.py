@@ -74,6 +74,7 @@ class Renderer(ABC):
         jinjaenv = current_app.config["JINJENV"]
         static_directory = current_app.config["TEMPLATE_STATIC"]
         template_static_directory = f"{static_directory}/{self.template_model.id}/"
+        base_static_directory = f"{static_directory}/"
 
         jinja_template = jinjaenv.get_template(
             name=f"{self.template_model.id}/{self.template_model.id}"
@@ -81,6 +82,7 @@ class Renderer(ABC):
 
         composed_html = jinja_template.render(
             p=compose_data,
+            base_static=base_static_directory,
             template_static=template_static_directory
         )
 
