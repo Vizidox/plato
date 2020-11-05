@@ -1,3 +1,5 @@
+from typing import Optional
+
 import click
 from flask import Flask
 from flask.cli import with_appcontext
@@ -29,15 +31,20 @@ def register_cli_commands(app: Flask):
 
     @app.cli.command("export_template")
     @click.argument("output", type=click.File("w"))
-    @click.argument("template_id", type=click.STRING)
+    @click.option("--template-id", default=None, type=click.STRING)
     @with_appcontext
-    def export_template(output, template_id: str):
+    def export_template(output, template_id: Optional[str] = None):
         """
         Export new template to file
         Args:
             output: output file
             template_id: template to be exported
         """
+        if template_id is None:
+            templates = Template.query.all()
+            template_options = "\n".join([template.id for template in templates])
+            click.echo(template_options)
+            template_id = click.prompt("Please enter the id for the template you wish to export")
         template = Template.query.filter_by(id=template_id).one()
         json.dump(template.json_dict(), output)
 
