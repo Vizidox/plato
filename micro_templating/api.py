@@ -84,9 +84,9 @@ def initialize_api(app: Flask):
 
         tags = request.args.getlist("tags", type=str)
 
-        template_query = Template.query.all()
+        template_query = Template.query
         if tags:
-            template_query = Template.query.filter(Template.tags.contains(db_cast(tags, ARRAY(String))))
+            template_query = template_query.filter(Template.tags.contains(db_cast(tags, ARRAY(String))))
 
         json_views = [TemplateDetailView.view_from_template(template)._asdict() for
                       template in
