@@ -96,7 +96,7 @@ def write_files(files: Dict[str, Any], target_directory: str) -> None:
 def load_templates(s3_bucket: str, target_directory: str, s3_template_directory: str) -> None:
     """
     Gets templates from the AWS S3 bucket which are associated with ones available in the DB.
-    Expected directory structure is /{template_id}
+    Expected directory structure is {s3_template_directory}/{template_id}
     Args:
         s3_bucket: AWS S3 Bucket where the templates are
         target_directory: Target directory to store the templates in
