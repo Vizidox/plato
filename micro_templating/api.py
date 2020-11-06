@@ -70,6 +70,7 @@ def initialize_api(app: Flask):
           - in: query
             name: tags
             type: array
+            collectionFormat: multi
             items:
                 type: string
         responses:
@@ -83,7 +84,6 @@ def initialize_api(app: Flask):
         """
 
         tags = request.args.getlist("tags", type=str)
-
         template_query = Template.query
         if tags:
             template_query = template_query.filter(Template.tags.contains(db_cast(tags, ARRAY(String))))

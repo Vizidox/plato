@@ -14,6 +14,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DATABASE: ${DB_DATABASE}
       S3_BUCKET: ${S3_BUCKET}
+      S3_TEMPLATE_DIR: ${S3_TEMPLATE_DIR}
       WORKER_CLASS: "egg:meinheld#gunicorn_worker"
     volumes:
       - ${DATA_DIR}/aws:/root/.aws

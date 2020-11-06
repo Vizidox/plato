@@ -3,6 +3,7 @@ version: "3.5"
 volumes:
   pg_data:
 
+
 services:
   database:
     image: postgres:12.2
@@ -30,6 +31,9 @@ services:
       DB_PASSWORD: test
       DB_DATABASE: test
       S3_BUCKET: ${S3_BUCKET}
+      S3_TEMPLATE_DIR: templating
+    volumes:
+      - ${API_DIRECTORY}/coverage:/app/coverage
     networks:
       - templating_test
 

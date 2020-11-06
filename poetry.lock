@@ -117,10 +117,10 @@ description = "The AWS SDK for Python"
 name = "boto3"
 optional = false
 python-versions = "*"
-version = "1.16.8"
+version = "1.16.9"
 
 [package.dependencies]
-botocore = ">=1.19.8,<1.20.0"
+botocore = ">=1.19.9,<1.20.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.3.0,<0.4.0"
 
@@ -130,7 +130,7 @@ description = "Low-level, data-driven core of boto 3."
 name = "botocore"
 optional = false
 python-versions = "*"
-version = "1.19.8"
+version = "1.19.9"
 
 [package.dependencies]
 jmespath = ">=0.7.1,<1.0.0"
@@ -952,7 +952,7 @@ description = "World timezone definitions, modern and historical"
 name = "pytz"
 optional = false
 python-versions = "*"
-version = "2020.1"
+version = "2020.4"
 
 [[package]]
 category = "dev"
@@ -1314,12 +1314,12 @@ boto = [
     {file = "boto-2.49.0.tar.gz", hash = "sha256:ea0d3b40a2d852767be77ca343b58a9e3a4b00d9db440efb8da74b4e58025e5a"},
 ]
 boto3 = [
-    {file = "boto3-1.16.8-py2.py3-none-any.whl", hash = "sha256:207d129d808659b6d5668dc106918aa906373cf00652a53422131e7218df39cf"},
-    {file = "boto3-1.16.8.tar.gz", hash = "sha256:0f8f9ef5e902e05b32f4b7ae3bf948a47675613f5a99185f63d2ef4183225086"},
+    {file = "boto3-1.16.9-py2.py3-none-any.whl", hash = "sha256:f2bda2d6292dbceaabd7c4dd860c9fa66d30e0fc80e10860f1d87d19a3eface7"},
+    {file = "boto3-1.16.9.tar.gz", hash = "sha256:3affe4f42849c332e877e460b27cc96cbd342276f70fb9da6ce1c469af74b9ea"},
 ]
 botocore = [
-    {file = "botocore-1.19.8-py2.py3-none-any.whl", hash = "sha256:da7ecc69b6e2ea42fb849928635c0689cae32a95cb38f82b21213d276e75a4a4"},
-    {file = "botocore-1.19.8.tar.gz", hash = "sha256:2e03401b4e0bc1f32fa11b7d1025975a2955f185dd2650fda6e33c70daeaba4c"},
+    {file = "botocore-1.19.9-py2.py3-none-any.whl", hash = "sha256:ee88c99bc0ec025e9b24b03dcec5cbae110435c486e28151fe8819c54ddd8a65"},
+    {file = "botocore-1.19.9.tar.gz", hash = "sha256:ffba3a407e2b9fbd958c9b3d089de8831015572e06b23b6203f434257a8d08c0"},
 ]
 cairocffi = [
     {file = "cairocffi-1.2.0.tar.gz", hash = "sha256:9a979b500c64c8179fec286f337e8fe644eca2f2cd05860ce0b62d25f22ea140"},
@@ -1805,8 +1805,8 @@ python-jose = [
     {file = "python_jose-3.1.0-py2.py3-none-any.whl", hash = "sha256:1ac4caf4bfebd5a70cf5bd82702ed850db69b0b6e1d0ae7368e5f99ac01c9571"},
 ]
 pytz = [
-    {file = "pytz-2020.1-py2.py3-none-any.whl", hash = "sha256:a494d53b6d39c3c6e44c3bec237336e14305e4f29bbf800b599253057fbb79ed"},
-    {file = "pytz-2020.1.tar.gz", hash = "sha256:c35965d010ce31b23eeb663ed3cc8c906275d6be1a34393a1d73a41febf4a048"},
+    {file = "pytz-2020.4-py2.py3-none-any.whl", hash = "sha256:5c55e189b682d420be27c6995ba6edce0c0a77dd67bfbe2ae6607134d5851ffd"},
+    {file = "pytz-2020.4.tar.gz", hash = "sha256:3e6b7dd2d1e0a59084bcee14a17af60c5c562cdc16d828e8eba2e683d3a7e268"},
 ]
 pywin32 = [
     {file = "pywin32-227-cp27-cp27m-win32.whl", hash = "sha256:371fcc39416d736401f0274dd64c2302728c9e034808e37381b5e1b22be4a6b0"},
