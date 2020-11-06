@@ -41,25 +41,28 @@ First, make sure you actually *have* a DATA_DIR, by creating a folder named 'dat
 
 e.g TEMPLATE_DIRECTORY=/home/carloscoda/projects/templating/data/templates
 
-If using a different S3 bucket than "micro-templating" then change S3_BUCKET to whichever bucket you want to use.
+A couple more environment variables need to be filled as well. 
+S3_BUCKET is the S3 Bucket you decide to use and S3_TEMPLATE_DIR is the path to 
+the directory where your templates are stored.
+
+e.g S3_TEMPLATE_DIR=projects/templating
 
 Make sure the bucket is accessible by providing credentials to the service by
  storing the S3 AWS credentials in your DATA_DIR/aws/.  
-#### Authentication Server and Database
-The templating service uses Postgresql and Keycloak for authentication.
-To set up local servers for both you may use the docker-compose file supplied.
+#### Database
+The templating service uses Postgresql.
+To set up local servers you may use the docker-compose file supplied.
  
 ```bash
 cp docker/docker-compose.local.override.yml docker-compose.override.yml
 ```
 
-Then spin up both containers by running:
+Then spin up the container by running:
 
 ```bash
-docker-compose up -d auth database
+docker-compose up -d database
 ```
 
-You can make sure the auth server is running by accessing http://localhost:8787/auth.
 To do the same for the database you may try accessing it through 
 ```
 postgresql://templating:template-pass@localhost:5455/templating
@@ -78,21 +81,31 @@ poetry run python main.py
 ```
 
 This will make the application available at http://localhost:5000/apidocs/ 
-where you can use swagger-ui to interact with the application. Make sure you authenticate with your example client. 
-By clicking one of the locks on the page and _Authorize_.
+where you can use swagger-ui to interact with the application. 
 
 *Note*: If you run the app through a server instead of main, make sure you run `flask refresh`
 so it can obtain the most recent templates from S3.  
 
 ## Running the tests
-
+Locally:
 ```bash
 poetry run pytest
 ```
 
-## Deployment
+Running tests inside the docker containers (you might need to build the templating docker image first):
+```bash
+docker-compose -f tests/docker/docker-compose.test.yml up -d database
 
-To be added.
+docker-compose -f tests/docker/docker-compose.test.yml run --rm test-templating pytest --cov=micro_templating
+```
+
+
+## Use Command Line Interface
+
+```bash
+flask <command>
+```
+
 
 ## Built With
 
@@ -109,6 +122,8 @@ We use [SemVer](http://semver.org/) for versioning.
 ## Authors
 
 * **Tiago Santos** - *Initial work* - tiago.santos@vizidox.com
+* **Rita Mariquitos** - rita.mariquitos@morphotech.co.uk
+
 
 ## License
 
