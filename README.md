@@ -106,6 +106,11 @@ docker-compose -f tests/docker/docker-compose.test.yml run --rm test-templating 
 flask <command>
 ```
 
+## How to use in your project
+
+You will need to add the templating and templating database container to your docker-compose file. The templating image is stored on Nexus.
+Please check the detailed instructions on our [confluence page](https://vizidox.atlassian.net/wiki/spaces/VIZ/pages/1349681260/How+to+deploy+locally+with+your+project).
+
 
 ## Built With
 
