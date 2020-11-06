@@ -6,7 +6,7 @@ from flask.cli import with_appcontext
 import json
 from .db import db
 from .db.models import Template
-from .settings import S3_BUCKET, TEMPLATE_DIRECTORY
+from .settings import S3_BUCKET, TEMPLATE_DIRECTORY, S3_TEMPLATE_DIR
 from .setup_util import load_templates
 
 
@@ -51,4 +51,4 @@ def register_cli_commands(app: Flask):
     @app.cli.command("refresh")
     @with_appcontext
     def refresh_local_templates():
-        load_templates(S3_BUCKET, TEMPLATE_DIRECTORY)
+        load_templates(S3_BUCKET, TEMPLATE_DIRECTORY, S3_TEMPLATE_DIR)

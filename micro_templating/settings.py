@@ -1,6 +1,7 @@
 import tomlkit
-from os import environ
+from os import environ, getenv
 from dotenv import load_dotenv, find_dotenv
+
 from .setup_util import inside_container
 
 if not inside_container():
@@ -21,6 +22,7 @@ PROJECT_VERSION = __project_meta["version"]
 
 # Template storage
 S3_BUCKET = environ["S3_BUCKET"]
+S3_TEMPLATE_DIR = getenv("S3_TEMPLATE_DIR", "templating")
 TEMPLATE_DIRECTORY = environ["TEMPLATE_DIRECTORY"]
 
 # Database
