@@ -14,6 +14,7 @@ from tests import get_message
 
 PLAIN_TEXT_TEMPLATE_ID = "plain_text"
 PNG_IMAGE_TEMPLATE_ID = "png_image"
+QR_CODE_TEMPLATE_ID = 'qr_code'
 NO_IMAGE_TEMPLATE_ID = PNG_IMAGE_TEMPLATE_ID.replace('p', 'u')
 PNG_IMAGE_NAME = "balloons.png"
 
@@ -67,6 +68,23 @@ def template_test_examples(client, template_loader):
             '</body>' \
             '</html>'
 
+        qr_code_template_model = Template(id_=QR_CODE_TEMPLATE_ID,
+                                          schema={"type": "object",
+                                                  "properties": {}
+                                                  },
+                                          type_="text/html", metadata={"qr_entries": ["qr_code"]},
+                                          example_composition={}, tags=[])
+        db.session.add(qr_code_template_model)
+
+        qr_code_template_jinja_id = f"{QR_CODE_TEMPLATE_ID}/{QR_CODE_TEMPLATE_ID}"
+        template_loader.mapping[qr_code_template_jinja_id] = \
+            '<!DOCTYPE html>' \
+            '<html>' \
+            '<body>' \
+            '<img src="file://{{ p.qr_code }}" alt="qr_fail">' \
+            '</body>' \
+            '</html>'
+
         db.session.commit()
 
     yield
@@ -75,6 +93,7 @@ def template_test_examples(client, template_loader):
         del template_loader.mapping[plain_text_jinja_id]
         del template_loader.mapping[png_template_jinja_id]
         del template_loader.mapping[no_image_template_jinja_id]
+        del template_loader.mapping[qr_code_template_jinja_id]
         Template.query.delete()
         db.session.commit()
 
@@ -195,3 +214,13 @@ class TestCompose:
 
         assert response.status_code == HTTPStatus.NOT_ACCEPTABLE
         assert get_message(response) == unsupported_mime_type.format(jpeg_mimetype, ", ".join(ALL_AVAILABLE_MIME_TYPES))
+
+    def test_compose_qr_code_exists(self, client):
+        response = client.post(self.COMPOSE_ENDPOINT.format(QR_CODE_TEMPLATE_ID), json={"qr_code": "qr_url.com"})
+        assert response.data is not None
+        assert response.status_code == HTTPStatus.OK
+
+        pdf_document = Document(filetype="bytes", stream=response.data)
+        blocks = chain.from_iterable((page.getText("dict")["blocks"] for page in pdf_document))
+        images = [block["image"] for block in blocks]
+        assert len(images) == 1

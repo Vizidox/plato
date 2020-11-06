@@ -8,7 +8,7 @@ from micro_templating.db.models import Template
 from micro_templating.db import db
 from json import loads as json_loads
 
-NUMBER_OF_TEMPLATES = 157
+NUMBER_OF_TEMPLATES = 50
 
 
 @pytest.fixture(scope="class")
@@ -19,7 +19,7 @@ def populate_db(client):
                          schema={"type": "object",
                                  "properties": {f"{i}": {"type": "string"}}
                                  },
-                         type_="text/html", metadata={}, example_composition={}, tags=[])
+                         type_="text/html", metadata={}, example_composition={}, tags=[f"tag{str(i)}", "example"])
             db.session.add(t)
         db.session.commit()
 
@@ -32,7 +32,6 @@ def populate_db(client):
 
 @pytest.mark.usefixtures("populate_db")
 class TestTemplates:
-
     GET_TEMPLATES_ENDPOINT = '/templates/'
     GET_TEMPLATES_METHOD_NAME = "templates"
 
@@ -61,10 +60,37 @@ class TestTemplates:
 
     def test_obtain_template_info_by_id_not_found(self, client):
 
-        tentative_template_id = 39
-        assert tentative_template_id < NUMBER_OF_TEMPLATES
-
-        new_tentative_template_id = 200
-        response = client.get(self.GET_TEMPLATES_BY_ID_ENDPOINT.format(new_tentative_template_id))
+        tentative_template_id = 200
+        assert tentative_template_id > NUMBER_OF_TEMPLATES
+        response = client.get(self.GET_TEMPLATES_BY_ID_ENDPOINT.format(tentative_template_id))
         assert response.status_code == HTTPStatus.NOT_FOUND
-        assert get_message(response) == template_not_found.format(new_tentative_template_id)
+        assert get_message(response) == template_not_found.format(tentative_template_id)
+
+    def test_obtain_template_by_tags(self, client):
+        for i in range(NUMBER_OF_TEMPLATES):
+            current_tag = f"tag{i}"
+            tags = {"tags": [current_tag]}
+            response = client.get(self.GET_TEMPLATES_ENDPOINT, query_string=tags)
+            assert response.status_code == HTTPStatus.OK
+            assert len(response.json) == 1
+            template_json = response.json[0]
+            assert current_tag == template_json["tags"][0]
+
+    def test_obtain_template_by_tags_empty(self, client):
+        template_id = 67
+        assert template_id > NUMBER_OF_TEMPLATES
+        current_tag = f"tag{template_id}"
+        tags = {"tags": [current_tag]}
+        response = client.get(self.GET_TEMPLATES_ENDPOINT, query_string=tags)
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json) == 0
+
+    def test_obtain_template_by_more_than_one_tag(self, client):
+        template_id = 32
+        assert template_id < NUMBER_OF_TEMPLATES
+        current_tag = f"tag{template_id}"
+        tags = {"tags": [current_tag, "example"]}
+
+        response = client.get(self.GET_TEMPLATES_ENDPOINT, query_string=tags)
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json) == 1
