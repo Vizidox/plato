@@ -1,13 +1,13 @@
 version: "3.5"
 services:
-  templating:
-    image: templating
+  plato:
+    image: plato
     build:
         context: .
         dockerfile: ./Dockerfile
     environment:
-      DATA_DIR: /templating-data/
-      TEMPLATE_DIRECTORY: /templating-data/templates/
+      DATA_DIR: /plato-data/
+      TEMPLATE_DIRECTORY: /plato-data/templates/
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_USERNAME: ${DB_USERNAME}
