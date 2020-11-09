@@ -7,7 +7,7 @@ COPY ./poetry.lock ./poetry.lock
 COPY ./pyproject.toml ./pyproject.toml
 COPY ./main.py /app/main.py
 ENV FLASK_APP=/app/main.py
-COPY ./micro_templating /app/micro_templating
+COPY plato /app/plato
 COPY ./migrations /app/migrations
 COPY ./prestart.sh /app/prestart.sh
 COPY ./tests /app/tests

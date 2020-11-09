@@ -6,10 +6,10 @@ from math import isclose
 import pytest
 from fitz import Document
 
-from micro_templating.compose import ALL_AVAILABLE_MIME_TYPES
-from micro_templating.db import db
-from micro_templating.db.models import Template
-from micro_templating.error_messages import aspect_ratio_compromised, resizing_unsupported, unsupported_mime_type
+from plato.compose import ALL_AVAILABLE_MIME_TYPES
+from plato.db import db
+from plato.db.models import Template
+from plato.error_messages import aspect_ratio_compromised, resizing_unsupported, unsupported_mime_type
 from tests import get_message
 
 PLAIN_TEXT_TEMPLATE_ID = "plain_text"

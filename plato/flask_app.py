@@ -9,10 +9,10 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 
 from jinja2 import Environment as JinjaEnv
-from micro_templating.api import initialize_api
-from micro_templating.views import swag
-from micro_templating.db import db
-from micro_templating.cli import register_cli_commands
+from plato.api import initialize_api
+from plato.views import swag
+from plato.db import db
+from plato.cli import register_cli_commands
 
 
 def create_app(db_url: str, template_static_directory: str,

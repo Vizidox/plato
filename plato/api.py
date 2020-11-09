@@ -6,9 +6,9 @@ from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm.exc import NoResultFound
 
-from micro_templating.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
-from micro_templating.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
-from micro_templating.views.views import TemplateDetailView
+from plato.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
+from plato.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
+from plato.views.views import TemplateDetailView
 from mimetypes import guess_extension
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \

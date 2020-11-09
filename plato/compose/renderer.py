@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 from weasyprint import HTML
 from jsonschema import validate as validate_schema
 
-from micro_templating.db.models import Template
+from plato.db.models import Template
 
 PDF_MIME = "application/pdf"
 HTML_MIME = "text/html"
