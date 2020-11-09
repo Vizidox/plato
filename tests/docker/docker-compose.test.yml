@@ -21,7 +21,7 @@ services:
       - plato_test
 
   test-plato:
-    image: plato
+    image: plato-api
     environment:
       DATA_DIR: /plato-data/
       TEMPLATE_DIRECTORY: /plato-data/templates/

@@ -1,10 +1,10 @@
 project_version=''
-nexus_api_image_name = 'nexus.morphotech.co.uk/plato'
-local_api_image_name = 'plato'
+nexus_api_image_name = 'nexus.morphotech.co.uk/plato-api'
+local_api_image_name = 'plato-api'
 
 sonar_project_key = 'plato'
 sonar_url = 'https://sonar.morphotech.co.uk'
-sonar_analyzed_dir = 'micro_templating'
+sonar_analyzed_dir = 'plato'
 
 pipeline {
     agent {
@@ -15,7 +15,7 @@ pipeline {
         stage('Build Project') {
             steps {
                 script {
-                    sh('docker-compose build plato')
+                    sh('docker-compose build plato-api')
                 }
             }
         }
@@ -33,7 +33,7 @@ pipeline {
         stage('Get project version') {
             steps {
                 script {
-                    project_version = sh(script: 'docker-compose run --rm plato poetry version', returnStdout: true).trim().split(' ')[-1]
+                    project_version = sh(script: 'docker-compose run --rm plato-api poetry version', returnStdout: true).trim().split(' ')[-1]
                 }
                 sh "echo 'current project version: ${project_version}'"
             }

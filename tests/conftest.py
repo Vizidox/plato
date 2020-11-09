@@ -9,8 +9,8 @@ from jinja2 import select_autoescape
 from testcontainers.compose import DockerCompose
 from testcontainers.core.utils import inside_container
 
-from micro_templating.db import db
-from micro_templating.flask_app import create_app
+from plato.db import db
+from plato.flask_app import create_app
 
 TEST_DB_URL = f"postgresql://test:test@{'database:5432' if inside_container() else 'localhost:5456'}/test"
 

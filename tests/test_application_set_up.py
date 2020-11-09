@@ -4,9 +4,9 @@ import pytest
 import pathlib
 from moto import mock_s3
 from smart_open import s3
-from micro_templating.setup_util import load_templates, NoIndexTemplateFound
+from plato.setup_util import load_templates, NoIndexTemplateFound
 from tempfile import TemporaryDirectory
-from micro_templating.db.models import Template, db
+from plato.db.models import Template, db
 
 TEMPLATE_FILE_PATH_FORMAT = "templating/templates/{0}/{1}"
 STATIC_FILE_PATH_FORMAT = "templating/static/{0}/{1}"

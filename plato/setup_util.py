@@ -1,6 +1,6 @@
 import os
 
-from micro_templating.db.models import Template
+from plato.db.models import Template
 from typing import Dict, Any
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 import pathlib

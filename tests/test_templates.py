@@ -2,10 +2,10 @@ from http import HTTPStatus
 
 import pytest
 
-from micro_templating.error_messages import template_not_found
+from plato.error_messages import template_not_found
 from tests import get_message
-from micro_templating.db.models import Template
-from micro_templating.db import db
+from plato.db.models import Template
+from plato.db import db
 from json import loads as json_loads
 
 NUMBER_OF_TEMPLATES = 50
