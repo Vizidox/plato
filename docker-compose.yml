@@ -1,6 +1,6 @@
 version: "3.5"
 services:
-  plato:
+  plato-api:
     image: plato-api
     build:
         context: .
