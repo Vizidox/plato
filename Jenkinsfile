@@ -1,8 +1,8 @@
 project_version=''
-nexus_api_image_name = 'nexus.morphotech.co.uk/templating'
-local_api_image_name = 'templating'
+nexus_api_image_name = 'nexus.morphotech.co.uk/plato'
+local_api_image_name = 'plato'
 
-sonar_project_key = 'vizidox-templating'
+sonar_project_key = 'plato'
 sonar_url = 'https://sonar.morphotech.co.uk'
 sonar_analyzed_dir = 'micro_templating'
 
@@ -15,7 +15,7 @@ pipeline {
         stage('Build Project') {
             steps {
                 script {
-                    sh('docker-compose build templating')
+                    sh('docker-compose build plato')
                 }
             }
         }
@@ -25,7 +25,7 @@ pipeline {
                     if(!params.get('skipTests', false)) {
                         sh 'docker-compose -f tests/docker/docker-compose.test.yml build'
                         sh 'docker-compose -f tests/docker/docker-compose.test.yml up -d database'
-                        sh "docker-compose -f tests/docker/docker-compose.test.yml run --rm test-templating pytest --junitxml=/app/coverage/pytest-report.xml --cov-report=xml:/app/coverage/coverage.xml --cov=${sonar_analyzed_dir}"
+                        sh "docker-compose -f tests/docker/docker-compose.test.yml run --rm test-plato pytest --junitxml=/app/coverage/pytest-report.xml --cov-report=xml:/app/coverage/coverage.xml --cov=${sonar_analyzed_dir}"
                     }
                 }
             }
@@ -33,7 +33,7 @@ pipeline {
         stage('Get project version') {
             steps {
                 script {
-                    project_version = sh(script: 'docker-compose run --rm templating poetry version', returnStdout: true).trim().split(' ')[-1]
+                    project_version = sh(script: 'docker-compose run --rm plato poetry version', returnStdout: true).trim().split(' ')[-1]
                 }
                 sh "echo 'current project version: ${project_version}'"
             }
