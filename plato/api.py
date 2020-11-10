@@ -6,11 +6,10 @@ from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm.exc import NoResultFound
 
-from micro_templating.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
-from micro_templating.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
-from micro_templating.views.views import TemplateDetailView
+from plato.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
+from plato.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
+from plato.views.views import TemplateDetailView
 from mimetypes import guess_extension
-from .auth import Authenticator
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
     resizing_unsupported, single_page_unsupported, negative_number_invalid
@@ -24,25 +23,20 @@ class UnsupportedMIMEType(Exception):
     ...
 
 
-def initialize_api(app: Flask, auth: Authenticator):
+def initialize_api(app: Flask):
     """
     Initializes Flask app with the microservice endpoints.
 
     Args:
         app: The Flask app
-        auth: The authenticator to provide security on the endpoints.
-
     Returns:
 
     """
     @app.route("/templates/<string:template_id>", methods=['GET'])
-    @auth.token_required
     def template_by_id(template_id: str):
         """
         Returns template information
         ---
-        security:
-          - api_auth: [templating]
         parameters:
           - name: template_id
             in: path
@@ -60,7 +54,7 @@ def initialize_api(app: Flask, auth: Authenticator):
         """
         try:
 
-            template: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
+            template: Template = Template.query.filter_by(id=template_id).one()
             view = TemplateDetailView.view_from_template(template)
             return jsonify(view._asdict())
 
@@ -68,17 +62,15 @@ def initialize_api(app: Flask, auth: Authenticator):
             return jsonify({"message": template_not_found.format(template_id)}), 404
 
     @app.route("/templates/", methods=['GET'])
-    @auth.token_required
     def templates():
         """
         Returns template information
         ---
-        security:
-          - api_auth: [templating]
         parameters:
           - in: query
             name: tags
             type: array
+            collectionFormat: multi
             items:
                 type: string
         responses:
@@ -92,8 +84,7 @@ def initialize_api(app: Flask, auth: Authenticator):
         """
 
         tags = request.args.getlist("tags", type=str)
-
-        template_query = Template.query.filter_by(partner_id=g.partner_id)
+        template_query = Template.query
         if tags:
             template_query = template_query.filter(Template.tags.contains(db_cast(tags, ARRAY(String))))
 
@@ -104,7 +95,6 @@ def initialize_api(app: Flask, auth: Authenticator):
         return jsonify(json_views)
 
     @app.route("/template/<string:template_id>/compose", methods=["POST"])
-    @auth.token_required
     def compose_file(template_id: str):
         """
         Composes file based on the template
@@ -146,8 +136,6 @@ def initialize_api(app: Flask, auth: Authenticator):
               required: false
               type: integer
               description: Intended width for image output
-        security:
-          - api_auth: [templating]
         responses:
           200:
             description: composed file
@@ -166,7 +154,6 @@ def initialize_api(app: Flask, auth: Authenticator):
         return _compose(template_id, "compose", lambda t: request.get_json())
 
     @app.route("/template/<string:template_id>/example", methods=["GET"])
-    @auth.token_required
     def example_compose(template_id: str):
         """
         Gets example file based on the template
@@ -202,8 +189,6 @@ def initialize_api(app: Flask, auth: Authenticator):
               required: false
               type: integer
               description: Intended width for image output
-        security:
-          - api_auth: [templating]
         responses:
           200:
             description: composed file
@@ -253,7 +238,7 @@ def initialize_api(app: Flask, auth: Authenticator):
             if page is not None:
                 compose_params["page"] = page
 
-            template_model: Template = Template.query.filter_by(partner_id=g.partner_id, id=template_id).one()
+            template_model: Template = Template.query.filter_by(id=template_id).one()
             compose_data = compose_retrieval_function(template_model)
             composed_file = compose(template_model, compose_data, mime_type, **compose_params)
             return send_file(composed_file, mimetype=mime_type, as_attachment=True,

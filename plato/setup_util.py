@@ -1,14 +1,13 @@
 import os
 
-from micro_templating.db.models import Template
+from plato.db.models import Template
 from typing import Dict, Any
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 import pathlib
 import shutil
-import smart_open
-
+from smart_open import s3
 from .compose import FILTERS
-from .auth import FlaskAuthenticator, Authenticator
+
 
 class SetupError(Exception):
     """
@@ -21,55 +20,37 @@ class NoStaticContentFound(SetupError):
     """
     raised when no static content fount on S3
     """
-    def __init__(self, partner_id: str, template_id: str):
+
+    def __init__(self, template_id: str):
         """
         Exception initialization
-
-        :param partner_id: the id of the partner
-        :type partner_id: string
 
         :param template_id: the id of the template
         :type template_id: string
         """
-        message = f"No static content found. partner_id: {partner_id}, template_id: {template_id}"
+        message = f"No static content found. template_id: {template_id}"
         super(NoStaticContentFound, self).__init__(message)
+
 
 class NoIndexTemplateFound(SetupError):
     """
     raised when no template found on S3
     """
-    def __init__(self, partner_id: str, template_id: str):
+
+    def __init__(self, template_id: str):
         """
         Exception initialization
-
-        :param partner_id: the id of the partner
-        :type partner_id: string
 
         :param template_id: the id of the template
         :type template_id: string
         """
-        message = f"No index template file found. partner_id: {partner_id}, template_id: {template_id}"
+        message = f"No index template file found. Template_id: {template_id}"
         super(NoIndexTemplateFound, self).__init__(message)
 
 
-def setup_authenticator(auth_host_url: str, oauth2_audience: str, auth_host_origin: str = "") -> Authenticator:
+def get_file_s3(bucket_name: str, url: str, s3_template_directory: str) -> Dict[str, Any]:
     """
-    Convenience method to setup the authenticator to gather all setup functions in one module.
-
-    Args:
-        auth_host_url: url for keycloak host e.g https://keycloak.org/auth/realms/vizidox/
-        auth_host_origin: the url keycloak signs with, defaults to auth_host_url
-        oauth2_audience: audience for JWT token validation
-
-    Returns:
-        Authenticator: authenticator be used for token validation
-    """
-    return FlaskAuthenticator(auth_host_url, oauth2_audience, auth_host_origin)
-
-
-def get_file_s3(bucket_name: str, url: str) -> Dict[str, Any]:
-    """
-    get files from s3 and save them in the form of a dict. If a folder is inserted as the url, all files in that folder
+    Get files from s3 and save them in the form of a dict. If a folder is inserted as the url, all files in that folder
         will be returned
 
     :param bucket_name: the bucket_name we want to retrieve file from
@@ -78,15 +59,20 @@ def get_file_s3(bucket_name: str, url: str) -> Dict[str, Any]:
     :param url: the url leading to the file/folder
     :type url: string
 
-    :return: A dictionary with key as file's location on s3-bucket and value as file's content
+    :param s3_template_directory: the s3-bucket path for the templates directory
+    :type s3_template_directory: string
+
+    :return: A dictionary with key as file's relative location on s3-bucket and value as file's content
     :rtype: Dict[str, Any]
     """
     key_content_mapping: dict = {}
-    for key, content in smart_open.s3_iter_bucket(bucket_name=bucket_name, prefix=url):
+    for key, content in s3.iter_bucket(bucket_name=bucket_name, prefix=url):
         if key[-1] == '/' or not content:
             # Is a directory
             continue
-        key_content_mapping[key] = content
+        # based on https://www.python.org/dev/peps/pep-0616/
+        new_key = key[len(s3_template_directory):]
+        key_content_mapping[new_key] = content
     return key_content_mapping
 
 
@@ -107,36 +93,36 @@ def write_files(files: Dict[str, Any], target_directory: str) -> None:
             file.write(content)
 
 
-def load_templates(s3_bucket: str, target_directory: str) -> None:
+def load_templates(s3_bucket: str, target_directory: str, s3_template_directory: str) -> None:
     """
     Gets templates from the AWS S3 bucket which are associated with ones available in the DB.
-    Expected directory structure is /{auth_id}/{template_id}
+    Expected directory structure is {s3_template_directory}/{template_id}
     Args:
         s3_bucket: AWS S3 Bucket where the templates are
         target_directory: Target directory to store the templates in
+        s3_template_directory: Base directory for S3 Bucket
     """
     # delete all old templates
     deleted_path = pathlib.Path(target_directory)
     if deleted_path.exists():
         shutil.rmtree(deleted_path)
 
-    templates = Template.query.with_entities(Template.partner_id, Template.id).all()
+    templates = Template.query.with_entities(Template.id).all()
 
     for template in templates:
-        partner_id = template.partner_id
         template_id = template.id
 
-        static_folder = f"static/{partner_id}"
-        template_file = f"templates/{partner_id}/{template_id}/{template_id}"
+        static_folder = f"{s3_template_directory}/static"
+        template_file = f"{s3_template_directory}/templates/{template_id}/{template_id}"
 
         # get static files
-        static_files = get_file_s3(bucket_name=s3_bucket, url=static_folder)
+        static_files = get_file_s3(bucket_name=s3_bucket, url=static_folder, s3_template_directory=s3_template_directory)
         write_files(files=static_files, target_directory=target_directory)
 
         # get template content
-        template_files = get_file_s3(bucket_name=s3_bucket, url=template_file)
+        template_files = get_file_s3(bucket_name=s3_bucket, url=template_file, s3_template_directory=s3_template_directory)
         if not template_files:
-            raise NoIndexTemplateFound(partner_id, template_id)
+            raise NoIndexTemplateFound(template_id)
         write_files(files=template_files, target_directory=target_directory)
 
 
@@ -160,20 +146,13 @@ def create_template_environment(template_directory_path: str) -> JinjaEnv:
     return env
 
 
-def setup_swagger_ui(project_name: str, project_version: str,
-                     auth_host_origin: str, swagger_scope: str,
-                     default_swagger_client: str = "", default_swagger_secret: str = "") -> dict:
+def setup_swagger_ui(project_name: str, project_version: str) -> dict:
     """
     Configurations to be used on the Swagger-ui page.
 
     Args:
         project_name: The project name to be displayed
         project_version: The project version to be displayed
-        auth_host_origin: The authentication host
-        swagger_scope: The scope to be requested to the auth server for access
-        default_swagger_client: Default for the client id, not to be used in Production
-        default_swagger_secret: Default for the client secret, NEVER to be used in production
-
     Returns:
         dict: The swagger ui configuration to be used with Flasgger
     """
@@ -185,22 +164,7 @@ def setup_swagger_ui(project_name: str, project_version: str,
         'favicon': "/static/favicon-32x32.png",
         'swagger_ui_css': "/static/swagger-ui.css",
         'swagger_ui_standalone_preset_js': '/static/swagger-ui-standalone-preset.js',
-        'description': '',
-        "securityDefinitions": {
-            "api_auth": {
-                "type": "oauth2",
-                "flow": "application",
-                "tokenUrl": f"{auth_host_origin}/protocol/openid-connect/token",
-                "scopes": {f"{swagger_scope}": "gives access to the templating engine"}
-            }
-        },
-        # 'auth' configuration used to initialize Oauth in swagger-ui as per the initOAuth method
-        # https://github.com/swagger-api/swagger-ui/blob/v3.24.3/docs/usage/oauth2.md
-        # this is not standard flasgger behavior but it is possible because we overrode the swagger-ui templates
-        "auth": {
-            "clientId": f"{default_swagger_client}",
-            "clientSecret": f"{default_swagger_secret}"
-        }
+        'description': ''
     }
 
     return swagger_ui_config

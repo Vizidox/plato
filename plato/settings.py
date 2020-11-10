@@ -1,6 +1,7 @@
 import tomlkit
 from os import environ, getenv
 from dotenv import load_dotenv, find_dotenv
+
 from .setup_util import inside_container
 
 if not inside_container():
@@ -21,6 +22,7 @@ PROJECT_VERSION = __project_meta["version"]
 
 # Template storage
 S3_BUCKET = environ["S3_BUCKET"]
+S3_TEMPLATE_DIR = getenv("S3_TEMPLATE_DIR", "templating")
 TEMPLATE_DIRECTORY = environ["TEMPLATE_DIRECTORY"]
 
 # Database
@@ -29,16 +31,6 @@ DB_PORT = environ["DB_PORT"]
 DB_USERNAME = environ["DB_USERNAME"]
 DB_PASSWORD = environ["DB_PASSWORD"]
 DB_DATABASE = environ["DB_DATABASE"]
-
-# Auth
-AUTH_SERVER = environ["AUTH_SERVER"]
-AUTH_SERVER_ORIGIN = getenv("AUTH_SERVER_ORIGIN", AUTH_SERVER)
-CLIENT_ID = environ["CLIENT_ID"]
-
-# Swagger-UI (optional)
-SWAGGER_AUTH_CLIENT = getenv("SWAGGER_AUTH_CLIENT", "")
-SWAGGER_AUTH_CLIENT_SECRET = getenv("SWAGGER_AUTH_CLIENT_SECRET", "")
-SWAGGER_AUTH_SCOPE = getenv("SWAGGER_AUTH_SCOPE", "")
 
 
 def db_url(database_name: str) -> str:
