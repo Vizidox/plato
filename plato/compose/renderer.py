@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 from weasyprint import HTML
 from jsonschema import validate as validate_schema
 
-from micro_templating.db.models import Template
+from plato.db.models import Template
 
 PDF_MIME = "application/pdf"
 HTML_MIME = "text/html"
@@ -73,16 +73,16 @@ class Renderer(ABC):
         """
         jinjaenv = current_app.config["JINJENV"]
         static_directory = current_app.config["TEMPLATE_STATIC"]
-        partner_static_directory = f"{static_directory}/{self.template_model.partner_id}/"
-        template_static_directory = f"{partner_static_directory}{self.template_model.id}/"
+        template_static_directory = f"{static_directory}/{self.template_model.id}/"
+        base_static_directory = f"{static_directory}/"
 
         jinja_template = jinjaenv.get_template(
-            name=f"{self.template_model.partner_id}/{self.template_model.id}/{self.template_model.id}"
+            name=f"{self.template_model.id}/{self.template_model.id}"
         )  # template id works for the file as well
 
         composed_html = jinja_template.render(
             p=compose_data,
-            partner_static=partner_static_directory,
+            base_static=base_static_directory,
             template_static=template_static_directory
         )
 

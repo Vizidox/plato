@@ -2,7 +2,7 @@ from typing import NamedTuple, Sequence, TYPE_CHECKING
 from . import swag
 
 if TYPE_CHECKING:
-    from micro_templating.db.models import Template
+    from plato.db.models import Template
 
 
 @swag.definition("TemplateDetail")

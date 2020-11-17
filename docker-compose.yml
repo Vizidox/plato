@@ -1,26 +1,22 @@
 version: "3.5"
 services:
-  deploy:
-    image: doxerv
+  plato-api:
+    image: plato-api
     build:
         context: .
         dockerfile: ./Dockerfile
     environment:
-      DATA_DIR: /templating-data/
-      TEMPLATE_DIRECTORY: /templating-data/templates/
+      DATA_DIR: /plato-data/
+      TEMPLATE_DIRECTORY: /plato-data/templates/
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DATABASE: ${DB_DATABASE}
-      AUTH_SERVER: ${AUTH_SERVER}
-      AUTH_SERVER_ORIGIN: ${AUTH_SERVER_ORIGIN} # optional
-      CLIENT_ID: ${CLIENT_ID}
       S3_BUCKET: ${S3_BUCKET}
-      SWAGGER_AUTH_CLIENT: ${SWAGGER_AUTH_CLIENT} # optional
-      SWAGGER_AUTH_CLIENT_SECRET: ${SWAGGER_AUTH_CLIENT_SECRET} # optional
-      SWAGGER_AUTH_SCOPE: ${SWAGGER_AUTH_SCOPE} # optional
+      S3_TEMPLATE_DIR: ${S3_TEMPLATE_DIR}
       WORKER_CLASS: "egg:meinheld#gunicorn_worker"
     volumes:
       - ${DATA_DIR}/aws:/root/.aws
-
+    ports:
+      - 5000:80

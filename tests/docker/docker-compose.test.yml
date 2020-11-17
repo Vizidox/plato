@@ -3,6 +3,7 @@ version: "3.5"
 volumes:
   pg_data:
 
+
 services:
   database:
     image: postgres:12.2
@@ -17,7 +18,24 @@ services:
     ports:
       - 127.0.0.1:5456:5432
     networks:
-      - templating_test
+      - plato_test
+
+  test-plato:
+    image: plato-api
+    environment:
+      DATA_DIR: /plato-data/
+      TEMPLATE_DIRECTORY: /plato-data/templates/
+      DB_HOST: localhost
+      DB_PORT: 5456
+      DB_USERNAME: test
+      DB_PASSWORD: test
+      DB_DATABASE: test
+      S3_BUCKET: ${S3_BUCKET}
+      S3_TEMPLATE_DIR: templating
+    volumes:
+      - ${API_DIRECTORY}/coverage:/app/coverage
+    networks:
+      - plato_test
 
 networks:
-  templating_test:
+  plato_test:

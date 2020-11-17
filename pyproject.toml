@@ -1,8 +1,9 @@
 [tool.poetry]
-name = "micro-templating"
-version = "1.3.0"
+name = "plato-api"
+version = "2.0.0"
 description = "Templating as a microservice"
-authors = ["Tiago Santos <tiago.santos@vizidox.com>"]
+authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com>",
+    "Hieu Le <hieu.le@morphotech.co.uk>", "Rita Mariquitos <rita.mariquitos@morphotech.co.uk>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -39,7 +40,7 @@ num2words="0.5.10"
 
 [tool.poetry.dev-dependencies]
 pytest="~5.4"
-pytest-cov="2.10.0"
+pytest-cov="2.10.1"
 moto="1.3.14"
 testcontainers = "3.0.3"
 blinker="1.4"
