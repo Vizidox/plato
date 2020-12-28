@@ -1,19 +1,23 @@
+import json
+from mimetypes import guess_extension
 from typing import Callable
 
-from flask import jsonify, request, g, Flask, send_file
+from accept_types import get_best_match
+from flask import jsonify, request, Flask, send_file
 from jsonschema import ValidationError
 from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 from plato.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
 from plato.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
 from plato.views.views import TemplateDetailView
-from mimetypes import guess_extension
+from .db import db
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
-    resizing_unsupported, single_page_unsupported, negative_number_invalid
-from accept_types import get_best_match
+    resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists
+from .setup_util import upload_template_files_to_s3
 
 
 class UnsupportedMIMEType(Exception):
@@ -30,8 +34,8 @@ def initialize_api(app: Flask):
     Args:
         app: The Flask app
     Returns:
-
     """
+
     @app.route("/templates/<string:template_id>", methods=['GET'])
     def template_by_id(template_id: str):
         """
@@ -93,6 +97,81 @@ def initialize_api(app: Flask):
                       template_query]
 
         return jsonify(json_views)
+
+    @app.route("/template/create", methods=['POST'])
+    def create_template():
+        """
+        Creates a template
+        ---
+        consumes:
+        - application/x-www-form-urlencoded
+        parameters:
+            - in: formData
+              name: zipfile
+              type: file
+              required: true
+              description: Contents of ZIP file
+            - in: formData
+              required: true
+              name: template details
+              type: string
+              format: application/json
+              properties:
+                  title:
+                    type: string
+                    description: The template id
+                    example: template_id
+                  schema:
+                    type: object
+                    properties: {}
+                  type:
+                    # default Content-Type for string is `application/octet-stream`
+                    type: string
+                  metadata:
+                    # default Content-Type for string is `application/octet-stream`
+                    type: object
+                    properties: {}
+                  example_composition:
+                    type: object
+                    properties: {}
+                  tags:
+                     type: array
+                     items:
+                       type: string
+              required: true
+              description: Contents of template
+        responses:
+          200:
+            description: Information of newly created template
+            type: array
+            items:
+                $ref: '#/definitions/TemplateDetail'
+          409:
+            description: The template already exists
+        tags:
+           - template
+        """
+        # saves zip file into temp
+        zip_file = request.files.get('zipfile')
+        zip_file.save('/tmp/zipfile.zip')
+
+        template_details = request.form.get('template details')
+        template_entry_json = json.loads(template_details)
+        template_id = template_entry_json['title']
+
+        upload_template_files_to_s3(template_id)
+
+        # Inserts json template into db
+        new_template = Template.from_json_dict(template_entry_json)
+        try:
+            db.session.add(new_template)
+            db.session.commit()
+        except IntegrityError:
+            return jsonify({"message": template_already_exists.format(template_id)}), 409
+
+        # todo refresh to load templates, ideally will want only to download the one we just created
+
+        return jsonify(TemplateDetailView.view_from_template(new_template)._asdict())
 
     @app.route("/template/<string:template_id>/compose", methods=["POST"])
     def compose_file(template_id: str):
