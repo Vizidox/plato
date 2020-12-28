@@ -10,6 +10,7 @@ token_is_invalid_message = "Token is invalid: {0}"
 
 #templating
 invalid_compose_json = "Invalid compose json: {0}"
+template_already_exists = "Template '{0}' already exists in database"
 template_not_found = "Template '{0}' not found"
 unsupported_mime_type = "No supported format in ACCEPT header: {0}, Available formats: {1}"
 aspect_ratio_compromised = "Specifying both width and height compromises the template's aspect ratio"
