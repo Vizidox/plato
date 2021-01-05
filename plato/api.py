@@ -1,4 +1,5 @@
 import json
+import zipfile
 from mimetypes import guess_extension
 from typing import Callable
 
@@ -16,8 +17,9 @@ from plato.views.views import TemplateDetailView
 from .db import db
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
-    resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists
-from .setup_util import upload_template_files_to_s3
+    resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file
+from .s3_bucket_util import upload_template_files_to_s3
+from .settings import S3_TEMPLATE_DIR
 
 
 class UnsupportedMIMEType(Exception):
@@ -148,6 +150,8 @@ def initialize_api(app: Flask):
                 $ref: '#/definitions/TemplateDetail'
           409:
             description: The template already exists
+          415:
+            description: The file is not a ZIP file
         tags:
            - template
         """
@@ -155,11 +159,15 @@ def initialize_api(app: Flask):
         zip_file = request.files.get('zipfile')
         zip_file.save('/tmp/zipfile.zip')
 
+        is_zipfile = zipfile.is_zipfile('/tmp/zipfile.zip')
+        if not is_zipfile:
+            return jsonify({"message": invalid_zip_file}), 415
+
         template_details = request.form.get('template details')
         template_entry_json = json.loads(template_details)
         template_id = template_entry_json['title']
 
-        upload_template_files_to_s3(template_id)
+        upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR)
 
         # Inserts json template into db
         new_template = Template.from_json_dict(template_entry_json)
