@@ -5,47 +5,8 @@ from typing import Dict, Any
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 import pathlib
 import shutil
-from .compose import FILTERS
-from .s3_bucket_util import get_file_s3
-
-
-class SetupError(Exception):
-    """
-    Error for any setup Exception to occur when running this module's functions.
-    """
-    ...
-
-
-class NoStaticContentFound(SetupError):
-    """
-    raised when no static content fount on S3
-    """
-
-    def __init__(self, template_id: str):
-        """
-        Exception initialization
-
-        :param template_id: the id of the template
-        :type template_id: string
-        """
-        message = f"No static content found. template_id: {template_id}"
-        super(NoStaticContentFound, self).__init__(message)
-
-
-class NoIndexTemplateFound(SetupError):
-    """
-    raised when no template found on S3
-    """
-
-    def __init__(self, template_id: str):
-        """
-        Exception initialization
-
-        :param template_id: the id of the template
-        :type template_id: string
-        """
-        message = f"No index template file found. Template_id: {template_id}"
-        super(NoIndexTemplateFound, self).__init__(message)
+from plato.compose import FILTERS
+from .s3_bucket_util import get_file_s3, NoIndexTemplateFound
 
 
 def write_files(files: Dict[str, Any], target_directory: str) -> None:
@@ -74,29 +35,24 @@ def load_templates(s3_bucket: str, target_directory: str, s3_template_directory:
         target_directory: Target directory to store the templates in
         s3_template_directory: Base directory for S3 Bucket
     """
-    # delete all old templates
-    deleted_path = pathlib.Path(target_directory)
-    if deleted_path.exists():
-        shutil.rmtree(deleted_path)
+    old_templates_path = pathlib.Path(target_directory)
+    if old_templates_path.exists():
+        shutil.rmtree(old_templates_path)
 
     templates = Template.query.with_entities(Template.id).all()
 
+    static_folder = f"{s3_template_directory}/static"
+    files = get_file_s3(bucket_name=s3_bucket, url=static_folder, s3_template_directory=s3_template_directory)
+    write_files(files=files, target_directory=target_directory)
+
     for template in templates:
-        template_id = template.id
-
-        static_folder = f"{s3_template_directory}/static"
-        template_file = f"{s3_template_directory}/templates/{template_id}/{template_id}"
-
-        # get static files
-        static_files = get_file_s3(bucket_name=s3_bucket, url=static_folder,
-                                   s3_template_directory=s3_template_directory)
-        write_files(files=static_files, target_directory=target_directory)
+        template_path = f"{s3_template_directory}/templates/{template.id}/{template.id}"
 
         # get template content
-        template_files = get_file_s3(bucket_name=s3_bucket, url=template_file,
+        template_files = get_file_s3(bucket_name=s3_bucket, url=template_path,
                                      s3_template_directory=s3_template_directory)
         if not template_files:
-            raise NoIndexTemplateFound(template_id)
+            raise NoIndexTemplateFound(template.id)
         write_files(files=template_files, target_directory=target_directory)
 
 

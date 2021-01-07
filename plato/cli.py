@@ -7,7 +7,7 @@ import json
 from .db import db
 from .db.models import Template
 from .settings import S3_BUCKET, TEMPLATE_DIRECTORY, S3_TEMPLATE_DIR
-from .setup_util import load_templates
+from plato.util.setup_util import load_templates
 
 
 def register_cli_commands(app: Flask):

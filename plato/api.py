@@ -17,9 +17,11 @@ from plato.views.views import TemplateDetailView
 from .db import db
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
-    resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file
-from .s3_bucket_util import upload_template_files_to_s3
-from .settings import S3_TEMPLATE_DIR
+    resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file, \
+    invalid_directory_structure
+from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
+from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
+from plato.util.setup_util import write_files
 
 
 class UnsupportedMIMEType(Exception):
