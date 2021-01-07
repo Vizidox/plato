@@ -1,4 +1,5 @@
 import json
+import uuid
 import zipfile
 from mimetypes import guess_extension
 from typing import Callable
@@ -132,7 +133,6 @@ def initialize_api(app: Flask):
                     # default Content-Type for string is `application/octet-stream`
                     type: string
                   metadata:
-                    # default Content-Type for string is `application/octet-stream`
                     type: object
                     properties: {}
                   example_composition:
@@ -150,6 +150,8 @@ def initialize_api(app: Flask):
             type: array
             items:
                 $ref: '#/definitions/TemplateDetail'
+          400:
+            description: The file does not have the correct directory structure
           409:
             description: The template already exists
           415:
@@ -158,30 +160,51 @@ def initialize_api(app: Flask):
            - template
         """
         # saves zip file into temp
-        zip_file = request.files.get('zipfile')
-        zip_file.save('/tmp/zipfile.zip')
+        zip_uid = str(uuid.uuid4())
+        zip_file_name = f"zipfile_{zip_uid}"
 
-        is_zipfile = zipfile.is_zipfile('/tmp/zipfile.zip')
+        zip_file = request.files.get('zipfile')
+        zip_file.save(f"/tmp/{zip_file_name}.zip")
+
+        is_zipfile = zipfile.is_zipfile(f'/tmp/{zip_file_name}.zip')
         if not is_zipfile:
             return jsonify({"message": invalid_zip_file}), 415
 
         template_details = request.form.get('template details')
         template_entry_json = json.loads(template_details)
         template_id = template_entry_json['title']
-
-        upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR)
-
-        # Inserts json template into db
         new_template = Template.from_json_dict(template_entry_json)
+
         try:
+            # uploads template files from zip file to S3
+            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
+            _load_and_write_template_from_s3(template_id)
+
+            # saves template json into database
             db.session.add(new_template)
             db.session.commit()
         except IntegrityError:
             return jsonify({"message": template_already_exists.format(template_id)}), 409
-
-        # todo refresh to load templates, ideally will want only to download the one we just created
+        except FileNotFoundError:
+            return jsonify({"message": invalid_directory_structure}), 400
 
         return jsonify(TemplateDetailView.view_from_template(new_template)._asdict())
+
+    def _load_and_write_template_from_s3(template_id) -> None:
+        """
+        Fetches template data from S3 Bucket and saves it locally
+
+        :param template_id: The template id
+        """
+        template_paths = [f"{S3_TEMPLATE_DIR}/templates/{template_id}/{template_id}",
+                          f"{S3_TEMPLATE_DIR}/static/{template_id}"]
+        for path in template_paths:
+
+            template_files = get_file_s3(bucket_name=S3_BUCKET, url=path,
+                                         s3_template_directory=S3_TEMPLATE_DIR)
+            if not template_files:
+                raise NoIndexTemplateFound(template_id)
+            write_files(files=template_files, target_directory=TEMPLATE_DIRECTORY)
 
     @app.route("/template/<string:template_id>/compose", methods=["POST"])
     def compose_file(template_id: str):
