@@ -19,7 +19,7 @@ from .db import db
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
     resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file, \
-    invalid_directory_structure
+    invalid_directory_structure, invalid_template_file_id
 from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
 from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
 from plato.util.setup_util import write_files
@@ -364,3 +364,93 @@ def initialize_api(app: Flask):
             return jsonify({"message": template_not_found.format(template_id)}), 404
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
+
+    @app.route("/template/<string:template_id>/update", methods=['PUT'])
+    def update_template(template_id: str):
+        """
+        Update a template
+        ---
+        consumes:
+        - application/x-www-form-urlencoded
+        parameters:
+            - name: template_id
+              in: path
+              type: string
+              required: true
+            - in: formData
+              name: zipfile
+              type: file
+              required: true
+              description: Contents of ZIP file
+            - in: formData
+              required: true
+              name: template details
+              type: string
+              format: application/json
+              properties:
+                  title:
+                    type: string
+                    description: The template id
+                    example: template_id
+                  schema:
+                    type: object
+                    properties: {}
+                  type:
+                    # default Content-Type for string is `application/octet-stream`
+                    type: string
+                  metadata:
+                    type: object
+                    properties: {}
+                  example_composition:
+                    type: object
+                    properties: {}
+                  tags:
+                     type: array
+                     items:
+                       type: string
+              required: true
+              description: Contents of template
+        responses:
+          200:
+            description: Information of newly created template
+            type: array
+            items:
+                $ref: '#/definitions/TemplateDetail'
+          400:
+            description: The file does not have the correct directory structure |
+          415:
+            description: The file is not a ZIP file
+        tags:
+           - template
+        """
+        # saves zip file into temp
+        zip_uid = str(uuid.uuid4())
+        zip_file_name = f"zipfile_{zip_uid}"
+
+        zip_file = request.files.get('zipfile')
+        zip_file.save(f"/tmp/{zip_file_name}.zip")
+
+        is_zipfile = zipfile.is_zipfile(f'/tmp/{zip_file_name}.zip')
+        if not is_zipfile:
+            return jsonify({"message": invalid_zip_file}), 415
+
+        template_details = request.form.get('template details')
+        template_entry_json = json.loads(template_details)
+        if template_entry_json['title'] != template_id:
+            return jsonify({"message": invalid_template_file_id.format(template_entry_json['title'], template_id)}), 400
+
+        try:
+            # uploads template files from zip file to S3
+            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
+            _load_and_write_template_from_s3(template_id)
+
+            # update template into database
+            template = Template.query.filter_by(id=template_id).first()
+            template.update_from_json_dict(template_entry_json)
+            db.session.commit()
+        except NoResultFound:
+            return jsonify({"message": template_not_found.format(template_id)}), 404
+        except FileNotFoundError:
+            return jsonify({"message": invalid_directory_structure}), 400
+
+        return jsonify(TemplateDetailView.view_from_template(template)._asdict())
