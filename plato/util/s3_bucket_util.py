@@ -8,8 +8,6 @@ from botocore.exceptions import ClientError
 
 from smart_open import s3
 
-from plato.settings import S3_BUCKET
-
 
 class S3Error(Exception):
     """
