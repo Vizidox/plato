@@ -118,7 +118,7 @@ def initialize_api(app: Flask):
               description: Contents of ZIP file
             - in: formData
               required: true
-              name: template details
+              name: template_details
               type: string
               format: application/json
               properties:
@@ -170,7 +170,7 @@ def initialize_api(app: Flask):
         if not is_zipfile:
             return jsonify({"message": invalid_zip_file}), 415
 
-        template_details = request.form.get('template details')
+        template_details = request.form.get('template_details')
         template_entry_json = json.loads(template_details)
         template_id = template_entry_json['title']
         new_template = Template.from_json_dict(template_entry_json)
