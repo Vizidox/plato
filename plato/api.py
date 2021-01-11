@@ -145,7 +145,7 @@ def initialize_api(app: Flask):
               required: true
               description: Contents of template
         responses:
-          200:
+          201:
             description: Information of newly created template
             type: array
             items:
@@ -188,7 +188,7 @@ def initialize_api(app: Flask):
         except FileNotFoundError:
             return jsonify({"message": invalid_directory_structure}), 400
 
-        return jsonify(TemplateDetailView.view_from_template(new_template)._asdict())
+        return jsonify(TemplateDetailView.view_from_template(new_template)._asdict()), 201
 
     def _load_and_write_template_from_s3(template_id) -> None:
         """
