@@ -1,4 +1,7 @@
+import json
 from http import HTTPStatus
+from pathlib import Path
+from unittest import TestCase, mock
 
 import pytest
 
@@ -9,6 +12,39 @@ from plato.db import db
 from json import loads as json_loads
 
 NUMBER_OF_TEMPLATES = 50
+TEMPLATE_DETAILS = {"title": "template_test_1",
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "cert_name",
+                                        "serial_number"
+                                    ],
+                                    "properties": {
+                                        "qr_code": {
+                                            "type": "string"
+                                        },
+                                        "cert_name": {
+                                            "type": "string"
+                                        },
+                                        "serial_number": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "type": "text/html",
+                                "metadata": {
+                                    "qr_entries": [
+                                        "qr_code"
+                                    ]
+                                },
+                                "example_composition": {
+                                    "qr_code": "https://vizidox.com",
+                                    "cert_date": "2020-01-12",
+                                    "cert_name": "Alan Turing",
+                                    "serial_number": "C18009"
+                                },
+                                "tags": [
+                                ]}
 
 
 @pytest.fixture(scope="class")
@@ -36,7 +72,10 @@ class TestTemplates:
     GET_TEMPLATES_METHOD_NAME = "templates"
 
     GET_TEMPLATES_BY_ID_ENDPOINT = '/templates/{0}'
-    GET_TEMPLATES_BY_ID_METHOD_NAME = "template_by_id"
+    GET_TEMPLATES_BY_ID_METHOD_NAME = 'template_by_id'
+    CREATE_TEMPLATE_ENDPOINT = '/template/create'
+
+    # UPDATE_TEMPLATE = '/template/{0}/update'
 
     def test_obtain_all_template_info(self, client):
         response = client.get(self.GET_TEMPLATES_ENDPOINT)
@@ -94,3 +133,42 @@ class TestTemplates:
         response = client.get(self.GET_TEMPLATES_ENDPOINT, query_string=tags)
         assert response.status_code == HTTPStatus.OK
         assert len(response.json) == 1
+
+    def test_create_new_file_invalid_zip_file(self, client):
+        current_folder = str(Path(__file__).resolve().parent)
+        with open(f'{current_folder}/resources/invalid_file.zip', 'rb') as file:
+            template_details_str = json.dumps(TEMPLATE_DETAILS)
+            data: dict = {'template_details': template_details_str}
+            filename = 'invalid_file.zip'
+            if file is not None:
+                file_payload = (file, filename) if filename is not None else file
+                data["zipfile"] = file_payload
+            result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
+            assert result.status_code == HTTPStatus.BAD_REQUEST
+
+    def test_create_new_file_invalid_file_type(self, client):
+        current_folder = str(Path(__file__).resolve().parent)
+        filename = 'example.pdf'
+        file = open(f'{current_folder}/resources/{filename}', "rb")
+        template_details_str = json.dumps(TEMPLATE_DETAILS)
+        data: dict = {'template_details': template_details_str}
+        if file is not None:
+            file_payload = (file, filename) if filename is not None else file
+            data["zipfile"] = file_payload
+        result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
+        assert result.status_code == HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+
+    @mock.patch('plato.util.s3_bucket_util')
+    def test_create_new_file_ok(self, mock_api, client):
+        current_folder = str(Path(__file__).resolve().parent)
+        mock_api.upload_template_files_to_s3.return_value = None
+        with open(f'{current_folder}/resources/template_test_1.zip', 'rb') as file:
+            template_details_str = json.dumps(TEMPLATE_DETAILS)
+            data: dict = {'template_details': template_details_str}
+            filename = 'template_test_1.zip'
+            if file is not None:
+                file_payload = (file, filename) if filename is not None else file
+                data["zipfile"] = file_payload
+            result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
+            assert result.status_code == HTTPStatus.CREATED
+            assert len(result.json) == 1
