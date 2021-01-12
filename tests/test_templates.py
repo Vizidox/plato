@@ -1,7 +1,7 @@
 import json
 from http import HTTPStatus
 from pathlib import Path
-from unittest import TestCase, mock
+from unittest import mock
 
 import pytest
 
@@ -13,38 +13,38 @@ from json import loads as json_loads
 
 NUMBER_OF_TEMPLATES = 50
 TEMPLATE_DETAILS = {"title": "template_test_1",
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "cert_name",
-                                        "serial_number"
-                                    ],
-                                    "properties": {
-                                        "qr_code": {
-                                            "type": "string"
-                                        },
-                                        "cert_name": {
-                                            "type": "string"
-                                        },
-                                        "serial_number": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "type": "text/html",
-                                "metadata": {
-                                    "qr_entries": [
-                                        "qr_code"
-                                    ]
-                                },
-                                "example_composition": {
-                                    "qr_code": "https://vizidox.com",
-                                    "cert_date": "2020-01-12",
-                                    "cert_name": "Alan Turing",
-                                    "serial_number": "C18009"
-                                },
-                                "tags": [
-                                ]}
+                    "schema": {
+                        "type": "object",
+                        "required": [
+                            "cert_name",
+                            "serial_number"
+                        ],
+                        "properties": {
+                            "qr_code": {
+                                "type": "string"
+                            },
+                            "cert_name": {
+                                "type": "string"
+                            },
+                            "serial_number": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "type": "text/html",
+                    "metadata": {
+                        "qr_entries": [
+                            "qr_code"
+                        ]
+                    },
+                    "example_composition": {
+                        "qr_code": "https://vizidox.com",
+                        "cert_date": "2020-01-12",
+                        "cert_name": "Alan Turing",
+                        "serial_number": "C18009"
+                    },
+                    "tags": [
+                    ]}
 
 
 @pytest.fixture(scope="class")
@@ -159,9 +159,8 @@ class TestTemplates:
         assert result.status_code == HTTPStatus.UNSUPPORTED_MEDIA_TYPE
 
     @mock.patch('plato.util.s3_bucket_util')
-    def test_create_new_file_ok(self, mock_api, client):
+    def test_create_new_file_ok(self, mock_util, client):
         current_folder = str(Path(__file__).resolve().parent)
-        mock_api.upload_template_files_to_s3.return_value = None
         with open(f'{current_folder}/resources/template_test_1.zip', 'rb') as file:
             template_details_str = json.dumps(TEMPLATE_DETAILS)
             data: dict = {'template_details': template_details_str}
@@ -169,6 +168,14 @@ class TestTemplates:
             if file is not None:
                 file_payload = (file, filename) if filename is not None else file
                 data["zipfile"] = file_payload
+
+            mock_util.upload_template_files_to_s3.return_value = None
             result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
             assert result.status_code == HTTPStatus.CREATED
-            assert len(result.json) == 1
+
+            template_id = "template_test_1"
+            response = client.get(f"{self.GET_TEMPLATES_ENDPOINT}{template_id}")
+            assert response.status_code == HTTPStatus.OK
+            template_info = response.json
+            assert template_info and template_info is not None
+            assert template_info["template_id"] == template_id
