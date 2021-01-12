@@ -1,11 +1,7 @@
-import logging
 import os
 import zipfile
 from pathlib import Path
 from typing import Dict, Any
-
-import boto3
-from botocore.exceptions import ClientError
 
 from smart_open import s3
 
