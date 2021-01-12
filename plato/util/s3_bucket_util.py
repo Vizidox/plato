@@ -1,6 +1,7 @@
 import logging
 import os
 import zipfile
+from pathlib import Path
 from typing import Dict, Any
 
 import boto3
@@ -76,30 +77,6 @@ def get_file_s3(bucket_name: str, url: str, s3_template_directory: str) -> Dict[
     return key_content_mapping
 
 
-def upload_file(file_name, bucket, object_name=None) -> bool:
-    """Upload a file to an S3 bucket
-
-    :param file_name: File to upload
-    :param bucket: Bucket to upload to
-    :param object_name: S3 object name. If not specified then file_name is used
-
-    :return: True if file was uploaded, else False
-    """
-
-    # If S3 object_name was not specified, use file_name
-    if object_name is None:
-        object_name = file_name
-
-    # Upload the file
-    s3_client = boto3.client('s3')
-    try:
-        _ = s3_client.upload_file(file_name, bucket, object_name)
-    except ClientError as e:
-        logging.error(e)
-        return False
-    return True
-
-
 def upload_template_files_to_s3(template_id: str, s3_template_dir: str, zip_file_name: str, s3_bucket: str) -> None:
     """
     Uploads template related files (static and template) to their respective S3 bucket directories
@@ -114,12 +91,18 @@ def upload_template_files_to_s3(template_id: str, s3_template_dir: str, zip_file
     file = zipfile.ZipFile(f'/tmp/{zip_file_name}.zip')
     file.extractall(path=f'/tmp/{zip_file_name}')
 
-    _ = upload_file(file_name=f"/tmp/{zip_file_name}/templates/{template_id}/{template_id}",
-                    bucket=s3_bucket,
-                    object_name=f"{s3_template_dir}/templates/{template_id}/{template_id}")
-
+    local_template = Path(f"/tmp/{zip_file_name}/templates/{template_id}/{template_id}")
+    s3_template_path = f"{s3_template_dir}/templates/{template_id}/{template_id}"
     static_files = os.listdir(f"/tmp/{zip_file_name}/static/{template_id}")
+
+    with local_template.open(mode='rb') as fin:
+        write_file_to_s3(fin, s3_bucket, s3_template_path)
+
     for static_file in static_files:
-        _ = upload_file(file_name=f"/tmp/{zip_file_name}/static/{template_id}/{static_file}",
-                        bucket=s3_bucket,
-                        object_name=f"{s3_template_dir}/static/{template_id}/{static_file}")
+        with open(f"/tmp/{zip_file_name}/static/{template_id}/{static_file}", mode='rb') as fin:
+            write_file_to_s3(fin, s3_bucket, f"{s3_template_dir}/static/{template_id}/{static_file}")
+
+
+def write_file_to_s3(input_file, s3_bucket, s3_path):
+    with s3.open(s3_bucket, s3_path, mode='wb') as file:
+        file.write(input_file.read())
