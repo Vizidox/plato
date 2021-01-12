@@ -118,7 +118,7 @@ def initialize_api(app: Flask):
               description: Contents of ZIP file
             - in: formData
               required: true
-              name: template details
+              name: template_details
               type: string
               format: application/json
               properties:
@@ -145,7 +145,7 @@ def initialize_api(app: Flask):
               required: true
               description: Contents of template
         responses:
-          200:
+          201:
             description: Information of newly created template
             type: array
             items:
@@ -170,7 +170,7 @@ def initialize_api(app: Flask):
         if not is_zipfile:
             return jsonify({"message": invalid_zip_file}), 415
 
-        template_details = request.form.get('template details')
+        template_details = request.form.get('template_details')
         template_entry_json = json.loads(template_details)
         template_id = template_entry_json['title']
         new_template = Template.from_json_dict(template_entry_json)
@@ -188,7 +188,7 @@ def initialize_api(app: Flask):
         except FileNotFoundError:
             return jsonify({"message": invalid_directory_structure}), 400
 
-        return jsonify(TemplateDetailView.view_from_template(new_template)._asdict())
+        return jsonify(TemplateDetailView.view_from_template(new_template)._asdict()), 201
 
     def _load_and_write_template_from_s3(template_id) -> None:
         """
