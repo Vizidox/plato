@@ -23,6 +23,7 @@ from .error_messages import invalid_compose_json, template_not_found, unsupporte
 from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
 from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
 from plato.util.setup_util import write_files
+from .util import s3_bucket_util
 
 
 class UnsupportedMIMEType(Exception):
@@ -109,7 +110,7 @@ def initialize_api(app: Flask):
         Creates a template
         ---
         consumes:
-        - application/x-www-form-urlencoded
+        - multipart/form-data
         parameters:
             - in: formData
               name: zipfile
@@ -159,25 +160,20 @@ def initialize_api(app: Flask):
         tags:
            - template
         """
-        # saves zip file into temp
-        zip_uid = str(uuid.uuid4())
-        zip_file_name = f"zipfile_{zip_uid}"
 
-        zip_file = request.files.get('zipfile')
-        zip_file.save(f"/tmp/{zip_file_name}.zip")
-
-        is_zipfile = zipfile.is_zipfile(f'/tmp/{zip_file_name}.zip')
+        is_zipfile, zip_file_name = _save_and_validate_zipfile()
         if not is_zipfile:
             return jsonify({"message": invalid_zip_file}), 415
 
         template_details = request.form.get('template_details')
         template_entry_json = json.loads(template_details)
+
         template_id = template_entry_json['title']
         new_template = Template.from_json_dict(template_entry_json)
 
         try:
             # uploads template files from zip file to S3
-            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
+            s3_bucket_util.upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
             _load_and_write_template_from_s3(template_id)
 
             # saves template json into database
@@ -456,3 +452,17 @@ def initialize_api(app: Flask):
             return jsonify({"message": invalid_directory_structure}), 400
 
         return jsonify(TemplateDetailView.view_from_template(template)._asdict())
+
+    def _save_and_validate_zipfile() -> (bool, str):
+        """
+        Saves in tmp directory and checks if file is a ZIP file. Returns a boolean that indicates if the
+        file is a ZIP file and the name it was saved as in the tmp directory.
+        """
+        zip_uid = str(uuid.uuid4())
+        zip_file_name = f"zipfile_{zip_uid}"
+        zip_file = request.files.get('zipfile')
+
+        zip_file.save(f"/tmp/{zip_file_name}.zip")
+        is_zipfile = zipfile.is_zipfile(zip_file)
+
+        return is_zipfile, zip_file_name

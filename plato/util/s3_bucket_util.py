@@ -99,6 +99,6 @@ def upload_template_files_to_s3(template_id: str, s3_template_dir: str, zip_file
             write_file_to_s3(fin, s3_bucket, f"{s3_template_dir}/static/{template_id}/{static_file}")
 
 
-def write_file_to_s3(input_file, s3_bucket, s3_path):
+def write_file_to_s3(input_file, s3_bucket, s3_path) -> None:
     with s3.open(s3_bucket, s3_path, mode='wb') as file:
         file.write(input_file.read())

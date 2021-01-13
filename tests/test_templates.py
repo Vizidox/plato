@@ -1,9 +1,10 @@
 import json
 from http import HTTPStatus
 from pathlib import Path
-from unittest import mock
 
+import boto3
 import pytest
+from moto import mock_s3
 
 from plato.error_messages import template_not_found
 from tests import get_message
@@ -11,8 +12,9 @@ from plato.db.models import Template
 from plato.db import db
 from json import loads as json_loads
 
-CURRENT_TEST_PATH = str(Path(__file__).resolve().parent)
+from tests.test_application_set_up import BUCKET_NAME
 
+CURRENT_TEST_PATH = str(Path(__file__).resolve().parent)
 NUMBER_OF_TEMPLATES = 50
 TEMPLATE_DETAILS = {"title": "template_test_1",
                     "schema": {
@@ -68,7 +70,16 @@ def populate_db(client):
         db.session.commit()
 
 
+@pytest.fixture(scope="function")
+@mock_s3
+def setup_s3():
+    conn = boto3.resource('s3', region_name='eu-central-1')
+    conn.create_bucket(Bucket=BUCKET_NAME)
+
+
 @pytest.mark.usefixtures("populate_db")
+@pytest.mark.usefixtures("setup_s3")
+@mock_s3
 class TestTemplates:
     GET_TEMPLATES_ENDPOINT = '/templates/'
     GET_TEMPLATES_METHOD_NAME = "templates"
@@ -136,14 +147,7 @@ class TestTemplates:
         assert response.status_code == HTTPStatus.OK
         assert len(response.json) == 1
 
-    @mock.patch('plato.util.s3_bucket_util')
-    @mock.patch('plato.api')
-    def test_create_new_file_invalid_zip_file(self,  mock_api, mock_s3, client):
-
-        mock_s3.upload_template_files_to_s3.return_value = None
-        mock_api._load_and_write_template_from_s3.return_value = None
-        mock_s3.write_file_to_s3.return_value = None
-
+    def test_create_new_file_invalid_zip_file(self, client):
         with open(f'{CURRENT_TEST_PATH}/resources/invalid_file.zip', 'rb') as file:
             template_details_str = json.dumps(TEMPLATE_DETAILS)
             data: dict = {'template_details': template_details_str}
@@ -165,14 +169,7 @@ class TestTemplates:
         result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
         assert result.status_code == HTTPStatus.UNSUPPORTED_MEDIA_TYPE
 
-    @mock.patch('plato.util.s3_bucket_util')
-    @mock.patch('plato.api')
-    def test_create_new_file_ok(self, mock_api, mock_s3, client):
-
-        mock_s3.upload_template_files_to_s3.return_value = None
-        mock_api._load_and_write_template_from_s3.return_value = None
-        mock_s3.write_file_to_s3.return_value = None
-
+    def test_create_new_file_ok(self, client):
         with open(f'{CURRENT_TEST_PATH}/resources/template_test_1.zip', 'rb') as file:
             template_details_str = json.dumps(TEMPLATE_DETAILS)
             data: dict = {'template_details': template_details_str}
@@ -191,13 +188,7 @@ class TestTemplates:
             assert template_info and template_info is not None
             assert template_info["template_id"] == template_id
 
-    @mock.patch('plato.util.s3_bucket_util')
-    @mock.patch('plato.api')
-    def test_update_template_invalid_zip_file(self, mock_api, mock_s3, client):
-        mock_s3.upload_template_files_to_s3.return_value = None
-        mock_api._load_and_write_template_from_s3.return_value = None
-        mock_s3.write_file_to_s3.return_value = None
-
+    def test_update_template_invalid_zip_file(self, client):
         with open(f'{CURRENT_TEST_PATH}/resources/invalid_file.zip', 'rb') as file:
             template_details_str = json.dumps(TEMPLATE_DETAILS)
             data: dict = {'template_details': template_details_str}
@@ -238,14 +229,7 @@ class TestTemplates:
         result = client.put(self.UPDATE_TEMPLATE.format(template_id), data=data)
         assert result.status_code == HTTPStatus.BAD_REQUEST
 
-    @mock.patch('plato.util.s3_bucket_util')
-    @mock.patch('plato.api')
-    def test_update_template_ok(self, mock_api, mock_s3, client):
-
-        mock_s3.upload_template_files_to_s3.return_value = None
-        mock_api._load_and_write_template_from_s3.return_value = None
-        mock_s3.write_file_to_s3.return_value = None
-
+    def test_update_template_ok(self, client):
         template_id = "template_test_1"
         filename = 'template_test_1.zip'
         file = open(f'{CURRENT_TEST_PATH}/resources/{filename}', "rb")
@@ -259,14 +243,7 @@ class TestTemplates:
         result = client.put(self.UPDATE_TEMPLATE.format(template_id), data=data)
         assert result.status_code == HTTPStatus.OK
 
-    @mock.patch('plato.util.s3_bucket_util')
-    @mock.patch('plato.api')
-    def test_update_template_template_not_found(self, mock_api, mock_s3, client):
-
-        mock_s3.upload_template_files_to_s3.return_value = None
-        mock_api._load_and_write_template_from_s3.return_value = None
-        mock_s3.write_file_to_s3.return_value = None
-
+    def test_update_template_template_not_found(self, client):
         # deletes template in db if exists
         template_id = "template_test_1"
         Template.query.filter_by(id=template_id).delete()
