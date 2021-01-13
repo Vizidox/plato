@@ -412,12 +412,12 @@ def initialize_api(app: Flask):
               description: Contents of template
         responses:
           200:
-            description: Information of newly created template
+            description: Information of updated template
             type: array
             items:
                 $ref: '#/definitions/TemplateDetail'
           400:
-            description: The file does not have the correct directory structure |
+            description: The file does not have the correct directory structure | Template Id does not match
           415:
             description: The file is not a ZIP file
         tags:
