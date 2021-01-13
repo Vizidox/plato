@@ -371,7 +371,7 @@ def initialize_api(app: Flask):
         Update a template
         ---
         consumes:
-        - application/x-www-form-urlencoded
+        - multipart/form-data
         parameters:
             - name: template_id
               in: path
@@ -384,7 +384,7 @@ def initialize_api(app: Flask):
               description: Contents of ZIP file
             - in: formData
               required: true
-              name: template details
+              name: template_details
               type: string
               format: application/json
               properties:
@@ -418,6 +418,8 @@ def initialize_api(app: Flask):
                 $ref: '#/definitions/TemplateDetail'
           400:
             description: The file does not have the correct directory structure | Template Id does not match
+          404:
+            description: Template not found in database
           415:
             description: The file is not a ZIP file
         tags:
@@ -434,7 +436,7 @@ def initialize_api(app: Flask):
         if not is_zipfile:
             return jsonify({"message": invalid_zip_file}), 415
 
-        template_details = request.form.get('template details')
+        template_details = request.form.get('template_details')
         template_entry_json = json.loads(template_details)
         if template_entry_json['title'] != template_id:
             return jsonify({"message": invalid_template_file_id.format(template_entry_json['title'], template_id)}), 400
