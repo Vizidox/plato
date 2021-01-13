@@ -447,7 +447,7 @@ def initialize_api(app: Flask):
             _load_and_write_template_from_s3(template_id)
 
             # update template into database
-            template = Template.query.filter_by(id=template_id).first()
+            template = Template.query.filter_by(id=template_id).first_or_404()
             template.update_from_json_dict(template_entry_json)
             db.session.commit()
         except NoResultFound:
