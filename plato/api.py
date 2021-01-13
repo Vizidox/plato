@@ -421,14 +421,7 @@ def initialize_api(app: Flask):
         tags:
            - template
         """
-        # saves zip file into temp
-        zip_uid = str(uuid.uuid4())
-        zip_file_name = f"zipfile_{zip_uid}"
-
-        zip_file = request.files.get('zipfile')
-        zip_file.save(f"/tmp/{zip_file_name}.zip")
-
-        is_zipfile = zipfile.is_zipfile(f'/tmp/{zip_file_name}.zip')
+        is_zipfile, zip_file_name = _save_and_validate_zipfile()
         if not is_zipfile:
             return jsonify({"message": invalid_zip_file}), 415
 
