@@ -1,9 +1,10 @@
 import json
 from http import HTTPStatus
 from pathlib import Path
-from unittest import mock
 
+import boto3
 import pytest
+from moto import mock_s3
 
 from plato.error_messages import template_not_found
 from tests import get_message
@@ -11,6 +12,9 @@ from plato.db.models import Template
 from plato.db import db
 from json import loads as json_loads
 
+from tests.test_application_set_up import BUCKET_NAME
+
+CURRENT_TEST_PATH = str(Path(__file__).resolve().parent)
 NUMBER_OF_TEMPLATES = 50
 TEMPLATE_DETAILS = {"title": "template_test_1",
                     "schema": {
@@ -66,7 +70,16 @@ def populate_db(client):
         db.session.commit()
 
 
+@pytest.fixture(scope="function")
+@mock_s3
+def setup_s3():
+    conn = boto3.resource('s3', region_name='eu-central-1')
+    conn.create_bucket(Bucket=BUCKET_NAME)
+
+
 @pytest.mark.usefixtures("populate_db")
+@pytest.mark.usefixtures("setup_s3")
+@mock_s3
 class TestTemplates:
     GET_TEMPLATES_ENDPOINT = '/templates/'
     GET_TEMPLATES_METHOD_NAME = "templates"
@@ -135,8 +148,7 @@ class TestTemplates:
         assert len(response.json) == 1
 
     def test_create_new_file_invalid_zip_file(self, client):
-        current_folder = str(Path(__file__).resolve().parent)
-        with open(f'{current_folder}/resources/invalid_file.zip', 'rb') as file:
+        with open(f'{CURRENT_TEST_PATH}/resources/invalid_file.zip', 'rb') as file:
             template_details_str = json.dumps(TEMPLATE_DETAILS)
             data: dict = {'template_details': template_details_str}
             filename = 'invalid_file.zip'
@@ -158,10 +170,8 @@ class TestTemplates:
         result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
         assert result.status_code == HTTPStatus.UNSUPPORTED_MEDIA_TYPE
 
-    @mock.patch('plato.util.s3_bucket_util')
-    def test_create_new_file_ok(self, mock_util, client):
-        current_folder = str(Path(__file__).resolve().parent)
-        with open(f'{current_folder}/resources/template_test_1.zip', 'rb') as file:
+    def test_create_new_file_ok(self, client):
+        with open(f'{CURRENT_TEST_PATH}/resources/template_test_1.zip', 'rb') as file:
             template_details_str = json.dumps(TEMPLATE_DETAILS)
             data: dict = {'template_details': template_details_str}
             filename = 'template_test_1.zip'
@@ -169,7 +179,6 @@ class TestTemplates:
                 file_payload = (file, filename) if filename is not None else file
                 data["zipfile"] = file_payload
 
-            mock_util.upload_template_files_to_s3.return_value = None
             result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
             assert result.status_code == HTTPStatus.CREATED
 
