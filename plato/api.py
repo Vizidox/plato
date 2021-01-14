@@ -24,6 +24,7 @@ from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, 
 from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
 from plato.util.setup_util import write_files
 from .util import s3_bucket_util
+from .util.file_util import compute_s3_template_path, compute_s3_base_static_path
 
 
 class UnsupportedMIMEType(Exception):
@@ -192,8 +193,10 @@ def initialize_api(app: Flask):
 
         :param template_id: The template id
         """
-        template_paths = [f"{S3_TEMPLATE_DIR}/templates/{template_id}/{template_id}",
-                          f"{S3_TEMPLATE_DIR}/static/{template_id}"]
+        static_base_path = compute_s3_base_static_path(S3_TEMPLATE_DIR)
+        template_path = compute_s3_template_path(S3_TEMPLATE_DIR, template_id)
+
+        template_paths = [template_path, f"{static_base_path}/{template_id}"]
         for path in template_paths:
 
             template_files = get_file_s3(bucket_name=S3_BUCKET, url=path,

@@ -5,6 +5,9 @@ from typing import Dict, Any
 
 from smart_open import s3
 
+from plato.util.file_util import compute_s3_template_path, compute_s3_static_path, compute_tmp_static_path, \
+    compute_tmp_template_path
+
 
 class S3Error(Exception):
     """
@@ -87,16 +90,16 @@ def upload_template_files_to_s3(template_id: str, s3_template_dir: str, zip_file
     file = zipfile.ZipFile(f'/tmp/{zip_file_name}.zip')
     file.extractall(path=f'/tmp/{zip_file_name}')
 
-    local_template = Path(f"/tmp/{zip_file_name}/templates/{template_id}/{template_id}")
-    s3_template_path = f"{s3_template_dir}/templates/{template_id}/{template_id}"
+    local_template = Path(compute_tmp_template_path(zip_file_name, template_id))
     static_files = os.listdir(f"/tmp/{zip_file_name}/static/{template_id}")
 
-    with local_template.open(mode='rb') as fin:
-        write_file_to_s3(fin, s3_bucket, s3_template_path)
+    with local_template.open(mode='rb') as tmp_file:
+        write_file_to_s3(tmp_file, s3_bucket, compute_s3_template_path(s3_template_dir, template_id))
 
     for static_file in static_files:
-        with open(f"/tmp/{zip_file_name}/static/{template_id}/{static_file}", mode='rb') as fin:
-            write_file_to_s3(fin, s3_bucket, f"{s3_template_dir}/static/{template_id}/{static_file}")
+        tmp_static_path = Path(compute_tmp_static_path(zip_file_name, template_id, static_file))
+        with tmp_static_path.open(mode='rb') as tmp_file:
+            write_file_to_s3(tmp_file, s3_bucket, compute_s3_static_path(s3_template_dir, template_id, static_file))
 
 
 def write_file_to_s3(input_file, s3_bucket, s3_path) -> None:
