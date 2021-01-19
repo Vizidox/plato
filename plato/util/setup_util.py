@@ -12,12 +12,11 @@ from .s3_bucket_util import get_file_s3, NoIndexTemplateFound
 def write_files(files: Dict[str, Any], target_directory: str) -> None:
     """
     Write files to a target directory
-    :param files: a dict representing files needing to be written in the target directory
-        with key as the file url and the value as file content
-    :type files: Dict[str, Any]
 
-    :param target_directory: the directory all the files will reside in
-    :type target_directory: string
+    Args:
+        files (Dict[str, Any]): a dict representing files needing to be written in the target directory
+            with key as the file url and the value as file content
+        target_directory (str): the directory all the files will reside in
     """
     for key, content in files.items():
         path = pathlib.Path(f"{target_directory}/{key}")
@@ -30,6 +29,7 @@ def load_templates(s3_bucket: str, target_directory: str, s3_template_directory:
     """
     Gets templates from the AWS S3 bucket which are associated with ones available in the DB.
     Expected directory structure is {s3_template_directory}/{template_id}
+
     Args:
         s3_bucket: AWS S3 Bucket where the templates are
         target_directory: Target directory to store the templates in

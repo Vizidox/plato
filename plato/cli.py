@@ -51,4 +51,7 @@ def register_cli_commands(app: Flask):
     @app.cli.command("refresh")
     @with_appcontext
     def refresh_local_templates():
+        """
+        Refresh local templates by loading the templates from AWS S3 Bucket
+        """
         load_templates(S3_BUCKET, TEMPLATE_DIRECTORY, S3_TEMPLATE_DIR)
