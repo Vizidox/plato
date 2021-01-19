@@ -1,6 +1,7 @@
 import json
 import uuid
 import zipfile
+from http import HTTPStatus
 from mimetypes import guess_extension
 from typing import Callable, Tuple
 
@@ -68,7 +69,7 @@ def initialize_api(app: Flask):
             return jsonify(view._asdict())
 
         except NoResultFound:
-            return jsonify({"message": template_not_found.format(template_id)}), 404
+            return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
 
     @app.route("/templates/", methods=['GET'])
     def templates():
@@ -162,7 +163,7 @@ def initialize_api(app: Flask):
 
         is_zipfile, zip_file_name = _save_and_validate_zipfile()
         if not is_zipfile:
-            return jsonify({"message": invalid_zip_file}), 415
+            return jsonify({"message": invalid_zip_file}), HTTPStatus.UNSUPPORTED_MEDIA_TYPE
 
         template_details = request.form.get('template_details')
         template_entry_json = json.loads(template_details)
@@ -179,11 +180,11 @@ def initialize_api(app: Flask):
             db.session.add(new_template)
             db.session.commit()
         except IntegrityError:
-            return jsonify({"message": template_already_exists.format(template_id)}), 409
+            return jsonify({"message": template_already_exists.format(template_id)}), HTTPStatus.CONFLICT
         except FileNotFoundError:
-            return jsonify({"message": invalid_directory_structure}), 400
+            return jsonify({"message": invalid_directory_structure}), HTTPStatus.BAD_REQUEST
 
-        return jsonify(TemplateDetailView.view_from_template(new_template)._asdict()), 201
+        return jsonify(TemplateDetailView.view_from_template(new_template)._asdict()), HTTPStatus.CREATED
 
     def _load_and_write_template_from_s3(template_id: str) -> None:
         """
@@ -327,16 +328,16 @@ def initialize_api(app: Flask):
                 raise UnsupportedMIMEType(accept_header)
 
             if (width is not None or height is not None) and mime_type != PNG_MIME:
-                return jsonify({"message": resizing_unsupported.format(mime_type)}), 400
+                return jsonify({"message": resizing_unsupported.format(mime_type)}), HTTPStatus.BAD_REQUEST
 
             if page is not None and mime_type != PNG_MIME:
-                return jsonify({"message": single_page_unsupported.format(mime_type)}), 400
+                return jsonify({"message": single_page_unsupported.format(mime_type)}), HTTPStatus.BAD_REQUEST
 
             if width is not None and height is not None:
-                return jsonify({"message": aspect_ratio_compromised}), 400
+                return jsonify({"message": aspect_ratio_compromised}), HTTPStatus.BAD_REQUEST
 
             if page is not None and page < 0:
-                return jsonify({"message": negative_number_invalid.format(page)}), 400
+                return jsonify({"message": negative_number_invalid.format(page)}), HTTPStatus.BAD_REQUEST
 
             compose_params = {}
             if width is not None:
@@ -350,16 +351,16 @@ def initialize_api(app: Flask):
             compose_data = compose_retrieval_function(template_model)
             composed_file = compose(template_model, compose_data, mime_type, **compose_params)
             return send_file(composed_file, mimetype=mime_type, as_attachment=True,
-                             attachment_filename=f"{file_name}{guess_extension(mime_type)}"), 200
+                             attachment_filename=f"{file_name}{guess_extension(mime_type)}"), HTTPStatus.OK
         except (RendererNotFound, UnsupportedMIMEType):
             return jsonify(
-                {"message": unsupported_mime_type.format(accept_header, ", ".join(ALL_AVAILABLE_MIME_TYPES))}), 406
+                {"message": unsupported_mime_type.format(accept_header, ", ".join(ALL_AVAILABLE_MIME_TYPES))}), HTTPStatus.NOT_ACCEPTABLE
         except InvalidPageNumber as e:
-            return jsonify({"message": e.message}), 400
+            return jsonify({"message": e.message}), HTTPStatus.BAD_REQUEST
         except NoResultFound:
-            return jsonify({"message": template_not_found.format(template_id)}), 404
+            return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
         except ValidationError as ve:
-            return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
+            return jsonify({"message": invalid_compose_json.format(ve.message)}), HTTPStatus.BAD_REQUEST
 
     def _save_and_validate_zipfile() -> Tuple[bool, str]:
         """
