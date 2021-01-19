@@ -42,9 +42,10 @@ def load_templates(s3_bucket: str, target_directory: str, s3_template_directory:
 
     templates = Template.query.with_entities(Template.id).all()
 
+    # get static files
     static_folder = compute_s3_base_static_path(s3_template_directory)
-    files = get_file_s3(bucket_name=s3_bucket, url=static_folder, s3_template_directory=s3_template_directory)
-    write_files(files=files, target_directory=target_directory)
+    static_files = get_file_s3(bucket_name=s3_bucket, url=static_folder, s3_template_directory=s3_template_directory)
+    write_files(files=static_files, target_directory=target_directory)
 
     for template in templates:
         template_path = compute_s3_template_path(s3_template_directory, template.id)
