@@ -2,7 +2,7 @@ import json
 import uuid
 import zipfile
 from mimetypes import guess_extension
-from typing import Callable
+from typing import Callable, Tuple
 
 from accept_types import get_best_match
 from flask import jsonify, request, Flask, send_file
@@ -361,7 +361,7 @@ def initialize_api(app: Flask):
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), 400
 
-    def _save_and_validate_zipfile() -> (bool, str):
+    def _save_and_validate_zipfile() -> Tuple[bool, str]:
         """
         Saves in tmp directory and checks if file is a ZIP file.
 
