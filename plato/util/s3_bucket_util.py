@@ -1,7 +1,7 @@
 import os
 import zipfile
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, BinaryIO
 
 from smart_open import s3
 
@@ -18,15 +18,16 @@ class S3Error(Exception):
 
 class NoStaticContentFound(S3Error):
     """
-    raised when no static content fount on S3
+    Raised when no static content found on S3
     """
 
     def __init__(self, template_id: str):
         """
         Exception initialization
 
-        :param template_id: the id of the template
-        :type template_id: string
+        Args:
+            template_id (str): the id of the template
+
         """
         message = f"No static content found. template_id: {template_id}"
         super(NoStaticContentFound, self).__init__(message)
@@ -34,15 +35,15 @@ class NoStaticContentFound(S3Error):
 
 class NoIndexTemplateFound(S3Error):
     """
-    raised when no template found on S3
+    Raised when no template found on S3
     """
 
     def __init__(self, template_id: str):
         """
         Exception initialization
 
-        :param template_id: the id of the template
-        :type template_id: string
+        Args:
+            template_id (str): the id of the template
         """
         message = f"No index template file found. Template_id: {template_id}"
         super(NoIndexTemplateFound, self).__init__(message)
@@ -53,17 +54,13 @@ def get_file_s3(bucket_name: str, url: str, s3_template_directory: str) -> Dict[
     Get files from S3 and save them in the form of a dict. If a folder is inserted as the url, all files in that folder
         will be returned
 
-    :param bucket_name: the bucket_name we want to retrieve file from
-    :type bucket_name: string
+    Args:
+        bucket_name (str): the bucket_name we want to retrieve file from
+        url (str): the url leading to the file/folder
+        s3_template_directory (str): the s3-bucket path for the templates directory
 
-    :param url: the url leading to the file/folder
-    :type url: string
-
-    :param s3_template_directory: the s3-bucket path for the templates directory
-    :type s3_template_directory: string
-
-    :return: A dictionary with key as file's relative location on s3-bucket and value as file's content
-    :rtype: Dict[str, Any]
+    Returns:
+     A dictionary with key as file's relative location on s3-bucket and value as file's content
     """
     key_content_mapping: dict = {}
     for key, content in s3.iter_bucket(bucket_name=bucket_name, prefix=url):
@@ -78,12 +75,13 @@ def get_file_s3(bucket_name: str, url: str, s3_template_directory: str) -> Dict[
 
 def upload_template_files_to_s3(template_id: str, s3_template_dir: str, zip_file_name: str, s3_bucket: str) -> None:
     """
-    Uploads template related files (static and template) to their respective S3 bucket directories
+    Uploads template related files (static and template) to their respective S3 Bucket directories
 
-    :param template_id: Template Id
-    :param s3_template_dir: S3 Bucket template directory
-    :param zip_file_name: Filename for the zipfile
-    :param s3_bucket: S3 Bucket where the
+    Args:
+        template_id (str): the template id
+        s3_template_dir (str): S3 Bucket template directory
+        zip_file_name (str): the filename for the zipfile
+        s3_bucket (str): S3 Bucket
     """
 
     # extract files to temporary directory
@@ -102,6 +100,14 @@ def upload_template_files_to_s3(template_id: str, s3_template_dir: str, zip_file
             write_file_to_s3(tmp_file, s3_bucket, compute_s3_static_path(s3_template_dir, template_id, static_file))
 
 
-def write_file_to_s3(input_file, s3_bucket, s3_path) -> None:
+def write_file_to_s3(input_file: BinaryIO, s3_bucket: str, s3_path: str) -> None:
+    """
+    Write file to S3 Bucket Path
+
+    Args:
+        input_file (BinaryIO): the input file
+        s3_bucket (str): S3 Bucket
+        s3_path (str): the S3 Bucket path
+    """
     with s3.open(s3_bucket, s3_path, mode='wb') as file:
         file.write(input_file.read())

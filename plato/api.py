@@ -2,7 +2,7 @@ import json
 import uuid
 import zipfile
 from mimetypes import guess_extension
-from typing import Callable
+from typing import Callable, Tuple
 
 from accept_types import get_best_match
 from flask import jsonify, request, Flask, send_file
@@ -186,11 +186,12 @@ def initialize_api(app: Flask):
 
         return jsonify(TemplateDetailView.view_from_template(new_template)._asdict()), 201
 
-    def _load_and_write_template_from_s3(template_id) -> None:
+    def _load_and_write_template_from_s3(template_id: str) -> None:
         """
         Fetches template data from S3 Bucket and saves it locally
 
-        :param template_id: The template id
+        Args:
+            template_id (str): The template id
         """
         static_base_path = compute_s3_base_static_path(S3_TEMPLATE_DIR)
         template_path = compute_s3_template_path(S3_TEMPLATE_DIR, template_id)
@@ -448,10 +449,14 @@ def initialize_api(app: Flask):
 
         return jsonify(TemplateDetailView.view_from_template(template)._asdict())
 
-    def _save_and_validate_zipfile() -> (bool, str):
+    def _save_and_validate_zipfile() -> Tuple[bool, str]:
         """
-        Saves in tmp directory and checks if file is a ZIP file. Returns a boolean that indicates if the
-        file is a ZIP file and the name it was saved as in the tmp directory.
+        Saves in tmp directory and checks if file is a ZIP file.
+
+        Returns:
+            bool: Indicates if the file is a ZIP file
+            str: ZIP filename it was saved as in the tmp directory
+
         """
         zip_uid = str(uuid.uuid4())
         zip_file_name = f"zipfile_{zip_uid}"
