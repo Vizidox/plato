@@ -187,6 +187,91 @@ def initialize_api(app: Flask):
 
         return jsonify(TemplateDetailView.view_from_template(new_template)._asdict()), HTTPStatus.CREATED
 
+    @app.route("/template/<string:template_id>/update", methods=['PUT'])
+    def update_template(template_id: str):
+        """
+        Update a template
+        ---
+        consumes:
+        - multipart/form-data
+        parameters:
+            - name: template_id
+              in: path
+              type: string
+              required: true
+            - in: formData
+              name: zipfile
+              type: file
+              required: true
+              description: Contents of ZIP file
+            - in: formData
+              required: true
+              name: template_details
+              type: string
+              format: application/json
+              properties:
+                  title:
+                    type: string
+                    description: The template id
+                    example: template_id
+                  schema:
+                    type: object
+                    properties: {}
+                  type:
+                    # default Content-Type for string is `application/octet-stream`
+                    type: string
+                  metadata:
+                    type: object
+                    properties: {}
+                  example_composition:
+                    type: object
+                    properties: {}
+                  tags:
+                     type: array
+                     items:
+                       type: string
+              required: true
+              description: Contents of template
+        responses:
+          200:
+            description: Information of updated template
+            type: array
+            items:
+                $ref: '#/definitions/TemplateDetail'
+          400:
+            description: The file does not have the correct directory structure | Template Id does not match
+          404:
+            description: Template not found in database
+          415:
+            description: The file is not a ZIP file
+        tags:
+           - template
+        """
+        is_zipfile, zip_file_name = _save_and_validate_zipfile()
+        if not is_zipfile:
+            return jsonify({"message": invalid_zip_file}), HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+
+        template_details = request.form.get('template_details')
+        template_entry_json = json.loads(template_details)
+        if template_entry_json['title'] != template_id:
+            return jsonify({"message": invalid_template_file_id.format(template_entry_json['title'], template_id)}), HTTPStatus.BAD_REQUEST
+
+        try:
+            # uploads template files from zip file to S3
+            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
+            _load_and_write_template_from_s3(template_id)
+
+            # update template into database
+            template = Template.query.filter_by(id=template_id).first_or_404()
+            template.update_from_json_dict(template_entry_json)
+            db.session.commit()
+        except NoResultFound:
+            return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
+        except FileNotFoundError:
+            return jsonify({"message": invalid_directory_structure}), HTTPStatus.BAD_REQUEST
+
+        return jsonify(TemplateDetailView.view_from_template(template)._asdict())
+
     def _load_and_write_template_from_s3(template_id: str) -> None:
         """
         Fetches template data from S3 Bucket and saves it locally
@@ -205,6 +290,24 @@ def initialize_api(app: Flask):
             if not template_files:
                 raise NoIndexTemplateFound(template_id)
             write_files(files=template_files, target_directory=TEMPLATE_DIRECTORY)
+
+    def _save_and_validate_zipfile() -> Tuple[bool, str]:
+        """
+        Saves in tmp directory and checks if file is a ZIP file.
+
+        Returns:
+            bool: Indicates if the file is a ZIP file
+            str: ZIP filename it was saved as in the tmp directory
+
+        """
+        zip_uid = str(uuid.uuid4())
+        zip_file_name = f"zipfile_{zip_uid}"
+        zip_file = request.files.get('zipfile')
+
+        zip_file.save(f"/tmp/{zip_file_name}.zip")
+        is_zipfile = zipfile.is_zipfile(zip_file)
+
+        return is_zipfile, zip_file_name
 
     @app.route("/template/<string:template_id>/compose", methods=["POST"])
     def compose_file(template_id: str):
@@ -364,106 +467,3 @@ def initialize_api(app: Flask):
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
         except ValidationError as ve:
             return jsonify({"message": invalid_compose_json.format(ve.message)}), HTTPStatus.BAD_REQUEST
-
-    @app.route("/template/<string:template_id>/update", methods=['PUT'])
-    def update_template(template_id: str):
-        """
-        Update a template
-        ---
-        consumes:
-        - multipart/form-data
-        parameters:
-            - name: template_id
-              in: path
-              type: string
-              required: true
-            - in: formData
-              name: zipfile
-              type: file
-              required: true
-              description: Contents of ZIP file
-            - in: formData
-              required: true
-              name: template_details
-              type: string
-              format: application/json
-              properties:
-                  title:
-                    type: string
-                    description: The template id
-                    example: template_id
-                  schema:
-                    type: object
-                    properties: {}
-                  type:
-                    # default Content-Type for string is `application/octet-stream`
-                    type: string
-                  metadata:
-                    type: object
-                    properties: {}
-                  example_composition:
-                    type: object
-                    properties: {}
-                  tags:
-                     type: array
-                     items:
-                       type: string
-              required: true
-              description: Contents of template
-        responses:
-          200:
-            description: Information of updated template
-            type: array
-            items:
-                $ref: '#/definitions/TemplateDetail'
-          400:
-            description: The file does not have the correct directory structure | Template Id does not match
-          404:
-            description: Template not found in database
-          415:
-            description: The file is not a ZIP file
-        tags:
-           - template
-        """
-        is_zipfile, zip_file_name = _save_and_validate_zipfile()
-        if not is_zipfile:
-            return jsonify({"message": invalid_zip_file}), 415
-
-        template_details = request.form.get('template_details')
-        template_entry_json = json.loads(template_details)
-        if template_entry_json['title'] != template_id:
-            return jsonify({"message": invalid_template_file_id.format(template_entry_json['title'], template_id)}), 400
-
-        try:
-            # uploads template files from zip file to S3
-            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
-            _load_and_write_template_from_s3(template_id)
-
-            # update template into database
-            template = Template.query.filter_by(id=template_id).first_or_404()
-            template.update_from_json_dict(template_entry_json)
-            db.session.commit()
-        except NoResultFound:
-            return jsonify({"message": template_not_found.format(template_id)}), 404
-        except FileNotFoundError:
-            return jsonify({"message": invalid_directory_structure}), 400
-
-        return jsonify(TemplateDetailView.view_from_template(template)._asdict())
-
-    def _save_and_validate_zipfile() -> Tuple[bool, str]:
-        """
-        Saves in tmp directory and checks if file is a ZIP file.
-
-        Returns:
-            bool: Indicates if the file is a ZIP file
-            str: ZIP filename it was saved as in the tmp directory
-
-        """
-        zip_uid = str(uuid.uuid4())
-        zip_file_name = f"zipfile_{zip_uid}"
-        zip_file = request.files.get('zipfile')
-
-        zip_file.save(f"/tmp/{zip_file_name}.zip")
-        is_zipfile = zipfile.is_zipfile(zip_file)
-
-        return is_zipfile, zip_file_name
