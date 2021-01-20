@@ -5,8 +5,8 @@ from typing import Dict, Any, BinaryIO
 
 from smart_open import s3
 
-from plato.util.file_util import compute_s3_template_path, compute_s3_static_path, compute_tmp_static_path, \
-    compute_tmp_template_path
+from plato.util.file_util import s3_template_path, s3_static_file_path, tmp_static_file_path, \
+    tmp_template_path, tmp_zipfile_path, tmp_path, tmp_template_static_path
 
 
 class S3Error(Exception):
@@ -85,19 +85,18 @@ def upload_template_files_to_s3(template_id: str, s3_template_dir: str, zip_file
     """
 
     # extract files to temporary directory
-    file = zipfile.ZipFile(f'/tmp/{zip_file_name}.zip')
-    file.extractall(path=f'/tmp/{zip_file_name}')
+    file = zipfile.ZipFile(tmp_zipfile_path(zip_file_name))
+    file.extractall(path=tmp_path(zip_file_name))
 
-    local_template = Path(compute_tmp_template_path(zip_file_name, template_id))
-    static_files = os.listdir(f"/tmp/{zip_file_name}/static/{template_id}")
-
+    local_template = Path(tmp_template_path(zip_file_name, template_id))
     with local_template.open(mode='rb') as tmp_file:
-        write_file_to_s3(tmp_file, s3_bucket, compute_s3_template_path(s3_template_dir, template_id))
+        write_file_to_s3(tmp_file, s3_bucket, s3_template_path(s3_template_dir, template_id))
 
+    static_files = os.listdir(tmp_template_static_path(zip_file_name, template_id))
     for static_file in static_files:
-        tmp_static_path = Path(compute_tmp_static_path(zip_file_name, template_id, static_file))
-        with tmp_static_path.open(mode='rb') as tmp_file:
-            write_file_to_s3(tmp_file, s3_bucket, compute_s3_static_path(s3_template_dir, template_id, static_file))
+        tmp_static_sys_path = Path(tmp_static_file_path(zip_file_name, template_id, static_file))
+        with tmp_static_sys_path.open(mode='rb') as tmp_file:
+            write_file_to_s3(tmp_file, s3_bucket, s3_static_file_path(s3_template_dir, template_id, static_file))
 
 
 def write_file_to_s3(input_file: BinaryIO, s3_bucket: str, s3_path: str) -> None:
