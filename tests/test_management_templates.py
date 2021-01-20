@@ -13,7 +13,6 @@ from plato.db import db
 from tests.test_application_set_up import BUCKET_NAME
 
 CURRENT_TEST_PATH = str(Path(__file__).resolve().parent)
-NUMBER_OF_TEMPLATES = 50
 TEMPLATE_DETAILS_1 = {"title": "template_test_1",
                       "schema": {
                           "type": "object",
