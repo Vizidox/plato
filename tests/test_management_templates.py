@@ -13,7 +13,6 @@ from plato.db import db
 from tests.test_application_set_up import BUCKET_NAME
 
 CURRENT_TEST_PATH = str(Path(__file__).resolve().parent)
-NUMBER_OF_TEMPLATES = 50
 TEMPLATE_DETAILS_1 = {"title": "template_test_1",
                       "schema": {
                           "type": "object",
@@ -130,7 +129,7 @@ class TestManageTemplates:
     CREATE_TEMPLATE_ENDPOINT = '/template/create'
     UPDATE_TEMPLATE = '/template/{0}/update'
 
-    def test_create_new_file_invalid_zip_file(self, client):
+    def test_create_new_template_invalid_zip_file(self, client):
         with open(f'{CURRENT_TEST_PATH}/resources/invalid_file.zip', 'rb') as file:
             template_details_str = json.dumps(TEMPLATE_DETAILS_2)
             data: dict = {'template_details': template_details_str}
@@ -179,6 +178,9 @@ class TestManageTemplates:
             template_model: Template = Template.query.filter_by(id=template_id).one()
             assert template_model is not None
 
+            expected_template = Template.from_json_dict(TEMPLATE_DETAILS_2)
+            assert template_model.schema == expected_template.schema
+
     def test_update_template_invalid_zip_file(self, client):
         with open(f'{CURRENT_TEST_PATH}/resources/invalid_file.zip', 'rb') as file:
             template_details_str = json.dumps(TEMPLATE_DETAILS_2)
@@ -220,6 +222,20 @@ class TestManageTemplates:
         result = client.put(self.UPDATE_TEMPLATE.format(template_id), data=data)
         assert result.status_code == HTTPStatus.BAD_REQUEST
 
+    def test_update_template_template_not_found(self, client):
+        template_id = "template_test_2"
+        filename = 'template_test_2.zip'
+        file = open(f'{CURRENT_TEST_PATH}/resources/{filename}', "rb")
+        template_details_str = json.dumps(TEMPLATE_DETAILS_2)
+        data: dict = {'template_details': template_details_str}
+
+        if file is not None:
+            file_payload = (file, filename) if filename is not None else file
+            data["zipfile"] = file_payload
+
+        result = client.put(self.UPDATE_TEMPLATE.format(template_id), data=data)
+        assert result.status_code == HTTPStatus.NOT_FOUND
+
     def test_update_template_ok(self, client):
         template_id = "template_test_1"
         filename = 'template_test_1.zip'
@@ -235,17 +251,15 @@ class TestManageTemplates:
         assert result.status_code == HTTPStatus.OK
         template_model: Template = Template.query.filter_by(id=template_id).one()
         assert template_model.example_composition is not None
+        expected_example_composition = {
+                          "qr_code": "https://vizidox.com",
+                          "cert_date": "2020-01-12",
+                          "cert_name": "Alan Turing",
+                          "serial_number": "C18009"
+                      }
+        assert template_model.example_composition == expected_example_composition
 
-    def test_update_template_template_not_found(self, client):
-        template_id = "template_test_2"
-        filename = 'template_test_2.zip'
-        file = open(f'{CURRENT_TEST_PATH}/resources/{filename}', "rb")
-        template_details_str = json.dumps(TEMPLATE_DETAILS_2)
-        data: dict = {'template_details': template_details_str}
+        expected_template = Template.from_json_dict(TEMPLATE_DETAILS_1)
+        assert template_model.schema == expected_template.schema
 
-        if file is not None:
-            file_payload = (file, filename) if filename is not None else file
-            data["zipfile"] = file_payload
 
-        result = client.put(self.UPDATE_TEMPLATE.format(template_id), data=data)
-        assert result.status_code == HTTPStatus.NOT_FOUND
