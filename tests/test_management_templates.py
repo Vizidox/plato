@@ -13,6 +13,7 @@ from plato.db import db
 from tests.test_application_set_up import BUCKET_NAME
 
 CURRENT_TEST_PATH = str(Path(__file__).resolve().parent)
+NUMBER_OF_TEMPLATES = 50
 TEMPLATE_DETAILS_1 = {"title": "template_test_1",
                       "schema": {
                           "type": "object",
@@ -139,6 +140,18 @@ class TestManageTemplates:
                 data["zipfile"] = file_payload
             result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
             assert result.status_code == HTTPStatus.BAD_REQUEST
+
+    def test_create_new_template_already_exists(self, client):
+        with open(f'{CURRENT_TEST_PATH}/resources/template_test_1.zip', 'rb') as file:
+            template_details_str = json.dumps(TEMPLATE_DETAILS_1)
+            data: dict = {'template_details': template_details_str}
+            template_id = "template_test_1"
+            filename = f'{template_id}.zip'
+            if file is not None:
+                file_payload = (file, filename) if filename is not None else file
+                data["zipfile"] = file_payload
+            result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
+            assert result.status_code == HTTPStatus.CONFLICT
 
     def test_create_new_file_invalid_file_type(self, client):
         filename = 'example.pdf'
