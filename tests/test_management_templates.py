@@ -152,7 +152,7 @@ class TestManageTemplates:
             result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
             assert result.status_code == HTTPStatus.CONFLICT
 
-    def test_create_new_file_invalid_file_type(self, client):
+    def test_create_new_template_invalid_file_type(self, client):
         filename = 'example.pdf'
         file = open(f'{CURRENT_TEST_PATH}/resources/{filename}', "rb")
         template_details_str = json.dumps(TEMPLATE_DETAILS_2)
@@ -163,7 +163,7 @@ class TestManageTemplates:
         result = client.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
         assert result.status_code == HTTPStatus.UNSUPPORTED_MEDIA_TYPE
 
-    def test_create_new_file_ok(self, client):
+    def test_create_new_template_ok(self, client):
         with open(f'{CURRENT_TEST_PATH}/resources/template_test_2.zip', 'rb') as file:
             template_id = "template_test_2"
             template_details_str = json.dumps(TEMPLATE_DETAILS_2)
@@ -222,7 +222,7 @@ class TestManageTemplates:
         result = client.put(self.UPDATE_TEMPLATE.format(template_id), data=data)
         assert result.status_code == HTTPStatus.BAD_REQUEST
 
-    def test_update_template_template_not_found(self, client):
+    def test_update_template_not_found(self, client):
         template_id = "template_test_2"
         filename = 'template_test_2.zip'
         file = open(f'{CURRENT_TEST_PATH}/resources/{filename}', "rb")
