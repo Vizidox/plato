@@ -6,7 +6,7 @@ from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 import pathlib
 import shutil
 from plato.compose import FILTERS
-from .file_util import s3_template_path, s3_base_static_path
+from .path_util import s3_template_path, s3_base_static_path
 from .s3_bucket_util import get_file_s3, NoIndexTemplateFound
 
 

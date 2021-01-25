@@ -24,7 +24,7 @@ from .error_messages import invalid_compose_json, template_not_found, unsupporte
 from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
 from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
 from plato.util.setup_util import write_files
-from .util.file_util import s3_template_path, tmp_zipfile_path, s3_static_path
+from .util.path_util import s3_template_path, tmp_zipfile_path, s3_static_path
 
 
 class UnsupportedMIMEType(Exception):

@@ -5,7 +5,7 @@ from typing import Dict, Any, BinaryIO
 
 from smart_open import s3
 
-from plato.util.file_util import s3_template_path, s3_static_file_path, tmp_static_file_path, \
+from plato.util.path_util import s3_template_path, s3_static_file_path, tmp_static_file_path, \
     tmp_template_path, tmp_zipfile_path, tmp_path, tmp_template_static_path
 
 
