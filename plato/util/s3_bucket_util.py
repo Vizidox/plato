@@ -5,8 +5,7 @@ from typing import Dict, Any, BinaryIO
 
 from smart_open import s3
 
-from plato.util.path_util import s3_template_path, s3_static_file_path, tmp_static_file_path, \
-    tmp_template_path, tmp_zipfile_path, tmp_path, tmp_template_static_path
+from plato.util.path_util import template_path, static_file_path, tmp_zipfile_path, tmp_path, static_path
 
 
 class S3Error(Exception):
@@ -83,20 +82,20 @@ def upload_template_files_to_s3(template_id: str, s3_template_dir: str, zip_file
         zip_file_name (str): the filename for the zipfile
         s3_bucket (str): S3 Bucket
     """
-
+    base_tmp_path = tmp_path(zip_file_name)
     # extract files to temporary directory
     file = zipfile.ZipFile(tmp_zipfile_path(zip_file_name))
-    file.extractall(path=tmp_path(zip_file_name))
+    file.extractall(path=base_tmp_path)
 
-    local_template = Path(tmp_template_path(zip_file_name, template_id))
+    local_template = Path(template_path(base_tmp_path, template_id))
     with local_template.open(mode='rb') as tmp_file:
-        write_file_to_s3(tmp_file, s3_bucket, s3_template_path(s3_template_dir, template_id))
+        write_file_to_s3(tmp_file, s3_bucket, template_path(s3_template_dir, template_id))
 
-    static_files = os.listdir(tmp_template_static_path(zip_file_name, template_id))
+    static_files = os.listdir(static_path(base_tmp_path, template_id))
     for static_file in static_files:
-        tmp_static_sys_path = Path(tmp_static_file_path(zip_file_name, template_id, static_file))
+        tmp_static_sys_path = Path(static_file_path(base_tmp_path, template_id, static_file))
         with tmp_static_sys_path.open(mode='rb') as tmp_file:
-            write_file_to_s3(tmp_file, s3_bucket, s3_static_file_path(s3_template_dir, template_id, static_file))
+            write_file_to_s3(tmp_file, s3_bucket, static_file_path(s3_template_dir, template_id, static_file))
 
 
 def write_file_to_s3(input_file: BinaryIO, s3_bucket: str, s3_path: str) -> None:

@@ -24,7 +24,7 @@ from .error_messages import invalid_compose_json, template_not_found, unsupporte
 from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
 from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
 from plato.util.setup_util import write_files
-from .util.path_util import s3_template_path, tmp_zipfile_path, s3_static_path
+from .util.path_util import template_path, tmp_zipfile_path, static_path
 
 
 class UnsupportedMIMEType(Exception):
@@ -280,7 +280,7 @@ def initialize_api(app: Flask):
             template_id (str): The template id
         """
 
-        template_paths = [s3_template_path(S3_TEMPLATE_DIR, template_id), s3_static_path(S3_TEMPLATE_DIR, template_id)]
+        template_paths = [template_path(S3_TEMPLATE_DIR, template_id), static_path(S3_TEMPLATE_DIR, template_id)]
         for path in template_paths:
 
             template_files = get_file_s3(bucket_name=S3_BUCKET, url=path,
