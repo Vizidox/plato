@@ -20,7 +20,7 @@ from .db import db
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
     resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file, \
-    invalid_directory_structure, invalid_template_file_id
+    invalid_directory_structure
 from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
 from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
 from plato.util.setup_util import write_files
@@ -210,10 +210,6 @@ def initialize_api(app: Flask):
               type: string
               format: application/json
               properties:
-                  title:
-                    type: string
-                    description: The template id
-                    example: template_id
                   schema:
                     type: object
                     properties: {}
@@ -239,7 +235,7 @@ def initialize_api(app: Flask):
             items:
                 $ref: '#/definitions/TemplateDetail'
           400:
-            description: The file does not have the correct directory structure | Template Id does not match
+            description: The file does not have the correct directory structure
           404:
             description: Template not found in database
           415:
@@ -253,18 +249,16 @@ def initialize_api(app: Flask):
 
         template_details = request.form.get('template_details')
         template_entry_json = json.loads(template_details)
-        if template_entry_json['title'] != template_id:
-            return jsonify({"message": invalid_template_file_id.format(template_entry_json['title'], template_id)}), HTTPStatus.BAD_REQUEST
 
         try:
-            # uploads template files from zip file to S3
-            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
-            _load_and_write_template_from_s3(template_id)
-
             # update template into database
             template = Template.query.filter_by(id=template_id).first_or_404()
             template.update_from_json_dict(template_entry_json)
             db.session.commit()
+
+            # uploads template files from zip file to S3
+            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
+            _load_and_write_template_from_s3(template_id)
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
         except FileNotFoundError:

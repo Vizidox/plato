@@ -208,20 +208,6 @@ class TestManageTemplates:
         result = client.put(self.UPDATE_TEMPLATE.format(template_id), data=data)
         assert result.status_code == HTTPStatus.UNSUPPORTED_MEDIA_TYPE
 
-    def test_update_template_invalid_id(self, client):
-        template_id = "template_test_1_invalid"
-        filename = 'template_test_2.zip'
-        file = open(f'{CURRENT_TEST_PATH}/resources/{filename}', "rb")
-        template_details_str = json.dumps(TEMPLATE_DETAILS_2)
-        data: dict = {'template_details': template_details_str}
-
-        if file is not None:
-            file_payload = (file, filename) if filename is not None else file
-            data["zipfile"] = file_payload
-
-        result = client.put(self.UPDATE_TEMPLATE.format(template_id), data=data)
-        assert result.status_code == HTTPStatus.BAD_REQUEST
-
     def test_update_template_not_found(self, client):
         template_id = "template_test_2"
         filename = 'template_test_2.zip'
