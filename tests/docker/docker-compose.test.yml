@@ -30,7 +30,7 @@ services:
       DB_USERNAME: test
       DB_PASSWORD: test
       DB_DATABASE: test
-      S3_BUCKET: ${S3_BUCKET}
+      S3_BUCKET: test_template_bucket_1
       S3_TEMPLATE_DIR: templating
     volumes:
       - ${API_DIRECTORY}/coverage:/app/coverage

@@ -2,7 +2,7 @@ import tomlkit
 from os import environ, getenv
 from dotenv import load_dotenv, find_dotenv
 
-from .setup_util import inside_container
+from plato.util.setup_util import inside_container
 
 if not inside_container():
     load_dotenv(find_dotenv(), override=False)

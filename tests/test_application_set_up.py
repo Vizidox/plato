@@ -4,7 +4,8 @@ import pytest
 import pathlib
 from moto import mock_s3
 from smart_open import s3
-from plato.setup_util import load_templates, NoIndexTemplateFound
+from plato.util.setup_util import load_templates
+from plato.util.s3_bucket_util import NoIndexTemplateFound
 from tempfile import TemporaryDirectory
 from plato.db.models import Template, db
 
@@ -13,6 +14,8 @@ STATIC_FILE_PATH_FORMAT = "templating/static/{0}/{1}"
 
 LOCAL_TEMPLATE_FILE_PATH_FORMAT = "templates/{0}/{1}"
 LOCAL_STATIC_FILE_PATH_FORMAT = "static/{0}/{1}"
+
+BUCKET_NAME = 'test_template_bucket_1'
 
 
 def get_template_file_path(template_id: str):
@@ -63,18 +66,17 @@ def populate_db(client):
 @pytest.fixture(scope='function')
 @mock_s3
 def populate_s3() -> str:
-    bucket_name = 'test_template_bucket_1'
     conn = boto3.resource('s3', region_name='eu-central-1')
-    conn.create_bucket(Bucket=bucket_name)
+    conn.create_bucket(Bucket=BUCKET_NAME)
 
     static_file_1 = get_static_file_path(file_name="abc_1", template_id="0")
     static_file_2 = get_static_file_path(file_name="abc_2", template_id="0")
-    write_to_s3(bucket_name=bucket_name, file_paths=[static_file_1, static_file_2])
+    write_to_s3(bucket_name=BUCKET_NAME, file_paths=[static_file_1, static_file_2])
 
     template_file_1 = get_template_file_path(template_id="0")
-    write_to_s3(bucket_name=bucket_name, file_paths=[template_file_1])
+    write_to_s3(bucket_name=BUCKET_NAME, file_paths=[template_file_1])
 
-    return bucket_name
+    return BUCKET_NAME
 
 
 @pytest.fixture(scope='function')
