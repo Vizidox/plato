@@ -82,6 +82,18 @@ class Template(db.Model):
         self.example_composition = json_["example_composition"]
         self.tags = json_["tags"]
 
+    def update_fields(self, **kwargs):
+        """
+        Updates some fields of a template object from a dictionary.
+
+        Raises a KeyError exception if key does not exist
+        """
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                raise KeyError(key)
+
     def json_dict(self) -> dict:
         """
         Exports template data as dict.
