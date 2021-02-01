@@ -266,6 +266,73 @@ def initialize_api(app: Flask):
 
         return jsonify(TemplateDetailView.view_from_template(template)._asdict())
 
+    @app.route("/template/<string:template_id>/update_json", methods=['PATCH'])
+    def update_json_template(template_id: str):
+        """
+        Update a template model
+        ---
+        consumes:
+        - application/json
+        parameters:
+            - name: template_id
+              in: path
+              type: string
+              required: true
+            - in: body
+              required: true
+              name: template_details
+              schema:
+                type: object
+                properties:
+                    schema:
+                      type: object
+                      properties: {}
+                    type:
+                      # default Content-Type for string is `application/octet-stream`
+                      type: string
+                    metadata:
+                      type: object
+                      properties: {}
+                    example_composition:
+                      type: object
+                      properties: {}
+                    tags:
+                       type: array
+                       items:
+                         type: string
+              required: true
+              description: Contents of a template model
+        responses:
+          200:
+            description: Information of updated template
+            type: array
+            items:
+                $ref: '#/definitions/TemplateDetail'
+          400:
+            description: The input is not in the correct form
+          404:
+            description: Template not found in database
+        tags:
+           - template
+        """
+
+        template_details = request.get_json()
+
+        try:
+            # update template into database
+            template = Template.query.filter_by(id=template_id).first_or_404()
+
+            original_template_json = template.json_dict()
+            original_template_json.update(template_details)
+
+            template.update_from_json_dict(original_template_json)
+            db.session.commit()
+
+        except NoResultFound:
+            return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
+
+        return jsonify(TemplateDetailView.view_from_template(template)._asdict())
+
     def _load_and_write_template_from_s3(template_id: str) -> None:
         """
         Fetches template data from S3 Bucket and saves it locally
