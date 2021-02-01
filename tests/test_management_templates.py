@@ -47,6 +47,40 @@ TEMPLATE_DETAILS_1 = {"title": "template_test_1",
                       "tags": [
                       ]}
 
+TEMPLATE_DETAILS_1_UPDATE = {
+                      "schema": {
+                          "type": "object",
+                          "required": [
+                              "cert_name",
+                              "serial_number"
+                          ],
+                          "properties": {
+                              "qr_code": {
+                                  "type": "string"
+                              },
+                              "cert_name": {
+                                  "type": "string"
+                              },
+                              "serial_number": {
+                                  "type": "string"
+                              }
+                          }
+                      },
+                      "type": "text/html",
+                      "metadata": {
+                          "qr_entries": [
+                              "qr_code"
+                          ]
+                      },
+                      "example_composition": {
+                          "qr_code": "https://vizidox.com",
+                          "cert_date": "2020-01-12",
+                          "cert_name": "Alan Turing",
+                          "serial_number": "C18009"
+                      },
+                      "tags": [
+                      ]}
+
 TEMPLATE_DETAILS_2 = {"title": "template_test_2",
                       "schema": {
                           "type": "object",
@@ -226,7 +260,7 @@ class TestManageTemplates:
         template_id = "template_test_1"
         filename = 'template_test_1.zip'
         file = open(f'{CURRENT_TEST_PATH}/resources/{filename}', "rb")
-        template_details_str = json.dumps(TEMPLATE_DETAILS_1)
+        template_details_str = json.dumps(TEMPLATE_DETAILS_1_UPDATE)
         data: dict = {'template_details': template_details_str}
 
         if file is not None:
