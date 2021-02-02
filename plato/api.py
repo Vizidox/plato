@@ -263,8 +263,6 @@ def initialize_api(app: Flask):
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
         except FileNotFoundError:
             return jsonify({"message": invalid_directory_structure}), HTTPStatus.BAD_REQUEST
-        except KeyError as e:
-            return jsonify({"message": invalid_json_field.format(e.args)}), HTTPStatus.BAD_REQUEST
 
         return jsonify(TemplateDetailView.view_from_template(template)._asdict())
 
