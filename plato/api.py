@@ -320,7 +320,7 @@ def initialize_api(app: Flask):
         try:
             # update template into database
             template = Template.query.filter_by(id=template_id).first_or_404()
-            template.update_fields(**template_details)
+            template.update_fields(template_details)
             db.session.commit()
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND

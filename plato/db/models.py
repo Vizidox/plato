@@ -82,14 +82,17 @@ class Template(db.Model):
         self.example_composition = json_["example_composition"]
         self.tags = json_["tags"]
 
-    def update_fields(self, **kwargs):
+    def update_fields(self, json_: dict):
         """
-        Updates some fields of a template object from a dictionary.
+        Updates some fields of a template object from a dictionary. It does not update the template id.
+
+        Args:
+            json_: dict with template details.
 
         Raises a KeyError exception if key does not exist
         """
-        for key, value in kwargs.items():
-            if hasattr(self, key):
+        for key, value in json_.items():
+            if hasattr(self, key) and key not in self.id:
                 setattr(self, key, value)
             else:
                 raise KeyError(key)
