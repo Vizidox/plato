@@ -162,7 +162,7 @@ def setup_s3():
 class TestManageTemplates:
     CREATE_TEMPLATE_ENDPOINT = '/template/create'
     UPDATE_TEMPLATE = '/template/{0}/update'
-    UPDATE_JSON_TEMPLATE = '/template/{0}/update_json'
+    UPDATE_TEMPLATE_DETAILS = '/template/{0}/update_details'
 
     def test_create_new_template_invalid_zip_file(self, client):
         with open(f'{CURRENT_TEST_PATH}/resources/invalid_file.zip', 'rb') as file:
@@ -280,21 +280,21 @@ class TestManageTemplates:
         expected_template = Template.from_json_dict(TEMPLATE_DETAILS_1)
         assert template_model.schema == expected_template.schema
 
-    def test_update_template_json_not_found(self, client):
+    def test_update_template_details_not_found(self, client):
         template_id = "template_test_3"
         data: dict = {'template_details': {"tags": ["test"]}}
 
-        result = client.patch(self.UPDATE_JSON_TEMPLATE.format(template_id), json=data)
+        result = client.patch(self.UPDATE_TEMPLATE_DETAILS.format(template_id), json=data)
         assert result.status_code == HTTPStatus.NOT_FOUND
 
-    def test_update_template_json_invalid(self, client):
+    def test_update_template_details_invalid(self, client):
         template_id = "template_test_1"
-        data: dict = {"user": "so invalid"}
+        data: dict = {"user": "invalid"}
 
-        result = client.patch(self.UPDATE_JSON_TEMPLATE.format(template_id), json=data)
+        result = client.patch(self.UPDATE_TEMPLATE_DETAILS.format(template_id), json=data)
         assert result.status_code == HTTPStatus.BAD_REQUEST
 
-    def test_update_template_json_ok(self, client):
+    def test_update_template_details_ok(self, client):
         template_id = "template_test_1"
         example_composition_data = {"qr_code": "https://google.com",
                                     "cert_date": "2021-01-12",
@@ -303,7 +303,7 @@ class TestManageTemplates:
 
         data: dict = {"example_composition": example_composition_data}
 
-        result = client.patch(self.UPDATE_JSON_TEMPLATE.format(template_id), json=data)
+        result = client.patch(self.UPDATE_TEMPLATE_DETAILS.format(template_id), json=data)
         assert result.status_code == HTTPStatus.OK
         template_model: Template = Template.query.filter_by(id=template_id).one()
         assert template_model.example_composition is not None

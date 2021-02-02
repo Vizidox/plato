@@ -266,10 +266,10 @@ def initialize_api(app: Flask):
 
         return jsonify(TemplateDetailView.view_from_template(template)._asdict())
 
-    @app.route("/template/<string:template_id>/update_json", methods=['PATCH'])
-    def update_json_template(template_id: str):
+    @app.route("/template/<string:template_id>/update_details", methods=['PATCH'])
+    def update_template_details(template_id: str):
         """
-        Update a template model
+        Update template details
         ---
         consumes:
         - application/json
