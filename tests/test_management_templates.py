@@ -115,6 +115,40 @@ TEMPLATE_DETAILS_2 = {"title": "template_test_2",
                       "tags": [
                       ]}
 
+TEMPLATE_DETAILS_2_UPDATE = {
+                      "schema": {
+                          "type": "object",
+                          "required": [
+                              "cert_name",
+                              "serial_number"
+                          ],
+                          "properties": {
+                              "qr_code": {
+                                  "type": "string"
+                              },
+                              "cert_name": {
+                                  "type": "string"
+                              },
+                              "serial_number": {
+                                  "type": "string"
+                              }
+                          }
+                      },
+                      "type": "text/html",
+                      "metadata": {
+                          "qr_entries": [
+                              "qr_code"
+                          ]
+                      },
+                      "example_composition": {
+                          "qr_code": "https://vizidox.com",
+                          "cert_date": "2020-01-12",
+                          "cert_name": "Alan Turing",
+                          "serial_number": "C18009"
+                      },
+                      "tags": [
+                      ]}
+
 
 @pytest.fixture(scope="function")
 def populate_db(client):
@@ -218,9 +252,22 @@ class TestManageTemplates:
 
     def test_update_template_invalid_zip_file(self, client):
         with open(f'{CURRENT_TEST_PATH}/resources/invalid_file.zip', 'rb') as file:
-            template_details_str = json.dumps(TEMPLATE_DETAILS_2)
+            template_details_str = json.dumps(TEMPLATE_DETAILS_2_UPDATE)
             data: dict = {'template_details': template_details_str}
             filename = 'invalid_file.zip'
+            template_id = "template_test_1"
+
+            if file is not None:
+                file_payload = (file, filename) if filename is not None else file
+                data["zipfile"] = file_payload
+            result = client.put(self.UPDATE_TEMPLATE.format(template_id), data=data)
+            assert result.status_code == HTTPStatus.BAD_REQUEST
+
+    def test_update_template_invalid_details(self, client):
+        with open(f'{CURRENT_TEST_PATH}/resources/template_test_1.zip', 'rb') as file:
+            template_details_str = json.dumps({"user": "Carlos Coda"})
+            data: dict = {'template_details': template_details_str}
+            filename = 'template_test_1.zip'
             template_id = "template_test_1"
 
             if file is not None:

@@ -10,6 +10,7 @@ token_is_invalid_message = "Token is invalid: {0}"
 
 #templating
 invalid_compose_json = "Invalid compose json: {0}"
+invalid_template_details = "Invalid template details: {0}"
 template_already_exists = "Template '{0}' already exists in database"
 invalid_directory_structure = "Template directories are invalid"
 invalid_zip_file = "File must be of .zip type"

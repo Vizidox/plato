@@ -7,7 +7,8 @@ from typing import Callable, Tuple
 
 from accept_types import get_best_match
 from flask import jsonify, request, Flask, send_file
-from jsonschema import ValidationError
+from jsonschema import validate as json_validate, ValidationError
+
 from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.exc import IntegrityError
@@ -15,12 +16,12 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from plato.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
 from plato.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
-from plato.views.views import TemplateDetailView
+from plato.views.views import TemplateDetailView, TEMPLATE_UPDATE_SCHEMA
 from .db import db
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
     resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file, \
-    invalid_directory_structure, invalid_json_field
+    invalid_directory_structure, invalid_json_field, invalid_template_details
 from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
 from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
 from plato.util.setup_util import write_files
@@ -235,7 +236,7 @@ def initialize_api(app: Flask):
             items:
                 $ref: '#/definitions/TemplateDetail'
           400:
-            description: The file does not have the correct directory structure
+            description: The file does not have the correct directory structure | Template details are invalid
           404:
             description: Template not found in database
           415:
@@ -251,9 +252,10 @@ def initialize_api(app: Flask):
         template_entry_json = json.loads(template_details)
 
         try:
+            json_validate(template_entry_json, schema=TEMPLATE_UPDATE_SCHEMA)
             # update template into database
             template = Template.query.filter_by(id=template_id).first_or_404()
-            template.update_from_json_dict(template_entry_json)
+            template.update_fields(template_entry_json)
             db.session.commit()
 
             # uploads template files from zip file to S3
@@ -263,6 +265,8 @@ def initialize_api(app: Flask):
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
         except FileNotFoundError:
             return jsonify({"message": invalid_directory_structure}), HTTPStatus.BAD_REQUEST
+        except ValidationError as ve:
+            return jsonify({"message": invalid_template_details.format(ve.message)}), HTTPStatus.BAD_REQUEST
 
         return jsonify(TemplateDetailView.view_from_template(template)._asdict())
 

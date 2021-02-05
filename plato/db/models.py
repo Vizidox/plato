@@ -69,19 +69,6 @@ class Template(db.Model):
                         example_composition=json_["example_composition"],
                         tags=json_["tags"])
 
-    def update_from_json_dict(self, json_: dict) -> None:
-        """
-        Updates a template object from a dictionary that follows the export standard.
-
-        Args:
-            json_: dict with template details.
-        """
-        self.schema = json_["schema"]
-        self.type = json_["type"]
-        self.metadata_ = json_["metadata"]
-        self.example_composition = json_["example_composition"]
-        self.tags = json_["tags"]
-
     def update_fields(self, json_: dict):
         """
         Updates some fields of a template object from a dictionary. It does not update the template id.
