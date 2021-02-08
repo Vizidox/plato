@@ -69,18 +69,20 @@ class Template(db.Model):
                         example_composition=json_["example_composition"],
                         tags=json_["tags"])
 
-    def update_from_json_dict(self, json_: dict) -> None:
+    def update_fields(self, json_: dict):
         """
-        Updates a template object from a dictionary that follows the export standard.
+        Updates some fields of a template object from a dictionary. It does not update the template id.
 
         Args:
             json_: dict with template details.
+
+        Raises a KeyError exception if key does not exist
         """
-        self.schema = json_["schema"]
-        self.type = json_["type"]
-        self.metadata_ = json_["metadata"]
-        self.example_composition = json_["example_composition"]
-        self.tags = json_["tags"]
+        for key, value in json_.items():
+            if hasattr(self, key) and key not in self.id:
+                setattr(self, key, value)
+            else:
+                raise KeyError(key)
 
     def json_dict(self) -> dict:
         """

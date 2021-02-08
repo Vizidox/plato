@@ -51,3 +51,34 @@ class TemplateDetailView(NamedTuple):
                                   metadata=template.metadata_,
                                   tags=template.tags)
 
+
+TEMPLATE_UPDATE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "schema": {
+            "type": "object"
+        },
+        "type": {
+            "type": "string"
+        },
+        "metadata": {
+            "type": "object"
+        },
+        "example_composition": {
+            "type": "object"
+        },
+        "tags": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "required": [
+        "schema",
+        "type",
+        "metadata",
+        "example_composition",
+        "tags"
+    ]
+}
