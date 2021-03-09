@@ -20,6 +20,8 @@ __project_meta = _get_project_meta()
 PROJECT_NAME = __project_meta["name"]
 PROJECT_VERSION = __project_meta["version"]
 
+ACCESS_KEY = environ["ACCESS_KEY"]
+
 # Template storage
 S3_BUCKET = environ["S3_BUCKET"]
 S3_TEMPLATE_DIR = getenv("S3_TEMPLATE_DIR", "templating")
