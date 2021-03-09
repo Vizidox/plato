@@ -1,9 +1,10 @@
 import json
 import uuid
 import zipfile
+from functools import wraps
 from http import HTTPStatus
 from mimetypes import guess_extension
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Any
 
 from accept_types import get_best_match
 from flask import jsonify, request, Flask, send_file
@@ -23,7 +24,7 @@ from .error_messages import invalid_compose_json, template_not_found, unsupporte
     resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file, \
     invalid_directory_structure, invalid_json_field, invalid_template_details
 from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
-from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
+from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY, ACCESS_KEY
 from plato.util.setup_util import write_files
 from .util.path_util import template_path, tmp_zipfile_path, static_path
 
@@ -44,12 +45,52 @@ def initialize_api(app: Flask):
     Returns:
     """
 
+    def _validate_access_key(f: Callable) -> Callable:
+        """
+        Returns a decorator function that validates the given Access Key to the endpoint before running
+        its code. Assumes a flask endpoint context, and that an access_key field is passed in the header of
+        the request. If the environment variable is set to None, though, the given access_key is ignored and
+        the endpoint is directly executed.
+
+        :param f: decorated function
+        :type f: Callable
+
+        :return: The decorator function
+        :rtype: Callable
+        """
+        @wraps(f)
+        def decorated(*args, **kwargs) -> Any:
+            """
+            Verifies that the given access key in the headers of the request is valid.
+            If not, return an appropriate error.
+
+            :param args: The arguments of the function
+            :type args: List[Any]
+
+            :param kwargs: The keyword arguments of the function
+            :type kwargs: Dict[str, Any]
+
+            :return: The function return
+            :rtype: Any
+            """
+            access_key = request.headers.get("access_key")
+            if ACCESS_KEY is not None and access_key != ACCESS_KEY:
+                return jsonify({"message": "Invalid access key"}), HTTPStatus.FORBIDDEN
+            return f(*args, **kwargs)
+        return decorated
+
+    @_validate_access_key
     @app.route("/templates/<string:template_id>", methods=['GET'])
     def template_by_id(template_id: str):
         """
         Returns template information
         ---
         parameters:
+          - name: access_key
+            in: header
+            type: string
+            required: false
+            description: access key to gain access to the endpoint
           - name: template_id
             in: path
             type: string
@@ -65,7 +106,6 @@ def initialize_api(app: Flask):
            - template
         """
         try:
-
             template: Template = Template.query.filter_by(id=template_id).one()
             view = TemplateDetailView.view_from_template(template)
             return jsonify(view._asdict())
@@ -73,12 +113,18 @@ def initialize_api(app: Flask):
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
 
+    @_validate_access_key
     @app.route("/templates/", methods=['GET'])
     def templates():
         """
         Returns template information
         ---
         parameters:
+          - name: access_key
+            in: header
+            type: string
+            required: false
+            description: access key to gain access to the endpoint
           - in: query
             name: tags
             type: array
@@ -106,6 +152,7 @@ def initialize_api(app: Flask):
 
         return jsonify(json_views)
 
+    @_validate_access_key
     @app.route("/template/create", methods=['POST'])
     def create_template():
         """
@@ -114,6 +161,11 @@ def initialize_api(app: Flask):
         consumes:
         - multipart/form-data
         parameters:
+            - name: access_key
+              in: header
+              type: string
+              required: false
+              description: access key to gain access to the endpoint
             - in: formData
               name: zipfile
               type: file
@@ -188,6 +240,7 @@ def initialize_api(app: Flask):
 
         return jsonify(TemplateDetailView.view_from_template(new_template)._asdict()), HTTPStatus.CREATED
 
+    @_validate_access_key
     @app.route("/template/<string:template_id>/update", methods=['PUT'])
     def update_template(template_id: str):
         """
@@ -196,6 +249,11 @@ def initialize_api(app: Flask):
         consumes:
         - multipart/form-data
         parameters:
+            - name: access_key
+              in: header
+              type: string
+              required: false
+              description: access key to gain access to the endpoint
             - name: template_id
               in: path
               type: string
@@ -270,6 +328,7 @@ def initialize_api(app: Flask):
 
         return jsonify(TemplateDetailView.view_from_template(template)._asdict())
 
+    @_validate_access_key
     @app.route("/template/<string:template_id>/update_details", methods=['PATCH'])
     def update_template_details(template_id: str):
         """
@@ -278,6 +337,11 @@ def initialize_api(app: Flask):
         consumes:
         - application/json
         parameters:
+            - name: access_key
+              in: header
+              type: string
+              required: false
+              description: access key to gain access to the endpoint
             - name: template_id
               in: path
               type: string
@@ -368,6 +432,7 @@ def initialize_api(app: Flask):
 
         return is_zipfile, zip_file_name
 
+    @_validate_access_key
     @app.route("/template/<string:template_id>/compose", methods=["POST"])
     def compose_file(template_id: str):
         """
@@ -380,6 +445,11 @@ def initialize_api(app: Flask):
             - image/png
             - text/html
         parameters:
+            - name: access_key
+              in: header
+              type: string
+              required: false
+              description: access key to gain access to the endpoint
             - name: template_id
               in: path
               type: string
@@ -427,6 +497,7 @@ def initialize_api(app: Flask):
         """
         return _compose(template_id, "compose", lambda t: request.get_json())
 
+    @_validate_access_key
     @app.route("/template/<string:template_id>/example", methods=["GET"])
     def example_compose(template_id: str):
         """
@@ -439,6 +510,11 @@ def initialize_api(app: Flask):
             - image/png
             - text/html
         parameters:
+            - name: access_key
+              in: header
+              type: string
+              required: false
+              description: access key to gain access to the endpoint
             - name: template_id
               in: path
               type: string
