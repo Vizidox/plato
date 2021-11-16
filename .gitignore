@@ -132,3 +132,4 @@ data/
 /docker-compose.override.yml
 
 .idea
+.run
