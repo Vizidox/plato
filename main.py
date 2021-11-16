@@ -5,9 +5,8 @@ Either create a Flask run configuration on this module or set up to run it local
 """
 
 from plato.flask_app import create_app
-from plato.settings import WORKING_DB_URL, PROJECT_NAME, PROJECT_VERSION, S3_BUCKET, TEMPLATE_DIRECTORY, \
-    S3_TEMPLATE_DIR
-from plato.setup_util import create_template_environment, load_templates, setup_swagger_ui
+from plato.settings import WORKING_DB_URL, PROJECT_NAME, PROJECT_VERSION, TEMPLATE_DIRECTORY, S3_TEMPLATE_DIR, S3_BUCKET
+from plato.util.setup_util import create_template_environment, setup_swagger_ui, load_templates
 
 template_environment = create_template_environment(TEMPLATE_DIRECTORY)
 swagger_ui_config = setup_swagger_ui(PROJECT_NAME, PROJECT_VERSION)

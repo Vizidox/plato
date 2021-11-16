@@ -5,7 +5,7 @@ All the classes in this module represent the database objects present in the mic
 base from sqlalchemy.
 
 """
-from typing import Sequence
+from typing import Sequence, List
 
 from plato.db import db
 from sqlalchemy import String
@@ -69,6 +69,21 @@ class Template(db.Model):
                         example_composition=json_["example_composition"],
                         tags=json_["tags"])
 
+    def update_fields(self, json_: dict):
+        """
+        Updates some fields of a template object from a dictionary. It does not update the template id.
+
+        Args:
+            json_: dict with template details.
+
+        Raises a KeyError exception if key does not exist
+        """
+        for key, value in json_.items():
+            if hasattr(self, key) and key not in self.id:
+                setattr(self, key, value)
+            else:
+                raise KeyError(key)
+
     def json_dict(self) -> dict:
         """
         Exports template data as dict.
@@ -85,7 +100,7 @@ class Template(db.Model):
         json_["tags"] = self.tags
         return json_
 
-    def get_qr_entries(self):
+    def get_qr_entries(self) -> List[str]:
         """
         Fetches all the qr_entries for the template as a list comprised of JMESPath friendly strings
         Returns:
