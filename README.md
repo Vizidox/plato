@@ -4,7 +4,7 @@ A python REST API for document composition through jsonschema.
 
 ## Getting Started
 
-These instructions will get the project up and running on your local environment so you can start contributing to the project.
+These instructions will get the project up and running on your local environment, so you can start contributing to the project.
 ### Prerequisites
 
 * [Python 3.7+](https://www.python.org/)
@@ -15,9 +15,9 @@ These instructions will get the project up and running on your local environment
 The project depends on [weasyprint](https://weasyprint.org/) for writing PDF from HTML so make sure you have everything
  weasy print needs to run by following the instructions on this [page](https://weasyprint.readthedocs.io/en/latest/install.html#linux). 
  
- The instructions are also available below.
+The instructions are also available below.
  
- ####Debian/Ubuntu
+####Debian/Ubuntu
 
 
 ```bash
@@ -35,7 +35,7 @@ cp .env.local .env
 ```
 
 Make sure you fill in the Template directory with an absolute path.
-You may use a subdirectory inside of your DATA_DIR.
+You may use a subdirectory inside your DATA_DIR.
 
 First, make sure you actually *have* a DATA_DIR, by creating a folder named 'data' within the main project directory.
 
@@ -49,15 +49,10 @@ e.g S3_TEMPLATE_DIR=projects/templating
 
 Make sure the bucket is accessible by providing credentials to the service by
  storing the S3 AWS credentials in your DATA_DIR/aws/.  
+
 #### Database
 The templating service uses Postgresql.
-To set up local servers you may use the docker-compose file supplied.
- 
-```bash
-cp docker/docker-compose.local.override.yml docker-compose.override.yml
-```
-
-Then spin up the container by running:
+To set up local servers you may use the docker-compose file supplied. Then spin up the container by running:
 
 ```bash
 docker-compose up -d database
@@ -116,7 +111,7 @@ Please check the detailed instructions on our [confluence page](https://vizidox.
 
 * [Flask](https://palletsprojects.com/p/flask/) - Web framework
 * [Flasgger](https://github.com/flasgger/flasgger) - Swagger 2 specification
-* [Poetry](https://maven.apache.org/) - Dependency Management
+* [Poetry](https://python-poetry.org/) - Dependency Management
 * [Jinja2](https://palletsprojects.com/p/jinja/) - For HTML composition
 * [Weasyprint](https://weasyprint.org/) - For PDF generation from HTML
 
@@ -128,11 +123,4 @@ We use [SemVer](http://semver.org/) for versioning.
 
 * **Tiago Santos** - *Initial work* - tiago.santos@vizidox.com
 * **Rita Mariquitos** - rita.mariquitos@morphotech.co.uk
-
-
-## License
-
-All of the code developed in this project belongs to Vizidox Solutions Limited and any 
-distribution or use must be authorized and agreed upon previously according to the
- Vizidox Solutions Limited terms and conditions.
-
+* **Joana Teixeira** - joana.teixeira@vizidox.com

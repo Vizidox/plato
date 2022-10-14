@@ -1,0 +1,16 @@
+pipeline {
+    agent {
+        label env.agent_label
+    }
+    stages {
+        stage('Build Slate Documentation') {
+            steps{
+                script {
+                    dir("./"){
+                        sh "docker run --rm --name slate -v /var/www/plato.vizidox.com:/srv/slate/build -v ${env.workspace}/slate/source:/srv/slate/source slatedocs/slate:v2.13.0 build"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -3,7 +3,6 @@ version: "3.5"
 volumes:
   pg_data:
 
-
 services:
   database:
     image: postgres:12.2
