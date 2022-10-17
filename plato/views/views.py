@@ -1,4 +1,5 @@
 from typing import NamedTuple, Sequence, TYPE_CHECKING
+
 from . import swag
 
 if TYPE_CHECKING:
@@ -27,12 +28,16 @@ class TemplateDetailView(NamedTuple):
             type: array
             items:
                 type: string
+        example_composition:
+            type: object
+            description: an example json to compose the template
           """
     template_id: str
     template_schema: dict
     type: str
     metadata: dict
     tags: Sequence[str]
+    example_composition: dict
 
     @classmethod
     def view_from_template(cls, template: 'Template') -> 'TemplateDetailView':
@@ -49,7 +54,8 @@ class TemplateDetailView(NamedTuple):
                                   template_schema=template.schema,
                                   type=template.type,
                                   metadata=template.metadata_,
-                                  tags=template.tags)
+                                  tags=template.tags,
+                                  example_composition=template.example_composition)
 
 
 TEMPLATE_UPDATE_SCHEMA = {
