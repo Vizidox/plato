@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "plato-api"
-version = "2.2.0"
+version = "2022.10.1-dev"
 description = "Templating as a microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com>",
     "Hieu Le <hieu.le@morphotech.co.uk>", "Rita Mariquitos <rita.mariquitos@morphotech.co.uk>"]
