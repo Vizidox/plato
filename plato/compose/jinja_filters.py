@@ -8,7 +8,7 @@ from num2words import num2words
 # is loaded into the Jinja environment
 
 
-def format_dates(date_str: str, format_='d MMMM yyyy') -> str:
+def format_dates(date_str: str, format_: str = 'd MMMM yyyy') -> str:
     """
     Formats a date in ISO 8601 format to any valid babel format given as input.
 
@@ -30,7 +30,7 @@ def format_dates(date_str: str, format_='d MMMM yyyy') -> str:
     return dates.format_datetime(date, format_)
 
 
-def num_to_ordinal(number: Union[int, str]) -> str:
+def num_to_ordinal(number: int) -> str:
     """
     Formats a given cardinal number (can be int or string) into an ordinal number.
 
@@ -49,7 +49,7 @@ def num_to_ordinal(number: Union[int, str]) -> str:
     return num2words(number, to='ordinal_num')
 
 
-def nth(number: Union[str, int]) -> str:
+def nth(number: int) -> str:
     """
     Returns the suffix of an ordinal number, obtained from the cardinal number
     For example:

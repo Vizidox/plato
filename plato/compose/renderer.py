@@ -213,21 +213,21 @@ class PNGRenderer(Renderer):
     _page: int = 0
 
     @property
-    def height(self) -> int:
+    def height(self) -> Optional[int]:
         return self._height
 
     @height.setter
-    def height(self, value: int) -> None:
+    def height(self, value: Optional[int]) -> None:
         if self.width is not None and value is not None:
             raise ValueError("Unable to use both height and width in order to maintain aspect ratio")
         self._height = value
 
     @property
-    def width(self) -> int:
+    def width(self) -> Optional[int]:
         return self._width
 
     @width.setter
-    def width(self, value: int) -> None:
+    def width(self, value: Optional[int]) -> None:
         if self.height is not None and value is not None:
             raise ValueError("Unable to use both height and width in order to maintain aspect ratio")
         self._width = value

@@ -18,7 +18,7 @@ app = create_app(db_url=WORKING_DB_URL,
 
 if __name__ == '__main__':
     # in app-context setups
-    with app.app_context():
-        load_templates(S3_BUCKET, TEMPLATE_DIRECTORY, S3_TEMPLATE_DIR)
+    # with app.app_context():
+    #     load_templates(S3_BUCKET, TEMPLATE_DIRECTORY, S3_TEMPLATE_DIR)
     app.run()
 

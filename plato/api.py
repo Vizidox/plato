@@ -3,16 +3,16 @@ import uuid
 import zipfile
 from http import HTTPStatus
 from mimetypes import guess_extension
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Union
 
 from accept_types import get_best_match
-from flask import jsonify, request, Flask, send_file
+from flask import jsonify, request, Flask, send_file, Response
 from jsonschema import validate as json_validate, ValidationError
 from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
-from werkzeug import FileStorage
+from werkzeug.datastructures import FileStorage
 
 from plato.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
 from plato.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
@@ -360,7 +360,7 @@ def initialize_api(app: Flask) -> None:
         """
         zip_uid = str(uuid.uuid4())
         zip_file_name = f"zipfile_{zip_uid}"
-        zip_file: FileStorage = request.files.get('zipfile')
+        zip_file: FileStorage = request.files['zipfile']
 
         zip_file.save(tmp_zipfile_path(zip_file_name))
         is_zipfile = zipfile.is_zipfile(zip_file)
@@ -368,7 +368,7 @@ def initialize_api(app: Flask) -> None:
         return is_zipfile, zip_file_name
 
     @app.route("/template/<string:template_id>/compose", methods=["POST"])
-    def compose_file(template_id: str) -> Tuple[dict, int]:
+    def compose_file(template_id: str) -> Tuple[Response, int]:
         """
         Composes file based on the template
         ---
@@ -427,7 +427,7 @@ def initialize_api(app: Flask) -> None:
         return _compose(template_id, "compose", lambda t: request.get_json())
 
     @app.route("/template/<string:template_id>/example", methods=["GET"])
-    def example_compose(template_id: str) -> Tuple[dict, int]:
+    def example_compose(template_id: str) -> Tuple[Response, int]:
         """
         Gets example file based on the template
         ---
@@ -479,7 +479,7 @@ def initialize_api(app: Flask) -> None:
 
     def _compose(template_id: str,
                  file_name: str,
-                 compose_retrieval_function: Callable[[Template], dict]):
+                 compose_retrieval_function: Callable[[Template], dict]) -> Tuple[Response, int]:
         width = request.args.get("width", type=int)
         height = request.args.get("height", type=int)
         page = request.args.get("page", type=int)
