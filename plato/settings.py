@@ -1,6 +1,7 @@
 import tomlkit
 from os import environ, getenv
 from dotenv import load_dotenv, find_dotenv
+from tomlkit.items import Table
 
 from plato.util.setup_util import inside_container
 
@@ -8,7 +9,7 @@ if not inside_container():
     load_dotenv(find_dotenv(), override=False)
 
 
-def _get_project_meta() -> dict:
+def _get_project_meta() -> Table:
     with open(find_dotenv(filename='pyproject.toml'), mode='r') as pyproject:
         file_contents = pyproject.read()
 
