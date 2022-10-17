@@ -1,0 +1,29 @@
+[mypy]
+mypy_path = <PROJECT_DIR>/stubs
+
+disallow_untyped_defs = True
+disallow_any_unimported = True
+disallow_incomplete_defs = True
+
+warn_redundant_casts = True
+warn_unused_ignores = True
+warn_unused_configs = True
+
+no_implicit_optional = True
+no_implicit_reexport = True
+
+check_untyped_defs = True
+show_error_codes = True
+show_traceback = True
+
+python_version = 3.7
+plugins = sqlmypy
+
+[mypy-vizidox.db.models.*]
+disallow_any_unimported = False
+
+[mypy-ratelimit.*]
+ignore_missing_imports = True
+
+[mypy-flask_sqlalchemy.*]
+ignore_missing_imports = True
