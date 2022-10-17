@@ -1,0 +1,1 @@
+from qrcode.main import make as make

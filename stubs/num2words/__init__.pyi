@@ -1,0 +1,3 @@
+from typing import Any
+
+def num2words(number: int, ordinal: bool = ..., lang: str = ..., to: str = ..., **kwargs: Any) -> str: ...
