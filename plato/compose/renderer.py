@@ -1,14 +1,15 @@
 import io
 import tempfile
 from abc import abstractmethod, ABC
+from mimetypes import guess_extension
+from tempfile import TemporaryDirectory
+from typing import Optional, Type, ClassVar, Dict, List
+
 from flask import current_app
 from jmespath import search
-from mimetypes import guess_extension
-from typing import Optional, Type, ClassVar, Dict, List
-from qrcode import make
-from tempfile import TemporaryDirectory
-from weasyprint import HTML
 from jsonschema import validate as validate_schema
+from qrcode import make
+from weasyprint import HTML
 
 from plato.db.models import Template
 
@@ -53,7 +54,7 @@ class Renderer(ABC):
         ...
 
     """
-    mime_type = OCTET_STREAM
+    mime_type: str = OCTET_STREAM
     """MIME type for the renderer. Should be implemented by subclass. e.g: 'text/plain', 'application/pdf'
     """
     renderers: ClassVar[Dict[str, 'Renderer']] = dict()
@@ -80,17 +81,13 @@ class Renderer(ABC):
             name=f"{self.template_model.id}/{self.template_model.id}"
         )  # template id works for the file as well
 
-        composed_html = jinja_template.render(
-            p=compose_data,
-            base_static=base_static_directory,
-            template_static=template_static_directory
-        )
-
-        return composed_html
+        return jinja_template.render(p=compose_data,
+                                     base_static=base_static_directory,
+                                     template_static=template_static_directory)
 
     def render(self, compose_data: dict) -> io.BytesIO:
         """
-        Renders Template onto a a stream according to the Renderer's MIME type.
+        Renders Template onto a stream according to the Renderer's MIME type.
 
         """
         with TemporaryDirectory() as temp_render_directory:
@@ -153,7 +150,7 @@ class Renderer(ABC):
             return type_
         return wrapper
 
-    def qr_render(self, output_folder: str, compose_data: dict):
+    def qr_render(self, output_folder: str, compose_data: dict) -> dict:
         """
         Render QR codes, altering self.compose_data to replace qr_code properties with the filepath to their renders
         Args:
@@ -164,7 +161,7 @@ class Renderer(ABC):
         """
         qr_schema_paths = self.template_model.get_qr_entries()
 
-        def set_nested(key_list: List[str], dict_: dict, value: str):
+        def set_nested(key_list: List[str], dict_: dict, value: str) -> None:
             """
             Sets dict_[key1, key2, ...] = value
             Args:
@@ -216,31 +213,31 @@ class PNGRenderer(Renderer):
     _page: int = 0
 
     @property
-    def height(self):
+    def height(self) -> int:
         return self._height
 
     @height.setter
-    def height(self, value):
+    def height(self, value: int) -> None:
         if self.width is not None and value is not None:
             raise ValueError("Unable to use both height and width in order to maintain aspect ratio")
         self._height = value
 
     @property
-    def width(self):
+    def width(self) -> int:
         return self._width
 
     @width.setter
-    def width(self, value):
+    def width(self, value: int) -> None:
         if self.height is not None and value is not None:
             raise ValueError("Unable to use both height and width in order to maintain aspect ratio")
         self._width = value
 
     @property
-    def page(self):
+    def page(self) -> int:
         return self._page
 
     @page.setter
-    def page(self, value):
+    def page(self, value: int) -> None:
         if value < 0:
             raise InvalidPageNumber(f"A negative number is not allowed as a page value: {value}")
         self._page = value
@@ -280,7 +277,7 @@ class PNGRenderer(Renderer):
 @Renderer.renderer()
 class HTMLRenderer(Renderer):
     """
-    HTML Renderer which uses does nothing but return the plain HTML.
+    HTML Renderer which does nothing but return the plain HTML.
     """
 
     mime_type = HTML_MIME

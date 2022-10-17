@@ -7,9 +7,10 @@ base from sqlalchemy.
 """
 from typing import Sequence, List
 
-from plato.db import db
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import JSONB, ENUM, ARRAY
+
+from plato.db import db
 
 
 class Template(db.Model):
@@ -69,7 +70,7 @@ class Template(db.Model):
                         example_composition=json_["example_composition"],
                         tags=json_["tags"])
 
-    def update_fields(self, json_: dict):
+    def update_fields(self, json_: dict) -> None:
         """
         Updates some fields of a template object from a dictionary. It does not update the template id.
 
@@ -91,14 +92,14 @@ class Template(db.Model):
         Returns:
             dict
         """
-        json_ = dict()
-        json_["title"] = self.id
-        json_["schema"] = self.schema
-        json_["type"] = self.type
-        json_["metadata"] = self.metadata_
-        json_["example_composition"] = self.example_composition
-        json_["tags"] = self.tags
-        return json_
+        return {
+            "title": self.id,
+            "schema": self.schema,
+            "type": self.type,
+            "metadata": self.metadata_,
+            "example_composition": self.example_composition,
+            "tags": self.tags
+        }
 
     def get_qr_entries(self) -> List[str]:
         """
@@ -108,5 +109,5 @@ class Template(db.Model):
         """
         return self.metadata_.get("qr_entries", [])
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<Template %r>' % self.id

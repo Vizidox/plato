@@ -8,23 +8,23 @@ from typing import Callable, Tuple
 from accept_types import get_best_match
 from flask import jsonify, request, Flask, send_file
 from jsonschema import validate as json_validate, ValidationError
-
 from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
+from werkzeug import FileStorage
 
 from plato.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
 from plato.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
+from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
+from plato.util.setup_util import write_files
 from plato.views.views import TemplateDetailView, TEMPLATE_UPDATE_SCHEMA
 from .db import db
 from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
     resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file, \
     invalid_directory_structure, invalid_json_field, invalid_template_details
-from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
 from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
-from plato.util.setup_util import write_files
 from .util.path_util import template_path, tmp_zipfile_path, static_path
 
 
@@ -35,7 +35,7 @@ class UnsupportedMIMEType(Exception):
     ...
 
 
-def initialize_api(app: Flask):
+def initialize_api(app: Flask) -> None:
     """
     Initializes Flask app with the microservice endpoints.
 
@@ -45,7 +45,7 @@ def initialize_api(app: Flask):
     """
 
     @app.route("/templates/<string:template_id>", methods=['GET'])
-    def template_by_id(template_id: str):
+    def template_by_id(template_id: str) -> Tuple[dict, int]:
         """
         Returns template information
         ---
@@ -65,7 +65,6 @@ def initialize_api(app: Flask):
            - template
         """
         try:
-
             template: Template = Template.query.filter_by(id=template_id).one()
             view = TemplateDetailView.view_from_template(template)
             return jsonify(view._asdict())
@@ -74,7 +73,7 @@ def initialize_api(app: Flask):
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
 
     @app.route("/templates/", methods=['GET'])
-    def templates():
+    def templates() -> Tuple[dict, int]:
         """
         Returns template information
         ---
@@ -107,7 +106,7 @@ def initialize_api(app: Flask):
         return jsonify(json_views)
 
     @app.route("/template/create", methods=['POST'])
-    def create_template():
+    def create_template() -> Tuple[dict, int]:
         """
         Creates a template
         ---
@@ -189,7 +188,7 @@ def initialize_api(app: Flask):
         return jsonify(TemplateDetailView.view_from_template(new_template)._asdict()), HTTPStatus.CREATED
 
     @app.route("/template/<string:template_id>/update", methods=['PUT'])
-    def update_template(template_id: str):
+    def update_template(template_id: str) -> Tuple[dict, int]:
         """
         Update a template
         ---
@@ -271,7 +270,7 @@ def initialize_api(app: Flask):
         return jsonify(TemplateDetailView.view_from_template(template)._asdict())
 
     @app.route("/template/<string:template_id>/update_details", methods=['PATCH'])
-    def update_template_details(template_id: str):
+    def update_template_details(template_id: str) -> Tuple[dict, int]:
         """
         Update template details
         ---
@@ -361,7 +360,7 @@ def initialize_api(app: Flask):
         """
         zip_uid = str(uuid.uuid4())
         zip_file_name = f"zipfile_{zip_uid}"
-        zip_file = request.files.get('zipfile')
+        zip_file: FileStorage = request.files.get('zipfile')
 
         zip_file.save(tmp_zipfile_path(zip_file_name))
         is_zipfile = zipfile.is_zipfile(zip_file)
@@ -369,7 +368,7 @@ def initialize_api(app: Flask):
         return is_zipfile, zip_file_name
 
     @app.route("/template/<string:template_id>/compose", methods=["POST"])
-    def compose_file(template_id: str):
+    def compose_file(template_id: str) -> Tuple[dict, int]:
         """
         Composes file based on the template
         ---
@@ -428,7 +427,7 @@ def initialize_api(app: Flask):
         return _compose(template_id, "compose", lambda t: request.get_json())
 
     @app.route("/template/<string:template_id>/example", methods=["GET"])
-    def example_compose(template_id: str):
+    def example_compose(template_id: str) -> Tuple[dict, int]:
         """
         Gets example file based on the template
         ---
