@@ -35,5 +35,5 @@ All [Jinja pre-defined filters}{https://jinja.palletsprojects.com/templates/#fil
 After you are done with the HTML file, then create the corresponding JSON Schema, and add everything to Plato, according to instructions on the [Quick Start](#add-templates-to-plato) guide.
 
 <aside class="warning">
-  [WeasyPrint](https://weasyprint.org/) is used to convert the HTML template to PDF, so make sure you do not use any unsupported HTML tag.
+  <a href="https://weasyprint.org/">WeasyPrint</a> is used to convert the HTML template to PDF, so make sure you do not use any unsupported HTML tag.
 </aside>
