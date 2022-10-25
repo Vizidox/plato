@@ -42,6 +42,9 @@ a {
   &:hover {
     color: $link-color;
   }
+  &.toc-link:hover {
+    color: $nav-link;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +85,9 @@ a {
   // This is the logo at the top of the ToC
   .logo {
     display: block;
-    margin: $logo-margin auto;
+    padding: $logo-margin $nav-padding $logo-margin $nav-padding;
+    width: $nav-width;
+    box-sizing: border-box;
   }
 
   & > .search {
