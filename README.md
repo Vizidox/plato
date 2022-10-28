@@ -1,4 +1,4 @@
-# Templating Microservice
+# Plato Microservice
 
 A python REST API for document composition through jsonschema. 
 
