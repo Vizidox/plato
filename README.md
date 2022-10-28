@@ -103,8 +103,8 @@ flask <command>
 
 ## How to use in your project
 
-You will need to add the templating and templating database container to your docker-compose file. The templating image is stored on Nexus.
-Please check the detailed instructions on our [confluence page](https://vizidox.atlassian.net/wiki/spaces/VIZ/pages/1349681260/How+to+deploy+locally+with+your+project).
+You will need to add the Plato and Plato database container to your docker-compose file. The templating image is stored on Nexus.
+Please check the detailed instructions on the [official documentation](https://plato.vizidox.com).
 
 
 ## Built With
@@ -117,7 +117,7 @@ Please check the detailed instructions on our [confluence page](https://vizidox.
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning.
+We use [Calendar Versioning](https://calver.org/).
 
 ## Authors
 
