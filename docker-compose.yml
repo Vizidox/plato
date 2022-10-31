@@ -20,3 +20,16 @@ services:
       - ${DATA_DIR}/aws:/root/.aws
     ports:
       - 5000:80
+
+  database:
+    image: postgres:${POSTGRES_VER}
+    restart: unless-stopped
+    volumes:
+      - ${DATA_DIR}/db:/data/db
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+      PGDATA: /data/db/
+    ports:
+      - 127.0.0.1:5455:5432

@@ -516,7 +516,7 @@ def initialize_api(app: Flask):
             compose_data = compose_retrieval_function(template_model)
             composed_file = compose(template_model, compose_data, mime_type, **compose_params)
             return send_file(composed_file, mimetype=mime_type, as_attachment=True,
-                             attachment_filename=f"{file_name}{guess_extension(mime_type)}"), HTTPStatus.OK
+                             download_name=f"{file_name}{guess_extension(mime_type)}"), HTTPStatus.OK
         except (RendererNotFound, UnsupportedMIMEType):
             return jsonify(
                 {"message": unsupported_mime_type.format(accept_header, ", ".join(ALL_AVAILABLE_MIME_TYPES))}), HTTPStatus.NOT_ACCEPTABLE

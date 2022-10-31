@@ -1,5 +1,4 @@
 project_version=''
-nexus_api_image_name = 'nexus.morphotech.co.uk/plato-api'
 local_api_image_name = 'plato-api'
 
 sonar_project_key = 'plato'
@@ -23,9 +22,8 @@ pipeline {
             steps{
                 script{
                     if(!params.get('skipTests', false)) {
-                        sh 'docker-compose -f tests/docker/docker-compose.test.yml build'
-                        sh 'docker-compose -f tests/docker/docker-compose.test.yml up -d database'
-                        sh 'docker-compose -f tests/docker/docker-compose.test.yml run --rm test-plato pytest --junitxml=/app/coverage/pytest-report.xml --cov-report=xml:/app/coverage/coverage.xml --cov=${sonar_analyzed_dir}'
+                        sh 'docker-compose -f tests/docker/docker-compose.build.test.yml up -d database'
+                        sh 'docker-compose -f tests/docker/docker-compose.build.test.yml run --rm test-plato pytest --junitxml=/app/coverage/pytest-report.xml --cov-report=xml:/app/coverage/coverage.xml --cov=${sonar_analyzed_dir}'
                     }
                 }
             }
@@ -38,11 +36,11 @@ pipeline {
                 sh "echo 'current project version: ${project_version}'"
             }
         }
-        stage('Push to Nexus') {
+        stage('Push to Docker Hub') {
             steps {
-                sh "docker tag ${local_api_image_name} ${nexus_api_image_name}:${project_version}"
-                sh "docker push ${nexus_api_image_name}:${project_version}"
-                sh "docker tag ${nexus_api_image_name}:${project_version} ${local_api_image_name}" // tag the image with the original name for later docker-compose cleanup
+                sh "docker tag ${local_api_image_name} vizidox/plato:${project_version}"
+                sh "docker push vizidox/plato:${project_version}"
+                sh "docker tag vizidox/plato:${project_version} ${local_api_image_name}" // tag the image with the original name for later docker-compose cleanup
             }
         }
         stage('Sonarqube code inspection') {

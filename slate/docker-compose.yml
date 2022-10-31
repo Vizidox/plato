@@ -1,0 +1,12 @@
+version: "3.3"
+services:
+
+  slate:
+    image: slatedocs/slate:v2.13.0
+    command: "serve"
+    restart: unless-stopped
+    volumes:
+      - ./build:/srv/slate/build
+      - ./source:/srv/slate/source:ro
+    ports:
+      - "4567:4567"
