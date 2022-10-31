@@ -22,9 +22,8 @@ pipeline {
             steps{
                 script{
                     if(!params.get('skipTests', false)) {
-                        sh 'docker-compose -f tests/docker/docker-compose.test.yml build'
-                        sh 'docker-compose -f tests/docker/docker-compose.test.yml up -d database'
-                        sh 'docker-compose -f tests/docker/docker-compose.test.yml run --rm test-plato pytest --junitxml=/app/coverage/pytest-report.xml --cov-report=xml:/app/coverage/coverage.xml --cov=${sonar_analyzed_dir}'
+                        sh 'docker-compose -f tests/docker/docker-compose.build.test.yml up -d database'
+                        sh 'docker-compose -f tests/docker/docker-compose.build.test.yml run --rm test-plato pytest --junitxml=/app/coverage/pytest-report.xml --cov-report=xml:/app/coverage/coverage.xml --cov=${sonar_analyzed_dir}'
                     }
                 }
             }

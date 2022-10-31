@@ -20,7 +20,7 @@ F = TypeVar('F', bound=FuncType)
 
 @pytest.fixture(scope='session')
 def template_loader() -> DictLoader:
-    yield DictLoader(dict())
+    yield DictLoader({})
 
 
 @pytest.fixture(scope='session')
@@ -32,7 +32,7 @@ def client(template_loader):
         context_manager = nullcontext()
     else:
         docker_compose_path = f"{current_folder}/docker/"
-        context_manager = DockerCompose(filepath=docker_compose_path, compose_file_name="docker-compose.test.yml")
+        context_manager = DockerCompose(filepath=docker_compose_path, compose_file_name="docker-compose.local.test.yml")
 
     with context_manager:
 

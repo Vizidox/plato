@@ -89,9 +89,9 @@ poetry run pytest
 
 Running tests inside the docker containers (you might need to build the templating docker image first):
 ```bash
-docker-compose -f tests/docker/docker-compose.test.yml up -d database
+docker-compose -f tests/docker/docker-compose.build.test.yml up -d database
 
-docker-compose -f tests/docker/docker-compose.test.yml run --rm test-templating pytest --cov=micro_templating
+docker-compose -f tests/docker/docker-compose.build.test.yml run --rm test-templating pytest --cov=micro_templating
 ```
 
 
