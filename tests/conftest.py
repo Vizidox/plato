@@ -20,7 +20,7 @@ F = TypeVar('F', bound=FuncType)
 
 @pytest.fixture(scope='session')
 def template_loader() -> DictLoader:
-    yield DictLoader(dict())
+    yield DictLoader({})
 
 
 @pytest.fixture(scope='session')
@@ -32,11 +32,11 @@ def client(template_loader):
         context_manager = nullcontext()
     else:
         docker_compose_path = f"{current_folder}/docker/"
-        context_manager = DockerCompose(filepath=docker_compose_path, compose_file_name="docker-compose.test.yml")
+        context_manager = DockerCompose(filepath=docker_compose_path, compose_file_name="docker-compose.local.test.yml")
 
     with context_manager:
 
-        sleep(3)
+        sleep(5)
 
         template_environment = JinjaEnv(
             loader=template_loader,
@@ -44,14 +44,14 @@ def client(template_loader):
             auto_reload=True
         )
 
-        micro_templating_app = create_app(db_url=TEST_DB_URL,
-                                          jinja_env=template_environment,
-                                          template_static_directory=f"{current_folder}/resources/static",
-                                          swagger_ui_config={})
-        micro_templating_app.config['TESTING'] = True
+        plato_app = create_app(db_url=TEST_DB_URL,
+                               jinja_env=template_environment,
+                               template_static_directory=f"{current_folder}/resources/static",
+                               swagger_ui_config={})
+        plato_app.config['TESTING'] = True
 
-        with micro_templating_app.test_client() as client:
-            with micro_templating_app.app_context():
+        with plato_app.test_client() as client:
+            with plato_app.app_context():
                 db.create_all()
             yield client
 

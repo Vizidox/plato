@@ -9,33 +9,27 @@ from plato.util.s3_bucket_util import NoIndexTemplateFound
 from tempfile import TemporaryDirectory
 from plato.db.models import Template, db
 
-TEMPLATE_FILE_PATH_FORMAT = "templating/templates/{0}/{1}"
-STATIC_FILE_PATH_FORMAT = "templating/static/{0}/{1}"
-
-LOCAL_TEMPLATE_FILE_PATH_FORMAT = "templates/{0}/{1}"
-LOCAL_STATIC_FILE_PATH_FORMAT = "static/{0}/{1}"
-
 BUCKET_NAME = 'test_template_bucket_1'
 
 
 def get_template_file_path(template_id: str):
-    return TEMPLATE_FILE_PATH_FORMAT.format(template_id, template_id)
+    return f"templating/templates/{template_id}/{template_id}"
 
 
 def get_local_template_file_path(template_id: str):
-    return LOCAL_TEMPLATE_FILE_PATH_FORMAT.format(template_id, template_id)
+    return f"templates/{template_id}/{template_id}"
 
 
 def get_static_file_path(template_id: str, file_name: str):
-    return STATIC_FILE_PATH_FORMAT.format(template_id, file_name)
+    return f"templating/static/{template_id}/{file_name}"
 
 
 def get_local_static_file_path(template_id: str, file_name: str):
-    return LOCAL_STATIC_FILE_PATH_FORMAT.format(template_id, file_name)
+    return f"static/{template_id}/{file_name}"
 
 
 def create_child_temp_folder(main_directory: str) -> str:
-    template_dir_name = main_directory + "/abc"
+    template_dir_name = f"{main_directory}/abc"
     pathlib.Path(template_dir_name).mkdir(parents=True, exist_ok=True)
     return template_dir_name
 
@@ -44,7 +38,7 @@ def write_to_s3(bucket_name: str, file_paths: list):
     encoding = "utf-8"
     for file_path in file_paths:
         with s3.open(bucket_name, key_id=file_path, mode="wb") as file:
-            file.write(f"I am file !".encode(encoding))
+            file.write("I am file !".encode(encoding))
 
 
 @pytest.fixture(scope="class")
@@ -104,13 +98,13 @@ class TestApplicationSetup:
                 template_dir_name = create_child_temp_folder(temp)
                 load_templates(bucket_name, template_dir_name, base_dir)
 
-                static_file_1 = template_dir_name + '/' + get_local_static_file_path(file_name="abc_1", template_id="0")
-                static_file_2 = template_dir_name + '/' + get_local_static_file_path(file_name="abc_2", template_id="0")
-                template_file_1 = template_dir_name + '/' + get_local_template_file_path(template_id="0")
+                static_file_1 = f'{template_dir_name}/{get_local_static_file_path(file_name="abc_1", template_id="0")}'
+                static_file_2 = f'{template_dir_name}/{get_local_static_file_path(file_name="abc_2", template_id="0")}'
+                template_file_1 = f'{template_dir_name}/{get_local_template_file_path(template_id="0")}'
 
-                assert pathlib.Path(static_file_1).is_file() == True
-                assert pathlib.Path(static_file_2).is_file() == True
-                assert pathlib.Path(template_file_1).is_file() == True
+                assert pathlib.Path(static_file_1).is_file()
+                assert pathlib.Path(static_file_2).is_file()
+                assert pathlib.Path(template_file_1).is_file()
 
     def test_missing_template_file(self, client, populate_s3_with_missing_template_file):
         bucket_name = populate_s3_with_missing_template_file
