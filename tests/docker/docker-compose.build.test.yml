@@ -36,5 +36,11 @@ services:
     networks:
       - plato_test
 
+  plato-helper-bom:
+    image: plato-api
+    command: bash -c "poetry run cyclonedx-py -e -o /app/bom/bom.xml"
+    volumes:
+      - ${API_DIRECTORY}/bom:/app/bom
+
 networks:
   plato_test:
