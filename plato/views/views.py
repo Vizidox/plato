@@ -33,6 +33,7 @@ class TemplateDetailView(NamedTuple):
     type: str
     metadata: dict
     tags: Sequence[str]
+    example_composition: dict
 
     @classmethod
     def view_from_template(cls, template: 'Template') -> 'TemplateDetailView':
@@ -49,7 +50,8 @@ class TemplateDetailView(NamedTuple):
                                   template_schema=template.schema,
                                   type=template.type,
                                   metadata=template.metadata_,
-                                  tags=template.tags)
+                                  tags=template.tags,
+                                  example_composition=template.example_composition)
 
 
 TEMPLATE_UPDATE_SCHEMA = {
