@@ -45,7 +45,8 @@ class TestGetTemplates:
         response = client.get(self.GET_TEMPLATES_ENDPOINT)
         assert response.status_code == HTTPStatus.OK
         assert len(response.json) == NUMBER_OF_TEMPLATES
-        template_view_expected_keys = ["template_id", "template_schema", "type", "metadata", "tags"]
+        template_view_expected_keys = ["template_id", "template_schema", "type", "metadata", "tags",
+                                       "example_composition"]
         for i, template_json in enumerate(response.json):
             assert all((key in template_json for key in template_view_expected_keys))
             assert i == json_loads(template_json["template_id"])

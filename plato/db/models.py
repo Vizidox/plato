@@ -30,6 +30,8 @@ class Template(db.Model):
         schema (dict): JSON dictionary with jsonschema used for validation in said template
         type (str): MIME type for template type, currently restricted to 'text/html'
         metadata_ (dict): JSON dictionary for arbitrary data useful for owner
+        example_composition (dict): A dictionary containing example compose data for the template
+        tags (list): A list of identifying tags for the template
     """
     __tablename__ = "template"
     id = db.Column(String, primary_key=True)
