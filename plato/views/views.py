@@ -27,7 +27,10 @@ class TemplateDetailView(NamedTuple):
             type: array
             items:
                 type: string
-          """
+        example_composition:
+            type: object
+            description: a dictionary containing example compose data for the template
+    """
     template_id: str
     template_schema: dict
     type: str
