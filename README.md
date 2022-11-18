@@ -17,7 +17,7 @@ The project depends on [weasyprint](https://weasyprint.org/) for writing PDF fro
  
 The instructions are also available below.
  
-####Debian/Ubuntu
+#### Debian/Ubuntu
 
 
 ```bash
@@ -87,11 +87,11 @@ Locally:
 poetry run pytest
 ```
 
-Running tests inside the docker containers (you might need to build the templating docker image first):
+Running tests inside the docker containers (you might need to build the plato docker image first):
 ```bash
 docker-compose -f tests/docker/docker-compose.build.test.yml up -d database
 
-docker-compose -f tests/docker/docker-compose.build.test.yml run --rm test-templating pytest --cov=micro_templating
+docker-compose -f tests/docker/docker-compose.build.test.yml run --rm test-plato pytest --cov=micro_templating
 ```
 
 
