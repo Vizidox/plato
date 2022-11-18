@@ -11,8 +11,7 @@ from jsonschema import validate as json_validate, ValidationError
 
 from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from plato.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
 from plato.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
