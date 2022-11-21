@@ -8,7 +8,7 @@ import shutil
 from plato.compose import FILTERS
 from .path_util import template_path, base_static_path
 from .file_storage_util import get_file_s3, NoIndexTemplateFound, write_files
-from ..file_storage import FileStorage, S3FileStorage, DiskFileStorage
+from ..file_storage import PlatoFileStorage, S3FileStorage, DiskFileStorage
 from .. import settings
 
 
@@ -97,7 +97,7 @@ def setup_swagger_ui(project_name: str, project_version: str) -> dict:
     return swagger_ui_config
 
 
-def initialize_file_storage(storage_type: str, data_dir: Optional[str] = None) -> FileStorage:
+def initialize_file_storage(storage_type: str, data_dir: Optional[str] = None) -> PlatoFileStorage:
     """
     Initializes a correct instance of the Plato File Storage, depending on the env values
 
@@ -113,7 +113,7 @@ def initialize_file_storage(storage_type: str, data_dir: Optional[str] = None) -
     :return: An instance of FileStorage
     :rtype: class:`FileStorage`
     """
-    file_storage: FileStorage
+    file_storage: PlatoFileStorage
     if storage_type == "disk":
         data_dir = settings.DATA_DIR if data_dir is None else data_dir
         file_storage = DiskFileStorage(data_dir)

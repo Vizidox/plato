@@ -10,14 +10,14 @@ from flask_migrate import Migrate
 
 from jinja2 import Environment as JinjaEnv
 from plato.api import initialize_api
-from plato.file_storage import FileStorage
+from plato.file_storage import PlatoFileStorage
 from plato.views import swag
 from plato.db import db
 from plato.cli import register_cli_commands
 
 
 def create_app(db_url: str, template_static_directory: str,
-               jinja_env: JinjaEnv, swagger_ui_config: dict, storage: FileStorage) -> Flask:
+               jinja_env: JinjaEnv, swagger_ui_config: dict, storage: PlatoFileStorage) -> Flask:
     """
 
     Args:

@@ -54,7 +54,7 @@ class NoIndexTemplateFound(FileStorageError):
         super(NoIndexTemplateFound, self).__init__(message)
 
 
-class FileStorage(ABC):
+class PlatoFileStorage(ABC):
     @abstractmethod
     def get_file(self, path: str, template_directory: str):
         pass
@@ -92,7 +92,7 @@ class FileStorage(ABC):
         pass
 
 
-class DiskFileStorage(FileStorage, ABC):
+class DiskFileStorage(PlatoFileStorage, ABC):
     def __init__(self, files_dir: str) -> None:
         super(DiskFileStorage, self).__init__()
         self.files_dir = os.path.join(files_dir, 'templates')
@@ -107,7 +107,7 @@ class DiskFileStorage(FileStorage, ABC):
         return open(path, 'rb')
 
 
-class S3FileStorage(FileStorage, ABC):
+class S3FileStorage(PlatoFileStorage, ABC):
     def __init__(self, bucket_name: str):
         super(S3FileStorage, self).__init__()
         self.bucket_name = bucket_name
