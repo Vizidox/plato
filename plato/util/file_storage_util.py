@@ -1,4 +1,5 @@
 import os
+import pathlib
 import zipfile
 from pathlib import Path
 from typing import Dict, Any, BinaryIO
@@ -109,3 +110,19 @@ def write_file_to_s3(input_file: BinaryIO, s3_bucket: str, s3_path: str) -> None
     """
     with s3.open(s3_bucket, s3_path, mode='wb') as file:
         file.write(input_file.read())
+
+
+def write_files(files: Dict[str, Any], target_directory: str) -> None:
+    """
+    Write files to a target directory
+
+    Args:
+        files (Dict[str, Any]): a dict representing files needing to be written in the target directory
+            with key as the file url and the value as file content
+        target_directory (str): the directory all the files will reside in
+    """
+    for key, content in files.items():
+        path = pathlib.Path(f"{target_directory}/{key}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, mode="wb") as file:
+            file.write(content)
