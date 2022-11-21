@@ -6,7 +6,7 @@ from mimetypes import guess_extension
 from typing import Callable, Tuple
 
 from accept_types import get_best_match
-from flask import jsonify, request, Flask, send_file
+from flask import jsonify, request, Flask, send_file, current_app
 from jsonschema import validate as json_validate, ValidationError
 
 from sqlalchemy import String, cast as db_cast
@@ -21,9 +21,8 @@ from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
     resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file, \
     invalid_directory_structure, invalid_json_field, invalid_template_details
-from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
-from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
-from plato.util.setup_util import write_files
+from plato.util.file_storage_util import NoIndexTemplateFound, write_files
+from .settings import S3_TEMPLATE_DIR, TEMPLATE_DIRECTORY
 from .util.path_util import template_path, tmp_zipfile_path, static_path
 
 
@@ -42,6 +41,8 @@ def initialize_api(app: Flask):
         app: The Flask app
     Returns:
     """
+    with app.app_context():
+        file_storage = current_app.config["storage"]
 
     @app.route("/templates/<string:template_id>", methods=['GET'])
     def template_by_id(template_id: str):
@@ -174,7 +175,7 @@ def initialize_api(app: Flask):
 
         try:
             # uploads template files from zip file to S3
-            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
+            file_storage.save_template_files(template_id, S3_TEMPLATE_DIR, zip_file_name)
             _load_and_write_template_from_s3(template_id)
 
             # saves template json into database
@@ -258,7 +259,7 @@ def initialize_api(app: Flask):
             db.session.commit()
 
             # uploads template files from zip file to S3
-            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
+            file_storage.save_template_files(template_id, S3_TEMPLATE_DIR, zip_file_name)
             _load_and_write_template_from_s3(template_id)
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
@@ -342,9 +343,7 @@ def initialize_api(app: Flask):
 
         template_paths = [template_path(S3_TEMPLATE_DIR, template_id), static_path(S3_TEMPLATE_DIR, template_id)]
         for path in template_paths:
-
-            template_files = get_file_s3(bucket_name=S3_BUCKET, url=path,
-                                         s3_template_directory=S3_TEMPLATE_DIR)
+            template_files = file_storage.get_file(path=path, template_directory=S3_TEMPLATE_DIR)
             if not template_files:
                 raise NoIndexTemplateFound(template_id)
             write_files(files=template_files, target_directory=TEMPLATE_DIRECTORY)

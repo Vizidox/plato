@@ -1,29 +1,26 @@
 import os
 
 from plato.db.models import Template
-from typing import Dict, Any
+from typing import Optional
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 import pathlib
 import shutil
 from plato.compose import FILTERS
 from .path_util import template_path, base_static_path
-from .s3_bucket_util import get_file_s3, NoIndexTemplateFound
+from .file_storage_util import get_file_s3, NoIndexTemplateFound, write_files
+from ..file_storage import FileStorage, S3FileStorage, DiskFileStorage
+from .. import settings
 
 
-def write_files(files: Dict[str, Any], target_directory: str) -> None:
+class InvalidFileStorageTypeException(Exception):
     """
-    Write files to a target directory
-
-    Args:
-        files (Dict[str, Any]): a dict representing files needing to be written in the target directory
-            with key as the file url and the value as file content
-        target_directory (str): the directory all the files will reside in
+    Exception raised when attempting to initialize the File Storage with an invalid type
     """
-    for key, content in files.items():
-        path = pathlib.Path(f"{target_directory}/{key}")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, mode="wb") as file:
-            file.write(content)
+    def __init__(self, type_: str):
+        """
+        Constructor method
+        """
+        super(InvalidFileStorageTypeException, self).__init__(type_)
 
 
 def load_templates(s3_bucket: str, target_directory: str, s3_template_directory: str) -> None:
@@ -41,10 +38,10 @@ def load_templates(s3_bucket: str, target_directory: str, s3_template_directory:
         shutil.rmtree(old_templates_path)
 
     templates = Template.query.with_entities(Template.id).all()
-
+    file_storage = S3FileStorage(bucket_name=s3_bucket)
     # get static files
-    static_files = get_file_s3(bucket_name=s3_bucket, url=base_static_path(s3_template_directory),
-                               s3_template_directory=s3_template_directory)
+    static_files = file_storage.get_file(path=base_static_path(s3_template_directory),
+                                         template_directory=s3_template_directory)
     write_files(files=static_files, target_directory=target_directory)
 
     for template in templates:
@@ -98,6 +95,33 @@ def setup_swagger_ui(project_name: str, project_version: str) -> dict:
     }
 
     return swagger_ui_config
+
+
+def initialize_file_storage(storage_type: str, data_dir: Optional[str] = None) -> FileStorage:
+    """
+    Initializes a correct instance of the Plato File Storage, depending on the env values
+
+    :param storage_type: The storage type
+    :type storage_type: str
+
+    :param data_dir: The data directory, if relevant. If Disk storage is selected, but data_dir is not given,
+                     the environment value DATA_DIR is used
+    :type data_dir: str, optional
+
+    :raises InvalidFileStorageTypeException: If the given file storage type doesn't exist
+
+    :return: An instance of FileStorage
+    :rtype: class:`FileStorage`
+    """
+    file_storage: FileStorage
+    if storage_type == "disk":
+        data_dir = settings.DATA_DIR if data_dir is None else data_dir
+        file_storage = DiskFileStorage(data_dir)
+    elif storage_type == 's3':
+        file_storage = S3FileStorage(settings.S3_BUCKET)
+    else:
+        raise InvalidFileStorageTypeException(storage_type)
+    return file_storage
 
 
 def inside_container():
