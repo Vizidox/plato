@@ -4,7 +4,7 @@ import shutil
 import zipfile
 from abc import ABC, abstractmethod
 from typing import BinaryIO, Dict, Any
-from zipfile import Path
+from pathlib import Path
 
 from smart_open import s3
 
@@ -85,10 +85,6 @@ class PlatoFileStorage(ABC):
 
     @abstractmethod
     def save_file(self, input_file: BinaryIO, path: str) -> None:
-        pass
-
-    @abstractmethod
-    def load_templates(self, target_directory, template_directory):
         pass
 
 
