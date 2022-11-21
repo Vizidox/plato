@@ -24,6 +24,8 @@ PROJECT_VERSION = __project_meta["version"]
 S3_BUCKET = environ["S3_BUCKET"]
 S3_TEMPLATE_DIR = getenv("S3_TEMPLATE_DIR", "templating")
 TEMPLATE_DIRECTORY = environ["TEMPLATE_DIRECTORY"]
+DATA_DIR = environ["DATA_DIR"]
+STORAGE_TYPE = environ["STORAGE_TYPE"]
 
 # Database
 DB_HOST = environ["DB_HOST"]
