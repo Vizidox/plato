@@ -47,7 +47,8 @@ def client(template_loader):
         plato_app = create_app(db_url=TEST_DB_URL,
                                jinja_env=template_environment,
                                template_static_directory=f"{current_folder}/resources/static",
-                               swagger_ui_config={})
+                               swagger_ui_config={},
+                               storage=S3FileStorage("fake_bucket"))
         plato_app.config['TESTING'] = True
 
         with plato_app.test_client() as client:
