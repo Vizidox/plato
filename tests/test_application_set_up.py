@@ -4,8 +4,9 @@ import pytest
 import pathlib
 from moto import mock_s3
 from smart_open import s3
+
+from plato.file_storage import NoIndexTemplateFound
 from plato.util.setup_util import load_templates
-from plato.util.s3_bucket_util import NoIndexTemplateFound
 from tempfile import TemporaryDirectory
 from plato.db.models import Template, db
 

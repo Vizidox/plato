@@ -55,9 +55,8 @@ class NoIndexTemplateFound(FileStorageError):
 
 
 class PlatoFileStorage(ABC):
-    @abstractmethod
-    def get_file(self, path: str, template_directory: str):
-        pass
+    def __init__(self, data_directory: str):
+        self.files_directory_name = data_directory
 
     def save_template_files(self, template_id: str, template_dir: str, zip_file_name: str) -> None:
         """
@@ -85,27 +84,48 @@ class PlatoFileStorage(ABC):
 
     @abstractmethod
     def save_file(self, input_file: BinaryIO, path: str) -> None:
+        """
+        Write file into storage folder
+
+        Args:
+            input_file (BinaryIO): the input file
+            path (str): the storage path
+        """
         pass
+
+    def _write_file_locally(self, input_file: BinaryIO, path: str):
+        """
+        Writes a file to a target directory inside the project's data folder
+
+        Args:
+            input_file (BinaryIO): the file
+            path (str): the target directory path
+        """
+        path = pathlib.Path(f"{self.files_directory_name}/{path}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, mode="wb") as file:
+            input_file.seek(0)
+            file.write(input_file.read())
 
 
 class DiskFileStorage(PlatoFileStorage, ABC):
-    def __init__(self, files_dir: str) -> None:
-        super(DiskFileStorage, self).__init__()
-        self.files_dir = os.path.join(files_dir, 'templates')
+    def __init__(self, data_directory: str):
+        super().__init__(data_directory)
 
     def save_file(self, input_file: BinaryIO, path: str) -> None:
-        if not os.path.isfile(path):
-            with open(path, 'wb') as destination:
-                input_file.seek(0)
-                destination.write(input_file.read())
+        """
+        Write file into local storage folder
 
-    def get_file(self, path: str, template_directory: str) -> BinaryIO:
-        return open(path, 'rb')
+        Args:
+            input_file (BinaryIO): the input file
+            path (str): the local storage path
+        """
+        self._write_file_locally(input_file, path)
 
 
 class S3FileStorage(PlatoFileStorage, ABC):
-    def __init__(self, bucket_name: str):
-        super(S3FileStorage, self).__init__()
+    def __init__(self, data_directory: str, bucket_name: str):
+        super(S3FileStorage, self).__init__(data_directory)
         self.bucket_name = bucket_name
 
     def get_file(self, path: str, template_directory: str) -> Dict[str, Any]:
@@ -132,14 +152,16 @@ class S3FileStorage(PlatoFileStorage, ABC):
 
     def save_file(self, input_file: BinaryIO, path: str) -> None:
         """
-            Write file to S3 Bucket Path
+        Write file to S3 Bucket Path and then write it into local folder
 
-            Args:
-                input_file (BinaryIO): the input file
-                path (str): the S3 Bucket path
-            """
+        Args:
+            input_file (BinaryIO): the input file
+            path (str): the S3 Bucket path
+        """
         with s3.open(self.bucket_name, path, mode='wb') as file:
             file.write(input_file.read())
+
+        self._write_file_locally(input_file, path)
 
     def load_templates(self, target_directory: str, template_directory: str) -> None:
         """

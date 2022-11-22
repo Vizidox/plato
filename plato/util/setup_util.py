@@ -1,14 +1,13 @@
 import os
 
 from plato.db.models import Template
-from typing import Optional
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 import pathlib
 import shutil
 from plato.compose import FILTERS
 from .path_util import template_path, base_static_path
-from .file_storage_util import get_file_s3, NoIndexTemplateFound, write_files
-from ..file_storage import PlatoFileStorage, S3FileStorage, DiskFileStorage
+from .file_storage_util import write_files
+from ..file_storage import PlatoFileStorage, S3FileStorage, DiskFileStorage, NoIndexTemplateFound
 from .. import settings
 
 
@@ -38,7 +37,7 @@ def load_templates(s3_bucket: str, target_directory: str, s3_template_directory:
         shutil.rmtree(old_templates_path)
 
     templates = Template.query.with_entities(Template.id).all()
-    file_storage = S3FileStorage(bucket_name=s3_bucket)
+    file_storage = S3FileStorage(settings.TEMPLATE_DIRECTORY, bucket_name=s3_bucket)
     # get static files
     static_files = file_storage.get_file(path=base_static_path(s3_template_directory),
                                          template_directory=s3_template_directory)
@@ -46,8 +45,8 @@ def load_templates(s3_bucket: str, target_directory: str, s3_template_directory:
 
     for template in templates:
         # get template content
-        template_files = get_file_s3(bucket_name=s3_bucket, url=template_path(s3_template_directory, template.id),
-                                     s3_template_directory=s3_template_directory)
+        template_files = file_storage.get_file(path=template_path(s3_template_directory, template.id),
+                                               template_directory=s3_template_directory)
         if not template_files:
             raise NoIndexTemplateFound(template.id)
         write_files(files=template_files, target_directory=target_directory)
@@ -97,16 +96,12 @@ def setup_swagger_ui(project_name: str, project_version: str) -> dict:
     return swagger_ui_config
 
 
-def initialize_file_storage(storage_type: str, data_dir: Optional[str] = None) -> PlatoFileStorage:
+def initialize_file_storage(storage_type: str) -> PlatoFileStorage:
     """
     Initializes a correct instance of the Plato File Storage, depending on the env values
 
     :param storage_type: The storage type
     :type storage_type: str
-
-    :param data_dir: The data directory, if relevant. If Disk storage is selected, but data_dir is not given,
-                     the environment value DATA_DIR is used
-    :type data_dir: str, optional
 
     :raises InvalidFileStorageTypeException: If the given file storage type doesn't exist
 
@@ -115,10 +110,9 @@ def initialize_file_storage(storage_type: str, data_dir: Optional[str] = None) -
     """
     file_storage: PlatoFileStorage
     if storage_type == "disk":
-        data_dir = settings.DATA_DIR if data_dir is None else data_dir
-        file_storage = DiskFileStorage(data_dir)
+        file_storage = DiskFileStorage(settings.DATA_DIR)
     elif storage_type == 's3':
-        file_storage = S3FileStorage(settings.S3_BUCKET)
+        file_storage = S3FileStorage(settings.DATA_DIR, settings.S3_BUCKET)
     else:
         raise InvalidFileStorageTypeException(storage_type)
     return file_storage
