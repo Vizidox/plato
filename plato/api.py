@@ -21,9 +21,8 @@ from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
     resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file, \
     invalid_directory_structure, invalid_json_field, invalid_template_details
-from plato.util.file_storage_util import NoIndexTemplateFound, write_files
-from .settings import S3_TEMPLATE_DIR, TEMPLATE_DIRECTORY
-from .util.path_util import template_path, tmp_zipfile_path, static_path
+from .settings import TEMPLATE_DIRECTORY_NAME
+from .util.path_util import tmp_zipfile_path
 
 
 class UnsupportedMIMEType(Exception):
@@ -173,10 +172,13 @@ def initialize_api(app: Flask):
         template_id = template_entry_json['title']
         new_template = Template.from_json_dict(template_entry_json)
 
+        template = Template.query.filter_by(id=template_id).one_or_none()
+        if template is not None:
+            return jsonify({"message": template_already_exists.format(template_id)}), HTTPStatus.CONFLICT
+
         try:
             # uploads template files from zip file to S3
-            file_storage.save_template_files(template_id, S3_TEMPLATE_DIR, zip_file_name)
-            _load_and_write_template_from_s3(template_id)
+            file_storage.save_template_files(template_id, TEMPLATE_DIRECTORY_NAME, zip_file_name)
 
             # saves template json into database
             db.session.add(new_template)
@@ -259,8 +261,7 @@ def initialize_api(app: Flask):
             db.session.commit()
 
             # uploads template files from zip file to S3
-            file_storage.save_template_files(template_id, S3_TEMPLATE_DIR, zip_file_name)
-            _load_and_write_template_from_s3(template_id)
+            file_storage.save_template_files(template_id, TEMPLATE_DIRECTORY_NAME, zip_file_name)
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
         except FileNotFoundError:
