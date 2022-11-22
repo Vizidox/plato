@@ -334,21 +334,6 @@ def initialize_api(app: Flask):
 
         return jsonify(TemplateDetailView.view_from_template(template)._asdict())
 
-    def _load_and_write_template_from_s3(template_id: str) -> None:
-        """
-        Fetches template data from S3 Bucket and saves it locally
-
-        Args:
-            template_id (str): The template id
-        """
-
-        template_paths = [template_path(S3_TEMPLATE_DIR, template_id), static_path(S3_TEMPLATE_DIR, template_id)]
-        for path in template_paths:
-            template_files = file_storage.get_file(path=path, template_directory=S3_TEMPLATE_DIR)
-            if not template_files:
-                raise NoIndexTemplateFound(template_id)
-            write_files(files=template_files, target_directory=TEMPLATE_DIRECTORY)
-
     def _save_and_validate_zipfile() -> Tuple[bool, str]:
         """
         Saves in tmp directory and checks if file is a ZIP file.
