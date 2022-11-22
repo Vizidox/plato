@@ -6,8 +6,9 @@ from flask.cli import with_appcontext
 import json
 from .db import db
 from .db.models import Template
-from .settings import S3_BUCKET, TEMPLATE_DIRECTORY, S3_TEMPLATE_DIR
-from plato.util.setup_util import load_templates
+from .domain import StorageType
+from .settings import TEMPLATE_DIRECTORY, TEMPLATE_DIRECTORY_NAME, STORAGE_TYPE
+from .util.setup_util import initialize_file_storage
 
 
 def register_cli_commands(app: Flask):
@@ -54,4 +55,9 @@ def register_cli_commands(app: Flask):
         """
         Refresh local templates by loading the templates from AWS S3 Bucket
         """
-        load_templates(S3_BUCKET, TEMPLATE_DIRECTORY, S3_TEMPLATE_DIR)
+        file_storage = initialize_file_storage(STORAGE_TYPE)
+        with app.app_context():
+            if STORAGE_TYPE == StorageType.S3:
+                file_storage.load_templates(TEMPLATE_DIRECTORY, TEMPLATE_DIRECTORY_NAME)
+            else:
+                print("You type of storage does not support this action.")
