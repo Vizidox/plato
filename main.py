@@ -3,7 +3,7 @@
 Either create a Flask run configuration on this module or set up to run it locally with main.
 
 """
-
+from plato.domain import StorageType
 from plato.flask_app import create_app
 from plato.settings import WORKING_DB_URL, PROJECT_NAME, PROJECT_VERSION, TEMPLATE_DIRECTORY, STORAGE_TYPE, \
     TEMPLATE_DIRECTORY_NAME
@@ -22,6 +22,6 @@ app = create_app(db_url=WORKING_DB_URL,
 if __name__ == '__main__':
     # in app-context setups
     with app.app_context():
-        if STORAGE_TYPE == 's3':  # todo create enum for this
+        if STORAGE_TYPE == StorageType.S3:
             file_storage.load_templates(TEMPLATE_DIRECTORY, TEMPLATE_DIRECTORY_NAME)
     app.run()

@@ -7,6 +7,7 @@ import shutil
 from plato.compose import FILTERS
 from .path_util import template_path, base_static_path
 from .file_storage_util import write_files
+from ..domain import StorageType
 from ..file_storage import PlatoFileStorage, S3FileStorage, DiskFileStorage, NoIndexTemplateFound
 from .. import settings
 
@@ -109,9 +110,9 @@ def initialize_file_storage(storage_type: str) -> PlatoFileStorage:
     :rtype: class:`FileStorage`
     """
     file_storage: PlatoFileStorage
-    if storage_type == "disk":
+    if storage_type == StorageType.DISK:
         file_storage = DiskFileStorage(settings.DATA_DIR)
-    elif storage_type == 's3':
+    elif storage_type == StorageType.S3:
         file_storage = S3FileStorage(settings.DATA_DIR, settings.S3_BUCKET)
     else:
         raise InvalidFileStorageTypeException(storage_type)
