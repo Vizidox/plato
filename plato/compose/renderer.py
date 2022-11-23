@@ -90,7 +90,7 @@ class Renderer(ABC):
 
     def render(self, compose_data: dict) -> io.BytesIO:
         """
-        Renders Template onto a a stream according to the Renderer's MIME type.
+        Renders Template onto a stream according to the Renderer's MIME type.
 
         """
         with TemporaryDirectory() as temp_render_directory:
