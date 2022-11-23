@@ -1,3 +1,4 @@
+import tempfile
 from contextlib import nullcontext
 from pathlib import Path
 from time import sleep
@@ -27,12 +28,14 @@ def template_loader() -> DictLoader:
 
 @pytest.fixture(scope='class')
 def client_file_storage():
-    yield from flask_client(template_loader, file_storage=DiskFileStorage(BASE_DIR))
+    with tempfile.TemporaryDirectory() as file_dir:
+        yield from flask_client(template_loader, file_storage=DiskFileStorage(file_dir))
 
 
 @pytest.fixture(scope='class')
 def client_s3_storage():
-    yield from flask_client(template_loader, file_storage=S3FileStorage(BASE_DIR, BUCKET_NAME))
+    with tempfile.TemporaryDirectory() as file_dir:
+        yield from flask_client(template_loader, file_storage=S3FileStorage(file_dir, BUCKET_NAME))
 
 
 def flask_client(template_loader, file_storage: PlatoFileStorage):
