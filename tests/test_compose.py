@@ -20,8 +20,8 @@ PNG_IMAGE_NAME = "balloons.png"
 
 
 @pytest.fixture(scope="class")
-def template_test_examples(client, template_loader):
-    with client.application.test_request_context():
+def template_test_examples(client_file_storage, template_loader):
+    with client_file_storage.application.test_request_context():
         plain_text_template_model = Template(id_=PLAIN_TEXT_TEMPLATE_ID,
                                              schema={"type": "object",
                                                      "properties": {"plain": {"type": "string"}}
@@ -89,7 +89,7 @@ def template_test_examples(client, template_loader):
 
     yield
 
-    with client.application.test_request_context():
+    with client_file_storage.application.test_request_context():
         del template_loader.mapping[plain_text_jinja_id]
         del template_loader.mapping[png_template_jinja_id]
         del template_loader.mapping[no_image_template_jinja_id]
@@ -106,19 +106,19 @@ class TestCompose:
     EXAMPLE_COMPOSE_ENDPOINT = "/template/{0}/example"
     EXAMPLE_COMPOSE_METHOD_NAME = "example_compose"
 
-    def test_compose_plain_ok(self, client):
+    def test_compose_plain_ok(self, client_file_storage):
         expected_text = "This is some plain text"
         json_request = {"plain": expected_text}
-        response = client.post(self.COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID), json=json_request)
+        response = client_file_storage.post(self.COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID), json=json_request)
         assert response.status_code == HTTPStatus.OK
         assert response.data is not None
         pdf_document = Document(filetype="bytes", stream=response.data)
         real_text = "".join((page.getText() for page in pdf_document))
         assert real_text.strip() == expected_text
 
-    def test_compose_image_exists(self, client):
+    def test_compose_image_exists(self, client_file_storage):
         def get_images_from_template(template_id: str):
-            response = client.post(self.COMPOSE_ENDPOINT.format(template_id), json={})
+            response = client_file_storage.post(self.COMPOSE_ENDPOINT.format(template_id), json={})
             assert response.data is not None
             assert response.status_code == HTTPStatus.OK
             pdf_document = Document(filetype="bytes", stream=response.data)
@@ -131,23 +131,23 @@ class TestCompose:
         images = get_images_from_template(NO_IMAGE_TEMPLATE_ID)
         assert len(images) == 0
 
-    def test_example_ok(self, client):
-        with client.application.app_context():
+    def test_example_ok(self, client_file_storage):
+        with client_file_storage.application.app_context():
             test_template = Template.query.filter_by(id=PLAIN_TEXT_TEMPLATE_ID).one()
             expected_text = test_template.example_composition["plain"]
 
-        response = client.get(self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID))
+        response = client_file_storage.get(self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID))
         assert response.status_code == HTTPStatus.OK
         assert response.data is not None
         pdf_document = Document(filetype="bytes", stream=response.data)
         real_text = "".join((page.getText() for page in pdf_document))
         assert real_text.strip() == expected_text
 
-    def test_resize_ok(self, client):
+    def test_resize_ok(self, client_file_storage):
         error = 1
         expected_resize = 200
 
-        response = client.get(
+        response = client_file_storage.get(
             f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}",
             headers={"accept": "image/png"}
         )
@@ -159,7 +159,7 @@ class TestCompose:
         assert height != expected_resize
         assert width != expected_resize
 
-        response = client.get(
+        response = client_file_storage.get(
             f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?width={expected_resize}",
             headers={"accept": "image/png"}
         )
@@ -175,17 +175,17 @@ class TestCompose:
 
         real_width, _ = maintains_aspect_ratio(response)
         assert isclose(expected_resize, real_width, abs_tol=error)
-        response = client.get(
+        response = client_file_storage.get(
             f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}?height={expected_resize}",
             headers={"accept": "image/png"}
         )
         _, real_height = maintains_aspect_ratio(response)
         assert isclose(expected_resize, real_height, abs_tol=error)
 
-    def test_resize_nok(self, client):
+    def test_resize_nok(self, client_file_storage):
         intended_resize = 200
 
-        response = client.get(
+        response = client_file_storage.get(
             f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}"
             f"?width={intended_resize}&height={intended_resize}",
             headers={"accept": "image/png"}
@@ -196,7 +196,7 @@ class TestCompose:
 
         pdf_mimetype = "application/pdf"
 
-        response = client.get(
+        response = client_file_storage.get(
             f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}"
             f"?width={intended_resize}",
             headers={"accept": pdf_mimetype}
@@ -204,10 +204,10 @@ class TestCompose:
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert get_message(response) == resizing_unsupported.format(pdf_mimetype)
 
-    def test_unsupported_mimetype(self, client):
+    def test_unsupported_mimetype(self, client_file_storage):
         jpeg_mimetype = "image/jpeg"
 
-        response = client.get(
+        response = client_file_storage.get(
             f"{self.EXAMPLE_COMPOSE_ENDPOINT.format(PLAIN_TEXT_TEMPLATE_ID)}",
             headers={"accept": jpeg_mimetype}
         )
@@ -215,8 +215,8 @@ class TestCompose:
         assert response.status_code == HTTPStatus.NOT_ACCEPTABLE
         assert get_message(response) == unsupported_mime_type.format(jpeg_mimetype, ", ".join(ALL_AVAILABLE_MIME_TYPES))
 
-    def test_compose_qr_code_exists(self, client):
-        response = client.post(self.COMPOSE_ENDPOINT.format(QR_CODE_TEMPLATE_ID), json={"qr_code": "qr_url.com"})
+    def test_compose_qr_code_exists(self, client_file_storage):
+        response = client_file_storage.post(self.COMPOSE_ENDPOINT.format(QR_CODE_TEMPLATE_ID), json={"qr_code": "qr_url.com"})
         assert response.data is not None
         assert response.status_code == HTTPStatus.OK
 
