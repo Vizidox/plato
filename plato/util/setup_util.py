@@ -1,14 +1,9 @@
 import os
 
-from plato.db.models import Template
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
-import pathlib
-import shutil
 from plato.compose import FILTERS
-from .path_util import template_path, base_static_path
-from .file_storage_util import write_files
 from ..domain import StorageType
-from ..file_storage import PlatoFileStorage, S3FileStorage, DiskFileStorage, NoIndexTemplateFound
+from ..file_storage import PlatoFileStorage, S3FileStorage, DiskFileStorage
 from .. import settings
 
 
@@ -21,36 +16,6 @@ class InvalidFileStorageTypeException(Exception):
         Constructor method
         """
         super(InvalidFileStorageTypeException, self).__init__(type_)
-
-
-def load_templates(s3_bucket: str, target_directory: str, s3_template_directory: str) -> None:
-    """
-    Gets templates from the AWS S3 bucket which are associated with ones available in the DB.
-    Expected directory structure is {s3_template_directory}/{template_id}
-
-    Args:
-        s3_bucket: AWS S3 Bucket where the templates are
-        target_directory: Target directory to store the templates in
-        s3_template_directory: Base directory for S3 Bucket
-    """
-    old_templates_path = pathlib.Path(target_directory)
-    if old_templates_path.exists():
-        shutil.rmtree(old_templates_path)
-
-    templates = Template.query.with_entities(Template.id).all()
-    file_storage = S3FileStorage(settings.TEMPLATE_DIRECTORY, bucket_name=s3_bucket)
-    # get static files
-    static_files = file_storage.get_file(path=base_static_path(s3_template_directory),
-                                         template_directory=s3_template_directory)
-    write_files(files=static_files, target_directory=target_directory)
-
-    for template in templates:
-        # get template content
-        template_files = file_storage.get_file(path=template_path(s3_template_directory, template.id),
-                                               template_directory=s3_template_directory)
-        if not template_files:
-            raise NoIndexTemplateFound(template.id)
-        write_files(files=template_files, target_directory=target_directory)
 
 
 def create_template_environment(template_directory_path: str) -> JinjaEnv:

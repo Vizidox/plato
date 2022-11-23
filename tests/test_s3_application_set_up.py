@@ -6,15 +6,15 @@ from moto import mock_s3
 from smart_open import s3
 
 from plato.file_storage import NoIndexTemplateFound
-from plato.util.setup_util import load_templates
 from tempfile import TemporaryDirectory
 from plato.db.models import Template, db
 
-BUCKET_NAME = 'test_template_bucket_1'
+BUCKET_NAME = 'test_template_bucket'
+BASE_DIR = 'templating'
 
 
 def get_template_file_path(template_id: str):
-    return f"templating/templates/{template_id}/{template_id}"
+    return f"{BASE_DIR}/templates/{template_id}/{template_id}"
 
 
 def get_local_template_file_path(template_id: str):
@@ -22,7 +22,7 @@ def get_local_template_file_path(template_id: str):
 
 
 def get_static_file_path(template_id: str, file_name: str):
-    return f"templating/static/{template_id}/{file_name}"
+    return f"{BASE_DIR}/static/{template_id}/{file_name}"
 
 
 def get_local_static_file_path(template_id: str, file_name: str):
@@ -42,9 +42,14 @@ def write_to_s3(bucket_name: str, file_paths: list):
             file.write("I am file !".encode(encoding))
 
 
+def create_s3_bucket() -> None:
+    conn = boto3.resource('s3', region_name='eu-central-1')
+    conn.create_bucket(Bucket=BUCKET_NAME)
+
+
 @pytest.fixture(scope="class")
-def populate_db(client):
-    with client.application.test_request_context():
+def populate_db(client_s3_storage):
+    with client_s3_storage.application.test_request_context():
         template = Template(id_="0", schema={},
                             type_="text/html", tags=['test_tags'], metadata={},
                             example_composition={'place_holder': 'value'})
@@ -53,16 +58,15 @@ def populate_db(client):
 
     yield
 
-    with client.application.test_request_context():
+    with client_s3_storage.application.test_request_context():
         Template.query.delete()
         db.session.commit()
 
 
 @pytest.fixture(scope='function')
 @mock_s3
-def populate_s3() -> str:
-    conn = boto3.resource('s3', region_name='eu-central-1')
-    conn.create_bucket(Bucket=BUCKET_NAME)
+def populate_s3() -> None:
+    create_s3_bucket()
 
     static_file_1 = get_static_file_path(file_name="abc_1", template_id="0")
     static_file_2 = get_static_file_path(file_name="abc_2", template_id="0")
@@ -71,33 +75,26 @@ def populate_s3() -> str:
     template_file_1 = get_template_file_path(template_id="0")
     write_to_s3(bucket_name=BUCKET_NAME, file_paths=[template_file_1])
 
-    return BUCKET_NAME
-
 
 @pytest.fixture(scope='function')
 @mock_s3
-def populate_s3_with_missing_template_file() -> str:
-    bucket_name = 'test_template_bucket_3'
-    conn = boto3.resource('s3', region_name='eu-central-1')
-    conn.create_bucket(Bucket=bucket_name)
+def populate_s3_with_missing_template_file() -> None:
+    create_s3_bucket()
 
     static_file = get_static_file_path(file_name="abc", template_id="0")
-    write_to_s3(bucket_name=bucket_name, file_paths=[static_file])
-
-    return bucket_name
+    write_to_s3(bucket_name=BUCKET_NAME, file_paths=[static_file])
 
 
 @pytest.mark.usefixtures("populate_db")
 @mock_s3
-class TestApplicationSetup:
-    def test_success_case(self, client, populate_s3):
-        bucket_name = populate_s3
-        with client.application.test_request_context():
+class TestS3ApplicationSetup:
+    def test_success_case(self, client_s3_storage, populate_s3):
+        with client_s3_storage.application.test_request_context():
             with TemporaryDirectory() as temp:
                 # as we cannot directly delete any folder created by TemporaryDirectory, we create another temporary one inside it
-                base_dir = 'templating'
                 template_dir_name = create_child_temp_folder(temp)
-                load_templates(bucket_name, template_dir_name, base_dir)
+                file_storage = client_s3_storage.application.config["storage"]
+                file_storage.load_templates(template_dir_name, BASE_DIR)
 
                 static_file_1 = f'{template_dir_name}/{get_local_static_file_path(file_name="abc_1", template_id="0")}'
                 static_file_2 = f'{template_dir_name}/{get_local_static_file_path(file_name="abc_2", template_id="0")}'
@@ -107,12 +104,11 @@ class TestApplicationSetup:
                 assert pathlib.Path(static_file_2).is_file()
                 assert pathlib.Path(template_file_1).is_file()
 
-    def test_missing_template_file(self, client, populate_s3_with_missing_template_file):
-        bucket_name = populate_s3_with_missing_template_file
-        with client.application.test_request_context():
+    def test_missing_template_file(self, client_s3_storage, populate_s3_with_missing_template_file):
+        with client_s3_storage.application.test_request_context():
             with pytest.raises(NoIndexTemplateFound):
                 with TemporaryDirectory() as temp:
                     # as we cannot directly delete any folder created by TemporaryDirectory, we create another temporary one inside it
-                    base_dir = 'templating'
                     template_dir_name = create_child_temp_folder(temp)
-                    load_templates(bucket_name, template_dir_name, base_dir)
+                    file_storage = client_s3_storage.application.config["storage"]
+                    file_storage.load_templates(template_dir_name, BASE_DIR)
