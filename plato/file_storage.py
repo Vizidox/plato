@@ -11,7 +11,6 @@ from smart_open import s3
 from plato.db.models import Template
 from plato.util.path_util import tmp_path, tmp_zipfile_path, template_path, static_path, static_file_path, \
     base_static_path
-from plato.util.file_storage_util import write_files
 
 
 class FileStorageError(Exception):
@@ -19,23 +18,6 @@ class FileStorageError(Exception):
     Error for any setup Exception to occur when running this module's functions.
     """
     ...
-
-
-class NoStaticContentFound(FileStorageError):
-    """
-    Raised when no static content found on file storage
-    """
-
-    def __init__(self, template_id: str):
-        """
-        Exception initialization
-
-        Args:
-            template_id (str): the id of the template
-
-        """
-        message = f"No static content found. template_id: {template_id}"
-        super(NoStaticContentFound, self).__init__(message)
 
 
 class NoIndexTemplateFound(FileStorageError):
@@ -91,11 +73,11 @@ class PlatoFileStorage(ABC):
             input_file (BinaryIO): the input file
             path (str): the storage path
         """
-        pass
+        raise NotImplementedError
 
-    def _write_file_locally(self, input_file: BinaryIO, path: str):
+    def write_file_locally(self, input_file: BinaryIO, path: str):
         """
-        Writes a file to a target directory inside the project's data folder
+        Writes a file to the defined target directory inside the project's data folder
 
         Args:
             input_file (BinaryIO): the file
@@ -106,6 +88,31 @@ class PlatoFileStorage(ABC):
         with open(path, mode="wb") as file:
             input_file.seek(0)
             file.write(input_file.read())
+
+    @staticmethod
+    def write_files(files: Dict[str, Any], target_directory: str) -> None:
+        """
+        Write files to a supplied target directory
+
+        Args:
+            files (Dict[str, Any]): a dict representing files needing to be written in the target directory
+                with key as the file url and the value as file content
+            target_directory (str): the directory all the files will reside in
+        """
+        for key, content in files.items():
+            path = pathlib.Path(f"{target_directory}/{key}")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, mode="wb") as file:
+                file.write(content)
+
+    @abstractmethod
+    def load_templates(self, target_directory: str, template_directory: str) -> None:
+        """
+        Args:
+            target_directory: Target directory to store the templates in
+            template_directory: Base directory
+        """
+        raise NotImplementedError
 
 
 class DiskFileStorage(PlatoFileStorage, ABC):
@@ -120,7 +127,15 @@ class DiskFileStorage(PlatoFileStorage, ABC):
             input_file (BinaryIO): the input file
             path (str): the local storage path
         """
-        self._write_file_locally(input_file, path)
+        self.write_file_locally(input_file, path)
+
+    def load_templates(self, target_directory: str, template_directory: str) -> None:
+        """
+            Args:
+                target_directory: Target directory to store the templates in
+                template_directory: Base directory
+        """
+        raise NotImplementedError
 
 
 class S3FileStorage(PlatoFileStorage, ABC):
@@ -161,7 +176,7 @@ class S3FileStorage(PlatoFileStorage, ABC):
         with s3.open(self.bucket_name, path, mode='wb') as file:
             file.write(input_file.read())
 
-        self._write_file_locally(input_file, path)
+        self.write_file_locally(input_file, path)
 
     def load_templates(self, target_directory: str, template_directory: str) -> None:
         """
@@ -181,12 +196,11 @@ class S3FileStorage(PlatoFileStorage, ABC):
         # get static files
         static_files = self.get_file(path=base_static_path(template_directory),
                                      template_directory=template_directory)
-        write_files(files=static_files, target_directory=target_directory)
+        self.write_files(files=static_files, target_directory=target_directory)
 
         for template in templates:
-            # get template content
-            template_files = self.get_file(path=template_path(template_directory, template.id),
-                                           template_directory=template_directory)
-            if not template_files:
+            if template_files := self.get_file(path=template_path(template_directory, template.id),
+                                               template_directory=template_directory):
+                self.write_files(files=template_files, target_directory=target_directory)
+            else:
                 raise NoIndexTemplateFound(template.id)
-            write_files(files=template_files, target_directory=target_directory)
