@@ -60,4 +60,4 @@ def register_cli_commands(app: Flask):
             if STORAGE_TYPE == StorageType.S3:
                 file_storage.load_templates(TEMPLATE_DIRECTORY, TEMPLATE_DIRECTORY_NAME)
             else:
-                print("You type of storage does not support this action.")
+                click.echo("You type of storage does not support this action.")
