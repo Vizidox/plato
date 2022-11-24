@@ -37,6 +37,7 @@ WeasyPrint="51"
 qrcode={ version = "6.1", extras=["pil"] }
 babel="2.8.0"
 num2words="0.5.10"
+psycopg2-binary = "^2.9.5"
 
 [tool.poetry.dev-dependencies]
 pytest="~5.4"
