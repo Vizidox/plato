@@ -196,11 +196,13 @@ class S3FileStorage(PlatoFileStorage, ABC):
         # get static files
         static_files = self.get_file(path=base_static_path(template_directory),
                                      template_directory=template_directory)
+
         self.write_files(files=static_files, target_directory=target_directory)
 
         for template in templates:
-            if template_files := self.get_file(path=template_path(template_directory, template.id),
-                                               template_directory=template_directory):
-                self.write_files(files=template_files, target_directory=target_directory)
-            else:
+            # get template content
+            template_files = self.get_file(path=template_path(template_directory, template.id),
+                                           template_directory=template_directory)
+            if not template_files:
                 raise NoIndexTemplateFound(template.id)
+            self.write_files(files=template_files, target_directory=target_directory)
