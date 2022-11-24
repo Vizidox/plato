@@ -157,8 +157,8 @@ def populate_db_s3(client_s3_storage):
 
 
 @pytest.fixture(scope="function")
-def populate_db(client_file_storage):
-    yield from _fleeting_database(client_file_storage)
+def populate_db(client_local_storage):
+    yield from _fleeting_database(client_local_storage)
 
 
 def _fleeting_database(client):
@@ -364,7 +364,7 @@ class TestManageTemplatesLocalFileStorage:
     UPDATE_TEMPLATE = '/template/{0}/update'
     UPDATE_TEMPLATE_DETAILS = '/template/{0}/update_details'
 
-    def test_create_new_template_ok(self, client_file_storage):
+    def test_create_new_template_ok(self, client_local_storage):
         with open(f'{CURRENT_TEST_PATH}/resources/template_test_2.zip', 'rb') as file:
             template_id = "template_test_2"
             template_details_str = json.dumps(TEMPLATE_DETAILS_2)
@@ -374,7 +374,7 @@ class TestManageTemplatesLocalFileStorage:
                 file_payload = (file, filename) if filename is not None else file
                 data["zipfile"] = file_payload
 
-            result = client_file_storage.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
+            result = client_local_storage.post(self.CREATE_TEMPLATE_ENDPOINT, data=data)
             assert result.status_code == HTTPStatus.CREATED
             template_model: Template = Template.query.filter_by(id=template_id).one()
             assert template_model is not None
@@ -382,7 +382,7 @@ class TestManageTemplatesLocalFileStorage:
             expected_template = Template.from_json_dict(TEMPLATE_DETAILS_2)
             assert template_model.schema == expected_template.schema
 
-    def test_update_template_ok(self, client_file_storage):
+    def test_update_template_ok(self, client_local_storage):
         filename = 'template_test_1.zip'
         file = open(f'{CURRENT_TEST_PATH}/resources/{filename}', "rb")
         template_details_str = json.dumps(TEMPLATE_DETAILS_1_UPDATE)
@@ -390,7 +390,7 @@ class TestManageTemplatesLocalFileStorage:
         if file is not None:
             file_payload = (file, filename) if filename is not None else file
             data["zipfile"] = file_payload
-        result = client_file_storage.put(self.UPDATE_TEMPLATE.format(TEMPLATE_ID), data=data)
+        result = client_local_storage.put(self.UPDATE_TEMPLATE.format(TEMPLATE_ID), data=data)
         assert result.status_code == HTTPStatus.OK
         template_model: Template = Template.query.filter_by(id=TEMPLATE_ID).one()
         assert template_model.example_composition is not None
@@ -404,7 +404,7 @@ class TestManageTemplatesLocalFileStorage:
         expected_template = Template.from_json_dict(TEMPLATE_DETAILS_1)
         assert template_model.schema == expected_template.schema
 
-    def test_update_template_details_ok(self, client_file_storage):
+    def test_update_template_details_ok(self, client_local_storage):
         example_composition_data = {"qr_code": "https://google.com",
                                     "cert_date": "2021-01-12",
                                     "cert_name": "Albert Einstein",
@@ -412,7 +412,7 @@ class TestManageTemplatesLocalFileStorage:
 
         data: dict = {"example_composition": example_composition_data}
 
-        result = client_file_storage.patch(self.UPDATE_TEMPLATE_DETAILS.format(TEMPLATE_ID), json=data)
+        result = client_local_storage.patch(self.UPDATE_TEMPLATE_DETAILS.format(TEMPLATE_ID), json=data)
         assert result.status_code == HTTPStatus.OK
         template_model: Template = Template.query.filter_by(id=TEMPLATE_ID).one()
         assert template_model.example_composition is not None

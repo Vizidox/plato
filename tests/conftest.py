@@ -13,7 +13,7 @@ from testcontainers.core.utils import inside_container
 from plato.db import db
 from plato.file_storage import S3FileStorage, PlatoFileStorage, DiskFileStorage
 from plato.flask_app import create_app
-from tests.test_s3_application_set_up import BUCKET_NAME, BASE_DIR
+from tests.test_s3_application_set_up import BUCKET_NAME
 
 TEST_DB_URL = f"postgresql://test:test@{'database:5432' if inside_container() else 'localhost:5456'}/test"
 
@@ -27,7 +27,7 @@ def template_loader() -> DictLoader:
 
 
 @pytest.fixture(scope='class')
-def client_file_storage():
+def client_local_storage():
     with tempfile.TemporaryDirectory() as file_dir:
         yield from flask_client(template_loader, file_storage=DiskFileStorage(file_dir))
 
@@ -72,6 +72,5 @@ def flask_client(template_loader, file_storage: PlatoFileStorage):
 
 
 @pytest.fixture(scope='session')
-def jinjaenv(client_file_storage):
-    yield client_file_storage.application.config["JINJENV"]
-
+def jinjaenv(client_local_storage):
+    yield client_local_storage.application.config["JINJENV"]
