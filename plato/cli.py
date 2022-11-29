@@ -6,7 +6,7 @@ from flask.cli import with_appcontext
 import json
 from .db import db
 from .db.models import Template
-from .domain import StorageType
+from .file_storage import StorageType
 from .settings import TEMPLATE_DIRECTORY, TEMPLATE_DIRECTORY_NAME, STORAGE_TYPE
 from .util.setup_util import initialize_file_storage
 

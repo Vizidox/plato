@@ -3,7 +3,7 @@
 Either create a Flask run configuration on this module or set up to run it locally with main.
 
 """
-from plato.domain import StorageType
+from plato.file_storage import StorageType
 from plato.flask_app import create_app
 from plato.settings import WORKING_DB_URL, PROJECT_NAME, PROJECT_VERSION, TEMPLATE_DIRECTORY, STORAGE_TYPE, \
     TEMPLATE_DIRECTORY_NAME

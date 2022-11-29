@@ -3,6 +3,7 @@ import pathlib
 import shutil
 import zipfile
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import BinaryIO, Dict, Any
 from pathlib import Path
 
@@ -11,6 +12,11 @@ from smart_open import s3
 from plato.db.models import Template
 from plato.util.path_util import tmp_path, tmp_zipfile_path, template_path, static_path, static_file_path, \
     base_static_path
+
+
+class StorageType(str, Enum):
+    S3 = 's3'
+    DISK = 'disk'
 
 
 class FileStorageError(Exception):

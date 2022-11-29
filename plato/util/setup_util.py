@@ -2,8 +2,7 @@ import os
 
 from jinja2 import Environment as JinjaEnv, FileSystemLoader, select_autoescape
 from plato.compose import FILTERS
-from ..domain import StorageType
-from ..file_storage import PlatoFileStorage, S3FileStorage, DiskFileStorage
+from ..file_storage import PlatoFileStorage, S3FileStorage, DiskFileStorage, StorageType
 from .. import settings
 
 
