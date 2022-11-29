@@ -177,7 +177,7 @@ def initialize_api(app: Flask):
             return jsonify({"message": template_already_exists.format(template_id)}), HTTPStatus.CONFLICT
 
         try:
-            # uploads template files from zip file to S3
+            # uploads template files from zip file to file storage
             file_storage.save_template_files(template_id, TEMPLATE_DIRECTORY_NAME, zip_file_name)
 
             # saves template json into database
@@ -260,7 +260,7 @@ def initialize_api(app: Flask):
             template.update_fields(template_entry_json)
             db.session.commit()
 
-            # uploads template files from zip file to S3
+            # uploads template files from zip file to file storage
             file_storage.save_template_files(template_id, TEMPLATE_DIRECTORY_NAME, zip_file_name)
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
