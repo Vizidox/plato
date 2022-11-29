@@ -73,4 +73,4 @@ def flask_client(template_loader, file_storage: PlatoFileStorage):
 
 @pytest.fixture(scope='session')
 def jinjaenv(client_local_storage):
-    yield client_local_storage.application.config["JINJENV"]
+    yield client_local_storage.application.config["JINJAENV"]

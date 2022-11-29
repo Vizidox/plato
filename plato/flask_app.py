@@ -41,7 +41,7 @@ def create_app(db_url: str, template_static_directory: str,
     app.config['SWAGGER'] = swagger_ui_config
     swag.init_app(app)
 
-    app.config["JINJENV"] = jinja_env
+    app.config["JINJAENV"] = jinja_env
     app.config["TEMPLATE_STATIC"] = template_static_directory
     app.config["storage"] = storage
 

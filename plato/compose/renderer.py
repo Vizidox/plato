@@ -71,7 +71,7 @@ class Renderer(ABC):
         Returns:
             str: HTML string for composed file.
         """
-        jinjaenv = current_app.config["JINJENV"]
+        jinjaenv = current_app.config["JINJAENV"]
         static_directory = current_app.config["TEMPLATE_STATIC"]
         template_static_directory = f"{static_directory}/{self.template_model.id}/"
         base_static_directory = f"{static_directory}/"
