@@ -111,14 +111,13 @@ class PlatoFileStorage(ABC):
             with open(path, mode="wb") as file:
                 file.write(content)
 
-    @abstractmethod
     def load_templates(self, target_directory: str, template_directory: str) -> None:
         """
         Args:
             target_directory: Target directory to store the templates in
             template_directory: Base directory
         """
-        raise NotImplementedError
+        pass
 
 
 class DiskFileStorage(PlatoFileStorage, ABC):
@@ -134,14 +133,6 @@ class DiskFileStorage(PlatoFileStorage, ABC):
             path (str): the local storage path
         """
         self.write_file_locally(input_file, path)
-
-    def load_templates(self, target_directory: str, template_directory: str) -> None:
-        """
-            Args:
-                target_directory: Target directory to store the templates in
-                template_directory: Base directory
-        """
-        raise NotImplementedError
 
 
 class S3FileStorage(PlatoFileStorage, ABC):

@@ -22,6 +22,5 @@ app = create_app(db_url=WORKING_DB_URL,
 if __name__ == '__main__':
     # in app-context setups
     with app.app_context():
-        if STORAGE_TYPE == StorageType.S3:
-            file_storage.load_templates(TEMPLATE_DIRECTORY, TEMPLATE_DIRECTORY_NAME)
+        file_storage.load_templates(TEMPLATE_DIRECTORY, TEMPLATE_DIRECTORY_NAME)
     app.run()
