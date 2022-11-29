@@ -39,7 +39,7 @@ You may use a subdirectory inside your DATA_DIR.
 
 First, make sure you actually *have* a DATA_DIR, by creating a folder named 'data' within the main project directory.
 
-e.g TEMPLATE_DIRECTORY=/home/carloscoda/projects/plato-api/data/templates
+e.g TEMPLATE_DIRECTORY=/home/carloscoda/projects/plato/data/templates
 
 A couple more environment variables need to be filled as well. 
 S3_BUCKET is the S3 Bucket you decide to use and S3_TEMPLATE_DIR is the path to 
