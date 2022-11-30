@@ -6,13 +6,12 @@ from mimetypes import guess_extension
 from typing import Callable, Tuple
 
 from accept_types import get_best_match
-from flask import jsonify, request, Flask, send_file
+from flask import jsonify, request, Flask, send_file, current_app
 from jsonschema import validate as json_validate, ValidationError
 
 from sqlalchemy import String, cast as db_cast
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from plato.compose import PDF_MIME, ALL_AVAILABLE_MIME_TYPES
 from plato.compose.renderer import compose, RendererNotFound, PNG_MIME, InvalidPageNumber
@@ -22,10 +21,8 @@ from .db.models import Template
 from .error_messages import invalid_compose_json, template_not_found, unsupported_mime_type, aspect_ratio_compromised, \
     resizing_unsupported, single_page_unsupported, negative_number_invalid, template_already_exists, invalid_zip_file, \
     invalid_directory_structure, invalid_json_field, invalid_template_details
-from plato.util.s3_bucket_util import upload_template_files_to_s3, get_file_s3, NoIndexTemplateFound
-from .settings import S3_TEMPLATE_DIR, S3_BUCKET, TEMPLATE_DIRECTORY
-from plato.util.setup_util import write_files
-from .util.path_util import template_path, tmp_zipfile_path, static_path
+from .settings import TEMPLATE_DIRECTORY_NAME
+from .util.path_util import tmp_zipfile_path
 
 
 class UnsupportedMIMEType(Exception):
@@ -43,6 +40,8 @@ def initialize_api(app: Flask):
         app: The Flask app
     Returns:
     """
+    with app.app_context():
+        file_storage = current_app.config["storage"]
 
     @app.route("/templates/<string:template_id>", methods=['GET'])
     def template_by_id(template_id: str):
@@ -173,10 +172,13 @@ def initialize_api(app: Flask):
         template_id = template_entry_json['title']
         new_template = Template.from_json_dict(template_entry_json)
 
+        template = Template.query.filter_by(id=template_id).one_or_none()
+        if template is not None:
+            return jsonify({"message": template_already_exists.format(template_id)}), HTTPStatus.CONFLICT
+
         try:
-            # uploads template files from zip file to S3
-            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
-            _load_and_write_template_from_s3(template_id)
+            # uploads template files from zip file to file storage
+            file_storage.save_template_files(template_id, TEMPLATE_DIRECTORY_NAME, zip_file_name)
 
             # saves template json into database
             db.session.add(new_template)
@@ -258,9 +260,8 @@ def initialize_api(app: Flask):
             template.update_fields(template_entry_json)
             db.session.commit()
 
-            # uploads template files from zip file to S3
-            upload_template_files_to_s3(template_id, S3_TEMPLATE_DIR, zip_file_name, S3_BUCKET)
-            _load_and_write_template_from_s3(template_id)
+            # uploads template files from zip file to file storage
+            file_storage.save_template_files(template_id, TEMPLATE_DIRECTORY_NAME, zip_file_name)
         except NoResultFound:
             return jsonify({"message": template_not_found.format(template_id)}), HTTPStatus.NOT_FOUND
         except FileNotFoundError:
@@ -332,23 +333,6 @@ def initialize_api(app: Flask):
             return jsonify({"message": invalid_json_field.format(e.args)}), HTTPStatus.BAD_REQUEST
 
         return jsonify(TemplateDetailView.view_from_template(template)._asdict())
-
-    def _load_and_write_template_from_s3(template_id: str) -> None:
-        """
-        Fetches template data from S3 Bucket and saves it locally
-
-        Args:
-            template_id (str): The template id
-        """
-
-        template_paths = [template_path(S3_TEMPLATE_DIR, template_id), static_path(S3_TEMPLATE_DIR, template_id)]
-        for path in template_paths:
-
-            template_files = get_file_s3(bucket_name=S3_BUCKET, url=path,
-                                         s3_template_directory=S3_TEMPLATE_DIR)
-            if not template_files:
-                raise NoIndexTemplateFound(template_id)
-            write_files(files=template_files, target_directory=TEMPLATE_DIRECTORY)
 
     def _save_and_validate_zipfile() -> Tuple[bool, str]:
         """

@@ -1,3 +1,4 @@
+import tempfile
 from contextlib import nullcontext
 from pathlib import Path
 from time import sleep
@@ -10,7 +11,9 @@ from testcontainers.compose import DockerCompose
 from testcontainers.core.utils import inside_container
 
 from plato.db import db
+from plato.file_storage import S3FileStorage, PlatoFileStorage, DiskFileStorage
 from plato.flask_app import create_app
+from tests.test_s3_application_set_up import BUCKET_NAME
 
 TEST_DB_URL = f"postgresql://test:test@{'database:5432' if inside_container() else 'localhost:5456'}/test"
 
@@ -23,8 +26,19 @@ def template_loader() -> DictLoader:
     yield DictLoader({})
 
 
-@pytest.fixture(scope='session')
-def client(template_loader):
+@pytest.fixture(scope='class')
+def client_local_storage():
+    with tempfile.TemporaryDirectory() as file_dir:
+        yield from flask_client(template_loader, file_storage=DiskFileStorage(file_dir))
+
+
+@pytest.fixture(scope='class')
+def client_s3_storage():
+    with tempfile.TemporaryDirectory() as file_dir:
+        yield from flask_client(template_loader, file_storage=S3FileStorage(file_dir, BUCKET_NAME))
+
+
+def flask_client(template_loader, file_storage: PlatoFileStorage):
 
     current_folder = str(Path(__file__).resolve().parent)
 
@@ -47,7 +61,8 @@ def client(template_loader):
         plato_app = create_app(db_url=TEST_DB_URL,
                                jinja_env=template_environment,
                                template_static_directory=f"{current_folder}/resources/static",
-                               swagger_ui_config={})
+                               swagger_ui_config={},
+                               storage=file_storage)
         plato_app.config['TESTING'] = True
 
         with plato_app.test_client() as client:
@@ -57,5 +72,5 @@ def client(template_loader):
 
 
 @pytest.fixture(scope='session')
-def jinjaenv(client):
-    yield client.application.config["JINJENV"]
+def jinjaenv(client_local_storage):
+    yield client_local_storage.application.config["JINJAENV"]

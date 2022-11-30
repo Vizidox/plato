@@ -17,7 +17,7 @@ The project depends on [weasyprint](https://weasyprint.org/) for writing PDF fro
  
 The instructions are also available below.
  
-####Debian/Ubuntu
+#### Debian/Ubuntu
 
 
 ```bash
@@ -39,7 +39,7 @@ You may use a subdirectory inside your DATA_DIR.
 
 First, make sure you actually *have* a DATA_DIR, by creating a folder named 'data' within the main project directory.
 
-e.g TEMPLATE_DIRECTORY=/home/carloscoda/projects/templating/data/templates
+e.g TEMPLATE_DIRECTORY=/home/carloscoda/projects/plato/data/templates
 
 A couple more environment variables need to be filled as well. 
 S3_BUCKET is the S3 Bucket you decide to use and S3_TEMPLATE_DIR is the path to 
@@ -87,11 +87,11 @@ Locally:
 poetry run pytest
 ```
 
-Running tests inside the docker containers (you might need to build the templating docker image first):
+Running tests inside the docker containers (you might need to build the plato docker image first):
 ```bash
 docker-compose -f tests/docker/docker-compose.build.test.yml up -d database
 
-docker-compose -f tests/docker/docker-compose.build.test.yml run --rm test-templating pytest --cov=micro_templating
+docker-compose -f tests/docker/docker-compose.build.test.yml run --rm test-plato pytest --cov=micro_templating
 ```
 
 

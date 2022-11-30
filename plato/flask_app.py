@@ -10,13 +10,14 @@ from flask_migrate import Migrate
 
 from jinja2 import Environment as JinjaEnv
 from plato.api import initialize_api
+from plato.file_storage import PlatoFileStorage
 from plato.views import swag
 from plato.db import db
 from plato.cli import register_cli_commands
 
 
 def create_app(db_url: str, template_static_directory: str,
-               jinja_env: JinjaEnv, swagger_ui_config: dict) -> Flask:
+               jinja_env: JinjaEnv, swagger_ui_config: dict, storage: PlatoFileStorage) -> Flask:
     """
 
     Args:
@@ -25,6 +26,7 @@ def create_app(db_url: str, template_static_directory: str,
         db_url: Database URI
         swagger_ui_config: The Swagger-UI config to be used with Flasgger.
          As defined in https://github.com/flasgger/flasgger#swagger-ui-and-templates
+        storage: The File Storage class
 
     Returns:
 
@@ -39,8 +41,9 @@ def create_app(db_url: str, template_static_directory: str,
     app.config['SWAGGER'] = swagger_ui_config
     swag.init_app(app)
 
-    app.config["JINJENV"] = jinja_env
+    app.config["JINJAENV"] = jinja_env
     app.config["TEMPLATE_STATIC"] = template_static_directory
+    app.config["storage"] = storage
 
     register_cli_commands(app)
     initialize_api(app)

@@ -58,7 +58,7 @@ pipeline {
     }
     post {
         cleanup{
-            sh 'docker-compose -f tests/docker/docker-compose.test.yml down -v --rmi all'
+            sh 'docker-compose -f tests/docker/docker-compose.build.test.yml down -v --rmi all'
         }
     }
 }

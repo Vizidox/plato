@@ -71,7 +71,7 @@ class Renderer(ABC):
         Returns:
             str: HTML string for composed file.
         """
-        jinjaenv = current_app.config["JINJENV"]
+        jinjaenv = current_app.config["JINJAENV"]
         static_directory = current_app.config["TEMPLATE_STATIC"]
         template_static_directory = f"{static_directory}/{self.template_model.id}/"
         base_static_directory = f"{static_directory}/"
@@ -80,17 +80,13 @@ class Renderer(ABC):
             name=f"{self.template_model.id}/{self.template_model.id}"
         )  # template id works for the file as well
 
-        composed_html = jinja_template.render(
-            p=compose_data,
-            base_static=base_static_directory,
-            template_static=template_static_directory
-        )
-
-        return composed_html
+        return jinja_template.render(p=compose_data,
+                                     base_static=base_static_directory,
+                                     template_static=template_static_directory)
 
     def render(self, compose_data: dict) -> io.BytesIO:
         """
-        Renders Template onto a a stream according to the Renderer's MIME type.
+        Renders Template onto a stream according to the Renderer's MIME type.
 
         """
         with TemporaryDirectory() as temp_render_directory:
