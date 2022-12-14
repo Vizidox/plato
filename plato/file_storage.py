@@ -119,6 +119,15 @@ class PlatoFileStorage(ABC):
         """
         pass
 
+    def load_template(self, target_directory: str, template_directory: str, template_id: str) -> None:
+        """
+        Args:
+            target_directory: Target directory to store the template in
+            template_directory: Base directory
+            template_id: Template id
+        """
+        pass
+
 
 class DiskFileStorage(PlatoFileStorage, ABC):
     def __init__(self, data_directory: str):
@@ -197,9 +206,38 @@ class S3FileStorage(PlatoFileStorage, ABC):
         self.write_files(files=static_files, target_directory=target_directory)
 
         for template in templates:
-            # get template content
-            template_files = self.get_file(path=template_path(template_directory, template.id),
-                                           template_directory=template_directory)
-            if not template_files:
-                raise NoIndexTemplateFound(template.id)
-            self.write_files(files=template_files, target_directory=target_directory)
+            self._load_template_content(target_directory, template, template_directory)
+
+    def load_template(self, target_directory: str, template_directory: str, template_id: str) -> None:
+        """
+        Get single template from the AWS S3 bucket which is associated with one available in the DB.
+        Expected directory structure is {s3_template_directory}/{template_id}
+
+        Args:
+            target_directory: Target directory to store the template in
+            template_directory: Base directory for S3 Bucket
+            template_id: Template id
+        """
+        template = Template.query.filter_by(id=template_id).one()
+
+        # get static files for template
+        static_files = self.get_file(path=static_path(template_directory, template.id),
+                                     template_directory=template_directory)
+        self.write_files(files=static_files, target_directory=target_directory)
+
+        self._load_template_content(target_directory, template, template_directory)
+
+    def _load_template_content(self, target_directory: str, template: Template, template_directory: str):
+        """
+        Get template content from the AWS S3 bucket template folder and save it locally.
+
+        Args:
+            target_directory: Target directory to store the template in
+            template_directory: Base directory for S3 Bucket
+            template: The Template object
+        """
+        template_files = self.get_file(path=template_path(template_directory, template.id),
+                                       template_directory=template_directory)
+        if not template_files:
+            raise NoIndexTemplateFound(template.id)
+        self.write_files(files=template_files, target_directory=target_directory)

@@ -6,7 +6,6 @@ from flask.cli import with_appcontext
 import json
 from .db import db
 from .db.models import Template
-from .file_storage import StorageType
 from .settings import TEMPLATE_DIRECTORY, TEMPLATE_DIRECTORY_NAME, STORAGE_TYPE
 from .util.setup_util import initialize_file_storage
 
@@ -32,7 +31,8 @@ def register_cli_commands(app: Flask):
 
     @app.cli.command("export_template")
     @click.argument("output", type=click.File("w"))
-    @click.option("--template-id", default=None, type=click.STRING)
+    @click.option("--template-id", default=None, type=click.STRING,
+                  help="Template id corresponding to the template to export")
     @with_appcontext
     def export_template(output, template_id: Optional[str] = None):
         """
@@ -50,11 +50,18 @@ def register_cli_commands(app: Flask):
         json.dump(template.json_dict(), output)
 
     @app.cli.command("refresh")
+    @click.option("--template-id", default=None, type=click.STRING,
+                  help='Template id corresponding to the template to refresh')
     @with_appcontext
-    def refresh_local_templates():
+    def refresh_local_templates(template_id: Optional[str] = None):
         """
-        Refresh local templates by loading the templates from AWS S3 Bucket
+        Refresh local templates by loading the templates from AWS S3 Bucket. Can also refresh a specific template.
         """
         file_storage = initialize_file_storage(STORAGE_TYPE)
         with app.app_context():
+            if template_id is not None:
+                if Template.query.filter_by(id=template_id).scalar() is None:
+                    raise click.ClickException('No template with this id exists!')
+                file_storage.load_template(TEMPLATE_DIRECTORY, TEMPLATE_DIRECTORY_NAME, template_id)
+                return None
             file_storage.load_templates(TEMPLATE_DIRECTORY, TEMPLATE_DIRECTORY_NAME)
