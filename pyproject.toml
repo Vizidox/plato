@@ -1,15 +1,15 @@
 [tool.poetry]
 name = "plato-api"
-version = "2022.10.1"
+version = "2023.5.1"
 description = "Templating as a microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com>",
     "Hieu Le <hieu.le@morphotech.co.uk>", "Rita Mariquitos <rita.mariquitos@morphotech.co.uk>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.7.7"
 
 flasgger = "0.9.5"
-flask = "^2.2"
+flask = "^2.2.5"
 Flask-Cors="3.0.8"
 gunicorn="20.0.4"
 meinheld="1.0.2"
@@ -18,7 +18,7 @@ meinheld="1.0.2"
 python-jose="3.1.0"
 
 # S3
-smart-open={version="2.0.0", extras=["aws"]}
+smart-open={version="6.3.0", extras=["aws"]}
 
 # settings
 python-dotenv="0.13.0"
@@ -47,5 +47,5 @@ blinker="1.4"
 PyMuPDF="1.16.18"
 
 [build-system]
-requires = ["poetry>=1.0"]
+requires = ["poetry>=1.2"]
 build-backend = "poetry.masonry.api"
