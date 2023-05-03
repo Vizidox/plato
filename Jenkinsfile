@@ -36,11 +36,13 @@ pipeline {
                 sh "echo 'current project version: ${project_version}'"
             }
         }
-        stage('Push to Docker Hub') {
+        stage('Push to Docker Hub and GitHub') {
             steps {
                 sh "docker tag ${local_api_image_name} vizidox/plato:${project_version}"
                 sh "docker push vizidox/plato:${project_version}"
-                sh "docker tag vizidox/plato:${project_version} ${local_api_image_name}" // tag the image with the original name for later docker-compose cleanup
+                sh "docker tag vizidox/plato:${project_version} ghcr.io/vizidox/plato:${project_version}"
+                sh "docker push ghcr.io/vizidox/plato:${project_version}"
+                sh "docker tag ghcr.io/vizidox/plato:${project_version} ${local_api_image_name}" // tag the image with the original name for later docker-compose cleanup
             }
         }
         stage('Sonarqube code inspection') {
@@ -58,7 +60,7 @@ pipeline {
     }
     post {
         cleanup{
-            sh 'docker-compose -f tests/docker/docker-compose.test.yml down -v --rmi all'
+            sh 'docker-compose -f tests/docker/docker-compose.build.test.yml down -v --rmi all'
         }
     }
 }
