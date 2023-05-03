@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "plato-api"
-version = "2023.5.1"
+version = "2023.5.2"
 description = "Templating as a microservice"
 authors = ["Tiago Santos <tiago.santos@vizidox.com>", "Joana Teixeira <joana.teixeira@vizidox.com>",
     "Hieu Le <hieu.le@morphotech.co.uk>", "Rita Mariquitos <rita.mariquitos@morphotech.co.uk>"]
@@ -10,7 +10,7 @@ python = "^3.7.7"
 
 flasgger = "0.9.5"
 flask = "^2.2.5"
-Flask-Cors="3.0.8"
+Flask-Cors="^3.0.9"
 gunicorn="20.0.4"
 meinheld="1.0.2"
 
@@ -35,7 +35,7 @@ accept-types="0.4.1"
 # Templating
 WeasyPrint="51"
 qrcode={ version = "6.1", extras=["pil"] }
-babel="2.8.0"
+babel="^2.9.1"
 num2words="0.5.10"
 
 [tool.poetry.dev-dependencies]
