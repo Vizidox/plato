@@ -47,5 +47,5 @@ blinker="1.4"
 PyMuPDF="1.16.18"
 
 [build-system]
-requires = ["poetry>=1.0"]
+requires = ["poetry>=1.2"]
 build-backend = "poetry.masonry.api"
