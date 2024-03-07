@@ -14,7 +14,7 @@ pipeline {
         stage('Build Project') {
             steps {
                 script {
-                    sh('docker-compose build plato-api')
+                    sh('docker compose build plato-api')
                 }
             }
         }
@@ -22,8 +22,8 @@ pipeline {
             steps{
                 script{
                     if(!params.get('skipTests', false)) {
-                        sh 'docker-compose -f tests/docker/docker-compose.build.test.yml up -d database'
-                        sh 'docker-compose -f tests/docker/docker-compose.build.test.yml run --rm test-plato pytest --junitxml=/app/coverage/pytest-report.xml --cov-report=xml:/app/coverage/coverage.xml --cov=${sonar_analyzed_dir}'
+                        sh 'docker compose -f tests/docker/docker-compose.build.test.yml up -d database'
+                        sh 'docker compose -f tests/docker/docker-compose.build.test.yml run --rm test-plato pytest --junitxml=/app/coverage/pytest-report.xml --cov-report=xml:/app/coverage/coverage.xml --cov=${sonar_analyzed_dir}'
                     }
                 }
             }
@@ -31,7 +31,7 @@ pipeline {
         stage('Get project version') {
             steps {
                 script {
-                    project_version = sh(script: 'docker-compose run --rm plato-api poetry version', returnStdout: true).trim().split(' ')[-1]
+                    project_version = sh(script: 'docker compose run --rm plato-api poetry version', returnStdout: true).trim().split(' ')[-1]
                 }
                 sh "echo 'current project version: ${project_version}'"
             }
@@ -42,7 +42,16 @@ pipeline {
                 sh "docker push vizidox/plato:${project_version}"
                 sh "docker tag vizidox/plato:${project_version} ghcr.io/vizidox/plato:${project_version}"
                 sh "docker push ghcr.io/vizidox/plato:${project_version}"
-                sh "docker tag ghcr.io/vizidox/plato:${project_version} ${local_api_image_name}" // tag the image with the original name for later docker-compose cleanup
+                sh "docker tag ghcr.io/vizidox/plato:${project_version} ${local_api_image_name}" // tag the image with the original name for later docker compose cleanup
+            }
+        }
+        stage('Build ARM Project and Push') {
+            steps {
+                sh('docker compose -f docker-compose-arm.yaml build')
+                sh "docker tag plato-api-arm vizidox/plato:${project_version}-arm"
+                sh "docker push vizidox/plato:${project_version}-arm"
+                sh "docker tag vizidox/plato:${project_version}-arm ghcr.io/vizidox/plato:${project_version}-arm"
+                sh "docker push ghcr.io/vizidox/plato:${project_version}-arm"
             }
         }
         stage('Sonarqube code inspection') {
@@ -60,7 +69,7 @@ pipeline {
     }
     post {
         cleanup{
-            sh 'docker-compose -f tests/docker/docker-compose.build.test.yml down -v --rmi all'
+            sh 'docker compose -f tests/docker/docker-compose.build.test.yml down -v --rmi all'
         }
     }
 }
